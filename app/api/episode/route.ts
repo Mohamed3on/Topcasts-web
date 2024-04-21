@@ -44,21 +44,30 @@ function createDocumentId(url: string): string {
 }
 
 const cleanUrl = (url: string) => {
-  const urlObject = new URL(url);
+  try {
+    const isValidUrl = isCorrectEpisodeURL(url);
+    if (!isValidUrl) {
+      return null;
+    }
+    const urlObject = new URL(url);
 
-  if (urlObject.hostname.includes('spotify.com')) {
-    // For Spotify, use only the pathname without any parameters
-    return `https://open.spotify.com${urlObject.pathname}`;
-  } else if (urlObject.hostname.includes('apple.com')) {
-    // For Apple Podcasts, keep only the 'i' parameter
-    const i = urlObject.searchParams.get('i');
-    return `https://podcasts.apple.com${urlObject.pathname}?i=${i}`;
-  } else if (urlObject.hostname.includes('castro.fm')) {
-    // For Castro, use only the pathname without any parameters
-    return `https://castro.fm${urlObject.pathname}`;
-  } else {
-    // Return the original URL if it doesn't match known patterns
-    return url;
+    if (urlObject.hostname.includes('spotify.com')) {
+      // For Spotify, use only the pathname without any parameters
+      return `https://open.spotify.com${urlObject.pathname}`;
+    } else if (urlObject.hostname.includes('apple.com')) {
+      // For Apple Podcasts, keep only the 'i' parameter
+      const i = urlObject.searchParams.get('i');
+      return `https://podcasts.apple.com${urlObject.pathname}?i=${i}`;
+    } else if (urlObject.hostname.includes('castro.fm')) {
+      // For Castro, use only the pathname without any parameters
+      return `https://castro.fm${urlObject.pathname}`;
+    } else {
+      // Return the original URL if it doesn't match known patterns
+      return url;
+    }
+  } catch (error) {
+    console.error('Error cleaning URL:', error);
+    return null;
   }
 };
 
@@ -98,8 +107,8 @@ async function scrapeSpotifyEpisodeDetails(url: string) {
 
   const episodeName = parsedJson.name;
   const podcastName = $('[data-testid=entity-header-entity-subtitle]').text();
-  const description = parsedJson.description;
-  const datePublished = parsedJson.datePublished;
+  const description = parsedJson?.description;
+  const datePublished = parsedJson?.datePublished;
   const duration = $('[data-testid=episode-progress-not-played]').text();
 
   const episodeImage = $('[data-testid=entity-header-entity-image]').attr('src');
@@ -191,13 +200,35 @@ const getURLType = (url: string): 'apple' | 'spotify' | 'castro' | null => {
   return null;
 };
 
+const isCorrectEpisodeURL = (url: string): boolean => {
+  const urlObject = new URL(url);
+
+  if (urlObject.hostname.includes('podcasts.apple.com')) {
+    return urlObject.searchParams.has('i');
+  }
+  if (urlObject.hostname.includes('open.spotify.com')) {
+    return urlObject.pathname.includes('/episode/');
+  }
+
+  if (urlObject.hostname.includes('castro.fm')) {
+    return urlObject.pathname.includes('/episode/');
+  }
+
+  return false;
+};
+
 export async function GET(request: NextRequest) {
   const searchParams = request.nextUrl.searchParams;
   const originalUrl = searchParams.get('url') || '';
   const urlToScrape = cleanUrl(originalUrl);
 
   if (!urlToScrape) {
-    return NextResponse.json({ error: 'No URL provided', status: 400 });
+    return NextResponse.json(
+      { error: 'No valid URL provided' },
+      {
+        status: 400,
+      }
+    );
   }
   const documentId = createDocumentId(urlToScrape);
 
@@ -215,7 +246,7 @@ export async function GET(request: NextRequest) {
 
   const urlType = getURLType(urlToScrape);
   if (!urlType) {
-    return NextResponse.json({ error: 'Invalid URL', status: 400 });
+    return NextResponse.json({ error: 'Invalid URL' }, { status: 400 });
   }
 
   try {
@@ -225,7 +256,7 @@ export async function GET(request: NextRequest) {
     } else if (urlType === 'spotify') {
       scrapedData = await scrapeSpotifyEpisodeDetails(urlToScrape);
     } else {
-      return NextResponse.json({ error: 'Unsupported URL', status: 400 });
+      return NextResponse.json({ error: 'Unsupported URL' }, { status: 400 });
     }
 
     // Prepare data for merging
@@ -246,6 +277,6 @@ export async function GET(request: NextRequest) {
     return NextResponse.json(updatedResponse);
   } catch (error) {
     console.error('Error scraping data:', error);
-    return NextResponse.json({ error: 'Error scraping episode details', status: 500 });
+    return NextResponse.json({ error: 'Error scraping episode details' }, { status: 500 });
   }
 }
