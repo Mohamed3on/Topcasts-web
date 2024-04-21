@@ -1,55 +1,27 @@
 import { EpisodeDetails } from '@/app/api/episode/route';
 
-import { getTokens } from 'next-firebase-auth-edge';
-import { cookies } from 'next/headers';
-import { notFound } from 'next/navigation';
-import { clientConfig, serverConfig } from '../config';
 import { PodcastDetails } from '@/app/PodcastDetails';
-import LogOut from '@/app/LogOutButton';
+import Header from '@/app/Header';
 
 export const dynamic = 'force-dynamic';
 
-const getHost = () => {
-  if (process.env.NODE_ENV === 'development') {
-    return 'http://localhost:3000';
-  } else {
-    return 'https://topcasts.vercel.app';
-  }
-};
+// const getEpisodeDetails = async (episodeUrl: string) => {
+//   const url = `${getHost()}/api/episode?url=${encodeURIComponent(episodeUrl)}`;
+//   const response = await fetch(url);
+//   const episode: EpisodeDetails = await response.json();
 
-const getEpisodeDetails = async (episodeUrl: string) => {
-  const url = `${getHost()}/api/episode?url=${encodeURIComponent(episodeUrl)}`;
-  const response = await fetch(url);
-  const episode: EpisodeDetails = await response.json();
-
-  return episode;
-};
+//   return episode;
+// };
 
 export default async function Home() {
   try {
-    // const episodeDetails = await getEpisodeDetails(
-    //   'https://podcasts.apple.com/de/podcast/419-sam-altman-openai-gpt-5-sora-board-saga-elon-musk/id1434243584?i=1000649593201&l=en-GB'
-    // );
-
-    const episodeDetails = await getEpisodeDetails(
-      'https://podcasts.apple.com/us/podcast/mark-zuckerberg-llama-3-open-sourcing-%2410b-models-caeser/id1516093381?i=1000652877239'
-    );
-
-    const tokens = await getTokens(cookies(), {
-      apiKey: clientConfig.apiKey,
-      cookieName: serverConfig.cookieName,
-      cookieSignatureKeys: serverConfig.cookieSignatureKeys,
-      serviceAccount: serverConfig.serviceAccount,
-    });
-
-    if (!tokens) {
-      notFound();
-    }
-
     return (
       <div>
-        <LogOut />
-        <PodcastDetails episodeDetails={episodeDetails} email={tokens.decodedToken.email} />
+        <Header />
+
+        <div className='w-full flex flex-col items-center gap-2'>
+          <PodcastDetails />
+        </div>
       </div>
     );
   } catch (error: any) {

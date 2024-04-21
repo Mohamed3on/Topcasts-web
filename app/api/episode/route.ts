@@ -1,7 +1,66 @@
 import { load } from 'cheerio';
 import { NextRequest, NextResponse } from 'next/server';
 
+import * as admin from 'firebase-admin';
+
+import { createHash } from 'crypto';
+
+if (!admin.apps.length) {
+  admin.initializeApp({
+    credential: admin.credential.cert({
+      projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID!,
+      clientEmail: process.env.FIREBASE_ADMIN_CLIENT_EMAIL!,
+      privateKey: process.env.FIREBASE_ADMIN_PRIVATE_KEY?.replace(/\\n/g, '\n')!,
+    }),
+  });
+}
+
+const db = admin.firestore();
+
 export const dynamic = 'force-dynamic';
+
+function createIdentifierFromDetails(episodeName: string, podcastName: string): string {
+  // Normalize the input
+  const normalizedEpisodeName = normalizeString(episodeName);
+  const normalizedPodcastName = normalizeString(podcastName);
+
+  // Concatenate normalized strings
+  const concatenatedDetails = `${normalizedPodcastName}-${normalizedEpisodeName}`;
+
+  // Hash the concatenated string using SHA-256
+  return hashString(concatenatedDetails);
+}
+
+function normalizeString(input: string): string {
+  return input.toLowerCase().replace(/[^a-z0-9]/gi, '');
+}
+
+function hashString(input: string): string {
+  return createHash('sha256').update(input).digest('hex');
+}
+
+function createDocumentId(url: string): string {
+  return createHash('sha256').update(url).digest('hex');
+}
+
+const cleanUrl = (url: string) => {
+  const urlObject = new URL(url);
+
+  if (urlObject.hostname.includes('spotify.com')) {
+    // For Spotify, use only the pathname without any parameters
+    return `https://open.spotify.com${urlObject.pathname}`;
+  } else if (urlObject.hostname.includes('apple.com')) {
+    // For Apple Podcasts, keep only the 'i' parameter
+    const i = urlObject.searchParams.get('i');
+    return `https://podcasts.apple.com${urlObject.pathname}?i=${i}`;
+  } else if (urlObject.hostname.includes('castro.fm')) {
+    // For Castro, use only the pathname without any parameters
+    return `https://castro.fm${urlObject.pathname}`;
+  } else {
+    // Return the original URL if it doesn't match known patterns
+    return url;
+  }
+};
 
 export type EpisodeDetails = {
   episodeName: string;
@@ -134,24 +193,59 @@ const getURLType = (url: string): 'apple' | 'spotify' | 'castro' | null => {
 
 export async function GET(request: NextRequest) {
   const searchParams = request.nextUrl.searchParams;
-  const urlToScrape = searchParams.get('url');
+  const originalUrl = searchParams.get('url') || '';
+  const urlToScrape = cleanUrl(originalUrl);
 
-  if (urlToScrape) {
-    const urlType = getURLType(urlToScrape);
-    try {
-      if (urlType === 'apple') {
-        const response = await scrapeApplePodcastsEpisodeDetails(urlToScrape);
-        return NextResponse.json(response);
-      } else if (urlType === 'spotify') {
-        const response = await scrapeSpotifyEpisodeDetails(urlToScrape);
-        return NextResponse.json(response);
-      }
-
-      return NextResponse.json({ error: 'Invalid URL type', status: 400 });
-    } catch (error) {
-      return NextResponse.json({ error: 'Error scraping episode details', status: 500 });
-    }
-  } else {
+  if (!urlToScrape) {
     return NextResponse.json({ error: 'No URL provided', status: 400 });
+  }
+  const documentId = createDocumentId(urlToScrape);
+
+  const urlRef = db.collection('urlToEpisodeDetails').doc(documentId);
+  const urlDoc = await urlRef.get();
+
+  if (urlDoc.exists) {
+    // Retrieve the episode details using the identifier from urlDoc
+    const episodeId = urlDoc.data()?.episodeId;
+    const episodeRef = db.collection('episodeDetails').doc(episodeId);
+    const episodeDoc = await episodeRef.get();
+
+    return NextResponse.json(episodeDoc.data());
+  }
+
+  const urlType = getURLType(urlToScrape);
+  if (!urlType) {
+    return NextResponse.json({ error: 'Invalid URL', status: 400 });
+  }
+
+  try {
+    let scrapedData;
+    if (urlType === 'apple') {
+      scrapedData = await scrapeApplePodcastsEpisodeDetails(urlToScrape);
+    } else if (urlType === 'spotify') {
+      scrapedData = await scrapeSpotifyEpisodeDetails(urlToScrape);
+    } else {
+      return NextResponse.json({ error: 'Unsupported URL', status: 400 });
+    }
+
+    // Prepare data for merging
+    const identifier = createIdentifierFromDetails(
+      scrapedData.episodeName,
+      scrapedData.podcastName
+    );
+
+    // Store updated data in Firestore
+    await db.collection('episodeDetails').doc(identifier).set(scrapedData, { merge: true });
+
+    // get the updated data
+    const updatedResponse = (await db.collection('episodeDetails').doc(identifier).get()).data();
+
+    // storeURL to EpisodeDetails mapping
+    await urlRef.set({ episodeId: identifier });
+
+    return NextResponse.json(updatedResponse);
+  } catch (error) {
+    console.error('Error scraping data:', error);
+    return NextResponse.json({ error: 'Error scraping episode details', status: 500 });
   }
 }
