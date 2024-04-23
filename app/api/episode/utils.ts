@@ -1,12 +1,21 @@
 import { load } from 'cheerio';
 import { EpisodeDetails } from '../types';
 import { createHash } from 'crypto';
-import { SupabaseClient, formatUrls } from '@/app/api/episode/route';
+import { SupabaseClient } from '@/app/api/episode/route';
+
+export function formatUrls(urlsArray: { url: string; type: string }[]): Record<string, string> {
+  return urlsArray.reduce((acc, { type, url }) => ({ ...acc, [type]: url }), {});
+}
 
 const getCheerio = async (url: string) => {
-  const response = await fetch(url);
-  const html = await response.text();
-  return load(html);
+  try {
+    const response = await fetch(url);
+    const html = await response.text();
+    return load(html);
+  } catch (error) {
+    console.error('Error loading HTML from URL:', error);
+    throw new Error('Failed to load HTML');
+  }
 };
 
 export async function updateEpisodeDetails({
@@ -21,53 +30,34 @@ export async function updateEpisodeDetails({
   cleanedUrl: string;
   scrapedData: EpisodeDetails;
   supabase: SupabaseClient;
-}) {
-  // Attempt to upsert episode details
-  const { error: episodeError } = await supabase
-    .from('episode_details')
-    .upsert({ ...scrapedData, id: identifier }, { onConflict: 'id' });
+}): Promise<EpisodeDetails | null> {
+  try {
+    await supabase
+      .from('episode_details')
+      .upsert({ ...scrapedData, id: identifier }, { onConflict: 'id' });
 
-  if (episodeError) {
-    console.error('Error upserting episode details:', episodeError);
-    return null;
-  }
+    await supabase
+      .from('episode_urls')
+      .upsert({ url: cleanedUrl, episode_id: identifier, type: type }, { onConflict: 'url' });
 
-  // Attempt to upsert the URL in the URLs table
-  const { error: urlError } = await supabase
-    .from('episode_urls')
-    .upsert({ url: cleanedUrl, episode_id: identifier, type: type }, { onConflict: 'url' });
-
-  if (urlError) {
-    console.error('Error updating URL:', urlError);
-    return null;
-  }
-
-  // Fetch the updated episode details along with URLs
-  const { data: episode, error: fetchError } = await supabase
-    .from('episode_details')
-    .select(
-      `
+    const { data, error } = await supabase
+      .from('episode_details')
+      .select(
+        `
       *,
       episode_urls (url, type)
     `
-    )
-    .eq('id', identifier)
-    .single();
+      )
+      .eq('id', identifier)
+      .single();
 
-  if (fetchError) {
-    console.error('Error fetching updated episode details:', fetchError);
+    if (error) throw new Error('Fetching updated episode details failed');
+
+    return { ...data, urls: formatUrls(data.episode_urls) };
+  } catch (error) {
+    console.error('Error updating episode details:', error);
     return null;
   }
-
-  if (episode) {
-    const updatedEpisode: EpisodeDetails = {
-      ...episode,
-      urls: formatUrls(episode.episode_urls),
-    };
-    return updatedEpisode;
-  }
-
-  return null;
 }
 
 export async function scrapeDataByType(type: 'apple' | 'spotify' | 'castro', url: string) {
@@ -196,31 +186,29 @@ export async function scrapeCastroEpisodeDetails(url: string) {
 export function parseAndCleanUrl(
   url: string
 ): { cleanedUrl: string; type: 'apple' | 'spotify' | 'castro' | null } | null {
+  let parsedUrl: URL;
   try {
-    const urlObject = new URL(url);
-    if (urlObject.hostname.includes('podcasts.apple.com')) {
-      const i = urlObject.searchParams.get('i');
-      if (i) {
-        return {
-          cleanedUrl: `https://podcasts.apple.com${urlObject.pathname}?i=${i}`,
-          type: 'apple',
-        };
-      }
-    } else if (
-      urlObject.hostname.includes('open.spotify.com') &&
-      urlObject.pathname.includes('/episode/')
-    ) {
-      return { cleanedUrl: `https://open.spotify.com${urlObject.pathname}`, type: 'spotify' };
-    } else if (
-      urlObject.hostname.includes('castro.fm') &&
-      urlObject.pathname.includes('/episode/')
-    ) {
-      return { cleanedUrl: `https://castro.fm${urlObject.pathname}`, type: 'castro' };
-    }
+    parsedUrl = new URL(url);
   } catch (error) {
     console.error('Error parsing URL:', error);
     return null;
   }
+
+  if (parsedUrl.hostname.includes('podcasts.apple.com')) {
+    const i = parsedUrl.searchParams.get('i');
+    return i
+      ? { cleanedUrl: `https://podcasts.apple.com${parsedUrl.pathname}?i=${i}`, type: 'apple' }
+      : null;
+  } else if (parsedUrl.hostname.includes('open.spotify.com')) {
+    return parsedUrl.pathname.includes('/episode/')
+      ? { cleanedUrl: `https://open.spotify.com${parsedUrl.pathname}`, type: 'spotify' }
+      : null;
+  } else if (parsedUrl.hostname.includes('castro.fm')) {
+    return parsedUrl.pathname.includes('/episode/')
+      ? { cleanedUrl: `https://castro.fm${parsedUrl.pathname}`, type: 'castro' }
+      : null;
+  }
+
   return null;
 }
 
