@@ -8,10 +8,11 @@ export type EpisodeDetails = {
   episode_name: string;
   formatted_duration?: string | null;
   guid?: string | null;
-  id?: string;
+  id?: number;
   image_url?: string | null;
   podcast_itunes_id?: string | null;
   podcast_name: string;
+  slug?: string | null;
 
   urls?: {
     spotify?: string;

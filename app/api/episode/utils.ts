@@ -1,7 +1,7 @@
 import { load } from 'cheerio';
 import { EpisodeDetails } from '../types';
-import { createHash } from 'crypto';
 import { SupabaseClient } from '@/app/api/episode/route';
+import slugify from 'slugify';
 
 export function formatUrls(urlsArray: { url: string; type: string }[]): Record<string, string> {
   return urlsArray.reduce((acc, { type, url }) => ({ ...acc, [type]: url }), {});
@@ -19,36 +19,64 @@ const getCheerio = async (url: string) => {
 };
 
 export async function updateEpisodeDetails({
-  identifier,
   type,
   cleanedUrl,
   scrapedData,
   supabase,
 }: {
-  identifier: string;
   type: 'apple' | 'spotify' | 'castro';
   cleanedUrl: string;
   scrapedData: EpisodeDetails;
   supabase: SupabaseClient;
 }): Promise<EpisodeDetails | null> {
   try {
-    await supabase
-      .from('episode_details')
-      .upsert({ ...scrapedData, id: identifier }, { onConflict: 'id' });
+    const slug = slugifyDetails(scrapedData.episode_name, scrapedData.podcast_name);
 
+    // Check if episode exists by slug
+    let { data: existingData, error: findError } = await supabase
+      .from('episode_details')
+      .select('id')
+      .eq('slug', slug)
+      .single();
+
+    if (findError && findError.message !== 'No rows found') throw findError;
+
+    let episodeId = existingData ? existingData.id : null;
+
+    // Upsert episode details
+    if (episodeId) {
+      await supabase
+        .from('episode_details')
+        .update({ ...scrapedData })
+        .match({ id: episodeId })
+        .single();
+    } else {
+      const { data } = await supabase
+        .from('episode_details')
+        .insert({ ...scrapedData, slug })
+        .select('id')
+        .single();
+
+      const newId = data?.id;
+      if (!newId) throw new Error('Failed to insert new episode details');
+      episodeId = newId;
+    }
+
+    // Upsert the URL
     await supabase
       .from('episode_urls')
-      .upsert({ url: cleanedUrl, episode_id: identifier, type: type }, { onConflict: 'url' });
+      .upsert({ url: cleanedUrl, episode_id: episodeId, type: type }, { onConflict: 'url' });
 
+    // Fetch updated episode details
     const { data, error } = await supabase
       .from('episode_details')
       .select(
         `
-      *,
-      episode_urls (url, type)
-    `
+        *,
+        episode_urls (url, type)
+      `
       )
-      .eq('id', identifier)
+      .eq('id', episodeId)
       .single();
 
     if (error) throw new Error('Fetching updated episode details failed');
@@ -123,7 +151,9 @@ export async function scrapeApplePodcastsEpisodeDetails(url: string) {
 
   const episode_name = episodeInfo.attributes.name;
   const podcast_name = episodeInfo.relationships.podcast.data[0].attributes.name;
+
   const description = episodeInfo.attributes.description.standard;
+
   const image_url = episodeInfo.attributes.artwork.url
     .replace('{w}', '400')
     .replace('{h}', '400')
@@ -212,20 +242,9 @@ export function parseAndCleanUrl(
   return null;
 }
 
-export function createIdentifierFromDetails(episode_name: string, podcast_name: string): string {
-  // Normalize the input
-  const normalizedEpisodeName = normalizeString(episode_name);
-  const normalizedPodcastName = normalizeString(podcast_name);
-
-  // Concatenate normalized strings
-  const concatenatedDetails = `${normalizedPodcastName}-${normalizedEpisodeName}`;
-
-  // Hash the concatenated string using SHA-256
-  return hashString(concatenatedDetails);
-}
-function normalizeString(input: string): string {
-  return input.toLowerCase().replace(/[^a-z0-9]/gi, '');
-}
-function hashString(input: string): string {
-  return createHash('sha256').update(input).digest('hex');
+export function slugifyDetails(episode_name: string, podcast_name: string): string {
+  return slugify(`${podcast_name} ${episode_name}`, {
+    lower: true, // Convert to lower case
+    strict: true, // Strip special characters except replacement
+  });
 }

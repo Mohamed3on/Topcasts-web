@@ -28,10 +28,10 @@ const formatDuration = (duration: number) => {
 const Duration = ({ episodeDetails }: { episodeDetails: EpisodeDetails }) => {
   return (
     <span>
-      {episodeDetails.formatted_duration
-        ? episodeDetails.formatted_duration
-        : episodeDetails.duration
+      {episodeDetails.duration
         ? formatDuration(episodeDetails.duration)
+        : episodeDetails.formatted_duration
+        ? episodeDetails.formatted_duration
         : null}
     </span>
   );
@@ -40,14 +40,19 @@ export const PodcastDetails = () => {
   const [episodeDetails, setEpisodeDetails] = React.useState<EpisodeDetails | null>(null);
 
   const [episodeURL, setEpisodeURL] = React.useState<string>('');
-
   return (
     <main className='flex min-h-screen flex-col items-center justify-between px-24 py-12'>
       <div className='flex items-center gap-8 w-full pb-8'>
         <form
           onSubmit={async (e) => {
             e.preventDefault();
-            const response = await fetch(`/api/episode?url=${episodeURL}`);
+            const response = await fetch(`/api/episode`, {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({ url: episodeURL }),
+            });
             const episodeDetails = await response.json();
             setEpisodeDetails(episodeDetails);
           }}
@@ -68,7 +73,7 @@ export const PodcastDetails = () => {
       </div>
       {episodeDetails && (
         <div className='flex flex-col gap-8 items-center justify-center'>
-          <h1 className='text-4xl font-bold text-center'>{episodeDetails.episode_name}</h1>
+          <h1 className='text-3xl font-semibold text-center'>{episodeDetails.episode_name}</h1>
           {episodeDetails.image_url && (
             <Image
               width={300}
@@ -99,8 +104,8 @@ export const PodcastDetails = () => {
               </div>
             }
           </div>
-          <p className='text-center'>
-            <span dangerouslySetInnerHTML={{ __html: episodeDetails.description || '' }}></span>
+          <p className=''>
+            <span>{episodeDetails?.description}</span>
           </p>
         </div>
       )}

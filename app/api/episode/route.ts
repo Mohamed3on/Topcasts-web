@@ -1,14 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-import {
-  scrapeDataByType,
-  updateEpisodeDetails,
-  parseAndCleanUrl,
-  createIdentifierFromDetails,
-  formatUrls,
-} from './utils';
-
-// export const dynamic = 'force-dynamic';
+import { scrapeDataByType, updateEpisodeDetails, parseAndCleanUrl, formatUrls } from './utils';
 
 import { createServerClient, type CookieOptions } from '@supabase/ssr';
 import { cookies } from 'next/headers';
@@ -22,17 +14,7 @@ const getSupabaseServerClient = () => {
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
     {
-      cookies: {
-        get(name: string) {
-          return cookieStore.get(name)?.value;
-        },
-        set(name: string, value: string, options: CookieOptions) {
-          cookieStore.set({ name, value, ...options });
-        },
-        remove(name: string, options: CookieOptions) {
-          cookieStore.set({ name, value: '', ...options });
-        },
-      },
+      cookies: cookieStore as CookieOptions,
     }
   );
 
@@ -41,8 +23,42 @@ const getSupabaseServerClient = () => {
 
 export async function GET(request: NextRequest): Promise<NextResponse> {
   const supabase = getSupabaseServerClient();
+
   const { searchParams } = request.nextUrl;
-  const originalUrl = searchParams.get('url') || '';
+  const episode_id = searchParams.get('episode_id') || '';
+
+  if (!episode_id) {
+    return NextResponse.json({ error: 'Invalid episode ID' }, { status: 400 });
+  }
+
+  const { data, error } = await supabase
+    .from('episode_details')
+    .select(
+      `
+      *,
+      episode_urls (url, type)
+    `
+    )
+    .eq('id', episode_id)
+    .single();
+
+  if (error || !data) {
+    console.error('Error fetching episode details:', error);
+    return NextResponse.json({ error: 'Failed to fetch episode details' }, { status: 500 });
+  }
+
+  return NextResponse.json({ ...data, urls: formatUrls(data.episode_urls) });
+}
+
+export async function POST(request: NextRequest): Promise<NextResponse> {
+  const supabase = getSupabaseServerClient();
+  const body = await request.json();
+
+  if (!body || !body?.url) {
+    return NextResponse.json({ error: 'Invalid URL' }, { status: 400 });
+  }
+
+  const originalUrl = body.url;
 
   const parsedUrl = parseAndCleanUrl(originalUrl);
   if (!parsedUrl || !parsedUrl.type) {
@@ -91,12 +107,8 @@ async function handleNewEpisodeData(
 ): Promise<NextResponse> {
   try {
     const scrapedData = await scrapeDataByType(type, cleanedUrl);
-    const identifier = createIdentifierFromDetails(
-      scrapedData.episode_name,
-      scrapedData.podcast_name
-    );
+
     const episode = await updateEpisodeDetails({
-      identifier,
       type,
       cleanedUrl,
       scrapedData,
