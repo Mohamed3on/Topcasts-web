@@ -3,6 +3,10 @@
 @tailwind utilities;
 
 @layer base {
+  a {
+    @apply underline;
+    @apply hover:no-underline;
+  }
   :root {
     --background: 0 0% 100%;
     --foreground: 222.2 84% 4.9%;

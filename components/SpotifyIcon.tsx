@@ -1,4 +1,4 @@
-const SpotifyIcon = () => (
+export const SpotifyIcon = () => (
   <svg
     enableBackground='new 0 0 128 128'
     version='1.1'
@@ -19,13 +19,3 @@ const SpotifyIcon = () => (
     </g>
   </svg>
 );
-export function SpotifyButton({ spotifyURL }: { spotifyURL: string }) {
-  return (
-    <a
-      className='w-10 h-10 hover:scale-105 active:scale-95 transform transition-transform'
-      href={spotifyURL}
-    >
-      <SpotifyIcon></SpotifyIcon>
-    </a>
-  );
-}

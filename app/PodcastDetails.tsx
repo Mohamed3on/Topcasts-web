@@ -1,50 +1,48 @@
 'use client';
-import { SpotifyButton } from '@/app/ListenButton';
-import { EpisodeDetails } from '@/app/api/episode/route';
+import { PlayerIcon } from '@/app/PlayerIcon';
+import { EpisodeDetails } from './api/types';
 import React from 'react';
 import Image from 'next/image';
-import { useAuth } from '@/app/auth/AuthContext';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { ClipboardPasteIcon, Copy, Search } from 'lucide-react';
+import { Search } from 'lucide-react';
+import { SpotifyIcon } from '@/components/SpotifyIcon';
+import AppleIcon from '@/components/AppleIcon';
 
-const formatDuration = (duration: string) => {
-  const totalSeconds = parseInt(duration) / 1000;
+const formatDuration = (duration: number) => {
+  const totalSeconds = duration / 1000;
   const hours = Math.floor(totalSeconds / 3600);
   const minutes = Math.floor((totalSeconds % 3600) / 60);
   const seconds = Math.floor(totalSeconds % 60);
-  let formattedDuration = '';
+  let formatted_duration = '';
   if (hours > 0) {
-    formattedDuration = `${hours} hours ${minutes} minutes`;
+    formatted_duration = `${hours} hours ${minutes} minutes`;
   } else if (minutes > 0) {
-    formattedDuration = `${minutes} minutes`;
+    formatted_duration = `${minutes} minutes`;
   } else {
-    formattedDuration = `${seconds} seconds`;
+    formatted_duration = `${seconds} seconds`;
   }
-  return formattedDuration;
+  return formatted_duration;
 };
 
 const Duration = ({ episodeDetails }: { episodeDetails: EpisodeDetails }) => {
   return (
-    // format the duration of the episode if exists, otherwise use formattedDuration, otherwise return
-    // null
     <span>
-      {episodeDetails.duration
+      {episodeDetails.formatted_duration
+        ? episodeDetails.formatted_duration
+        : episodeDetails.duration
         ? formatDuration(episodeDetails.duration)
-        : episodeDetails.formattedDuration
-        ? episodeDetails.formattedDuration
         : null}
     </span>
   );
 };
 export const PodcastDetails = () => {
   const [episodeDetails, setEpisodeDetails] = React.useState<EpisodeDetails | null>(null);
-  const { user } = useAuth();
 
   const [episodeURL, setEpisodeURL] = React.useState<string>('');
 
   return (
-    <main className='flex min-h-screen flex-col items-center justify-between p-24'>
+    <main className='flex min-h-screen flex-col items-center justify-between px-24 py-12'>
       <div className='flex items-center gap-8 w-full pb-8'>
         <form
           onSubmit={async (e) => {
@@ -70,38 +68,40 @@ export const PodcastDetails = () => {
       </div>
       {episodeDetails && (
         <div className='flex flex-col gap-8 items-center justify-center'>
-          <h1 className='text-4xl font-bold text-center'>{episodeDetails.episodeName}</h1>
-          {episodeDetails.imageUrl && (
+          <h1 className='text-4xl font-bold text-center'>{episodeDetails.episode_name}</h1>
+          {episodeDetails.image_url && (
             <Image
               width={300}
               height={300}
               unoptimized
               className='w-64 h-64 object-cover rounded-lg'
-              src={episodeDetails.imageUrl}
-              alt={episodeDetails.episodeName}
+              src={episodeDetails.image_url}
+              alt={episodeDetails.episode_name}
             />
           )}
-          <p className='text-2xl font-bold'>{episodeDetails.podcastName}</p>
-          <p>
-            Only <strong>{user?.displayName}</strong> holds the magic key to this kingdom!
-          </p>
-          <p className='text-center'>{episodeDetails.description}</p>
-
+          <p className='text-2xl font-bold'>{episodeDetails.podcast_name}</p>
           <div className='flex flex-col gap-4 items-center'>
             {/* <p>{JSON.stringify(episodeDetails)}</p> */}
             <Duration episodeDetails={episodeDetails} />
             {
               <div className='flex gap-4 justify-center items-center'>
                 <span className='text-lg font-semibold'>Listen on:</span>
-                {episodeDetails.spotifyURL && (
-                  <SpotifyButton spotifyURL={episodeDetails.spotifyURL} />
+                {episodeDetails.urls?.spotify && (
+                  <PlayerIcon url={episodeDetails.urls.spotify}>
+                    <SpotifyIcon />
+                  </PlayerIcon>
                 )}
-                {episodeDetails.applePodcastsURL && (
-                  <a href={episodeDetails.applePodcastsURL}>Apple Podcasts</a>
+                {episodeDetails.urls?.apple && (
+                  <PlayerIcon url={episodeDetails.urls.apple}>
+                    <AppleIcon></AppleIcon>
+                  </PlayerIcon>
                 )}
               </div>
             }
           </div>
+          <p className='text-center'>
+            <span dangerouslySetInnerHTML={{ __html: episodeDetails.description || '' }}></span>
+          </p>
         </div>
       )}
     </main>

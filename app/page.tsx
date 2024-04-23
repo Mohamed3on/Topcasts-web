@@ -1,4 +1,4 @@
-import { EpisodeDetails } from '@/app/api/episode/route';
+import { EpisodeDetails } from './api/types';
 
 import { PodcastDetails } from '@/app/PodcastDetails';
 import Header from '@/app/Header';
