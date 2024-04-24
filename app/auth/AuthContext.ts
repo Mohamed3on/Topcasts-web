@@ -1,10 +1,5 @@
 import { createContext, useContext } from 'react';
-import { UserInfo } from 'firebase/auth';
-
-export interface User extends UserInfo {
-  emailVerified: boolean;
-}
-
+import { type User } from '@supabase/supabase-js';
 export interface AuthContextValue {
   user: User | null;
 }

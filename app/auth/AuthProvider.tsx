@@ -1,7 +1,8 @@
 'use client';
 
 import * as React from 'react';
-import { AuthContext, User } from './AuthContext';
+import { AuthContext } from './AuthContext';
+import { type User } from '@supabase/supabase-js';
 
 export interface AuthProviderProps {
   user: User | null;

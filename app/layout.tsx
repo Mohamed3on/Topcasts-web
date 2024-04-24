@@ -2,12 +2,9 @@ import type { Metadata } from 'next';
 import { Inter } from 'next/font/google';
 import './globals.css';
 import { cn } from '@/lib/utils';
-import { getTokens } from 'next-firebase-auth-edge';
-import { cookies } from 'next/headers';
 
-import { clientConfig, serverConfig } from '../config';
 import { AuthProvider } from '@/app/auth/AuthProvider';
-import { toUser } from '@/app/auth/utils';
+import { createClient } from '@/utils/supabase/server';
 
 const inter = Inter({ subsets: ['latin'], variable: '--font-sans' });
 
@@ -21,13 +18,11 @@ export default async function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const credential = await getTokens(cookies(), {
-    apiKey: clientConfig.apiKey,
-    cookieName: serverConfig.cookieName,
-    cookieSignatureKeys: serverConfig.cookieSignatureKeys,
-    serviceAccount: serverConfig.serviceAccount,
-  });
-  const user = credential ? toUser(credential) : null;
+  const supabase = createClient();
+
+  const { data } = await supabase.auth.getUser();
+
+  const user = data.user ? data.user : null;
 
   return (
     <html lang='en'>
