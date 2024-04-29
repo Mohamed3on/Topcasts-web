@@ -3,8 +3,9 @@ import { Inter } from 'next/font/google';
 import './globals.css';
 import { cn } from '@/lib/utils';
 
-import { AuthProvider } from '@/app/auth/AuthProvider';
-import { createClient } from '@/utils/supabase/server';
+import { Toaster } from 'sonner';
+import { EpisodeUrlSearch } from '@/app/EpisodeUrlSearch';
+import Header from '@/app/Header';
 
 const inter = Inter({ subsets: ['latin'], variable: '--font-sans' });
 
@@ -18,16 +19,15 @@ export default async function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const supabase = createClient();
-
-  const { data } = await supabase.auth.getUser();
-
-  const user = data.user ? data.user : null;
-
   return (
     <html lang='en'>
       <body className={cn('min-h-screen bg-background font-sans antialiased', inter.variable)}>
-        <AuthProvider user={user}>{children}</AuthProvider>
+        <main>
+          <Header />
+          <EpisodeUrlSearch />
+          {children}
+          <Toaster />
+        </main>
       </body>
     </html>
   );

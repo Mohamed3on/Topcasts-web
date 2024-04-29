@@ -1,27 +1,10 @@
-import { EpisodeDetails } from './api/types';
-
-import { PodcastDetails } from '@/app/PodcastDetails';
-import Header from '@/app/Header';
-
 export const dynamic = 'force-dynamic';
-
-// const getEpisodeDetails = async (episodeUrl: string) => {
-//   const url = `${getHost()}/api/episode?url=${encodeURIComponent(episodeUrl)}`;
-//   const response = await fetch(url);
-//   const episode: EpisodeDetails = await response.json();
-
-//   return episode;
-// };
 
 export default async function Home() {
   try {
     return (
       <div>
-        <Header />
-
-        <div className='w-full flex flex-col items-center gap-2'>
-          <PodcastDetails />
-        </div>
+        <div className='w-full flex flex-col items-center gap-2'></div>
       </div>
     );
   } catch (error: any) {

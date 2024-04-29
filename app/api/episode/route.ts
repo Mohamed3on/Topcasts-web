@@ -1,10 +1,18 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-import { scrapeDataByType, updateEpisodeDetails, parseAndCleanUrl, formatUrls } from './utils';
+import {
+  scrapeDataByType,
+  updateEpisodeDetails,
+  getHtml,
+  formatUrls,
+  determineType,
+} from './utils';
 
 import { createServerClient, type CookieOptions } from '@supabase/ssr';
 import { cookies } from 'next/headers';
 import { Database } from '@/app/api/types/supabase';
+
+export const dynamic = 'force-dynamic';
 
 export type SupabaseClient = ReturnType<typeof getSupabaseServerClient>;
 const getSupabaseServerClient = () => {
@@ -44,79 +52,142 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
 
   if (error || !data) {
     console.error('Error fetching episode details:', error);
-    return NextResponse.json({ error: 'Failed to fetch episode details' }, { status: 500 });
+    return NextResponse.json(
+      { error: `Failed to fetch episode details: ${error?.message}` },
+      { status: 500 }
+    );
   }
 
   return NextResponse.json({ ...data, urls: formatUrls(data.episode_urls) });
 }
 
-export async function POST(request: NextRequest): Promise<NextResponse> {
+export const cleanUrl = (urlString: string) => {
+  const url = new URL(urlString);
+  url.hostname = url.hostname.toLowerCase().replace(/^www\./, '');
+  url.pathname = url.pathname.replace(/\/+$/, '');
+
+  const params = new URLSearchParams();
+  if (url.searchParams.has('i')) {
+    params.set('i', url.searchParams.get('i')!);
+  }
+  url.search = params.toString();
+
+  return `${url.origin}${url.pathname}${url.search ? `${url.search}` : ''}`;
+};
+
+async function handlePodcastURL({
+  url,
+  html,
+}: {
+  url: string;
+  html?: string;
+}): Promise<NextResponse> {
   const supabase = getSupabaseServerClient();
+  const urlInput = url.trim();
+  const cleanedUrl = cleanUrl(urlInput); // Assume this function exists to standardize URLs.
+  const type = determineType(cleanedUrl);
+
+  if (!type) {
+    // Handle non-podcast URLs by following redirects to check if it becomes a podcast URL.
+    return handleNonPodcastURL(cleanedUrl);
+  }
+
+  // find url in supabase
+  const { data } = await supabase
+    .from('episode_urls')
+    .select('episode_id')
+    .eq('url', cleanedUrl)
+    .single();
+
+  if (data?.episode_id) {
+    const episodeDetails = await getEpisodeDetailsFromDb(data.episode_id);
+
+    return NextResponse.json(episodeDetails);
+  }
+
+  if (!html) {
+    html = await getHtml(cleanedUrl.toString());
+  }
+  return handleNewEpisodeData({
+    type,
+    html,
+    cleanedUrl,
+    supabase,
+  });
+}
+
+const getEpisodeDetailsFromDb = async (episodeId: number) => {
+  const supabase = getSupabaseServerClient();
+  const { data, error } = await supabase
+    .from('episode_details')
+    .select(
+      `
+      *,
+      episode_urls (url, type)
+    `
+    )
+    .eq('id', episodeId)
+    .single();
+
+  if (error || !data) {
+    console.error('Episode ID not in DB:', error);
+    return null;
+  }
+
+  return { ...data, urls: formatUrls(data.episode_urls) };
+};
+
+async function handleNonPodcastURL(cleanedUrl: string) {
+  const response = await fetch(cleanedUrl, { redirect: 'follow', method: 'GET' });
+  const finalUrl = response.url;
+
+  const type = determineType(finalUrl);
+  if (!type) {
+    return NextResponse.json({ error: 'Invalid URL' }, { status: 400 });
+  }
+
+  const html = await response.text();
+  return handlePodcastURL({
+    url: finalUrl,
+    html,
+  });
+}
+
+export async function POST(request: NextRequest): Promise<NextResponse> {
   const body = await request.json();
 
   if (!body || !body?.url) {
     return NextResponse.json({ error: 'Invalid URL' }, { status: 400 });
   }
 
-  const originalUrl = body.url;
-
-  const parsedUrl = parseAndCleanUrl(originalUrl);
-  if (!parsedUrl || !parsedUrl.type) {
-    return NextResponse.json({ error: 'Invalid URL' }, { status: 400 });
-  }
-
-  const { cleanedUrl, type } = parsedUrl;
-
-  const episodeDetails = await fetchEpisodeDetails(cleanedUrl, supabase);
-  if (episodeDetails) {
-    return NextResponse.json(episodeDetails);
-  }
-
-  return await handleNewEpisodeData(type, cleanedUrl, supabase);
+  return handlePodcastURL({
+    url: body.url,
+  });
 }
 
-async function fetchEpisodeDetails(cleanedUrl: string, supabase: SupabaseClient) {
-  const { data, error } = await supabase
-    .from('episode_urls')
-    .select(
-      `
-      episode_id,
-      episode_details (
-        *,
-        episode_urls (url, type)
-      )
-    `
-    )
-    .eq('url', cleanedUrl)
-    .single();
-
-  if (error || !data?.episode_details) {
-    console.error('Error fetching episode details:', error);
-    return null;
-  }
-
-  return {
-    ...data.episode_details,
-    urls: formatUrls(data.episode_details.episode_urls),
-  };
-}
-async function handleNewEpisodeData(
-  type: 'apple' | 'spotify' | 'castro',
-  cleanedUrl: string,
-  supabase: SupabaseClient
-): Promise<NextResponse> {
+async function handleNewEpisodeData({
+  type,
+  html,
+  cleanedUrl,
+  supabase,
+}: {
+  type: 'apple' | 'spotify' | 'castro';
+  html: string;
+  cleanedUrl: string;
+  supabase: SupabaseClient;
+}) {
   try {
-    const scrapedData = await scrapeDataByType(type, cleanedUrl);
+    const scrapedData = await scrapeDataByType(type, html);
 
-    const episode = await updateEpisodeDetails({
+    const response = await updateEpisodeDetails({
       type,
       cleanedUrl,
       scrapedData,
       supabase,
     });
 
-    return NextResponse.json(episode || { error: 'Failed to update episode details' }, {
-      status: episode ? 200 : 500,
+    return NextResponse.json(response || { error: 'Failed to update episode details' }, {
+      status: response ? 200 : 500,
     });
   } catch (error) {
     console.error('Error scraping data:', error);

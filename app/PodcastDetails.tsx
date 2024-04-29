@@ -1,11 +1,7 @@
-'use client';
 import { PlayerIcon } from '@/app/PlayerIcon';
 import { EpisodeDetails } from './api/types';
 import React from 'react';
 import Image from 'next/image';
-import { Input } from '@/components/ui/input';
-import { Button } from '@/components/ui/button';
-import { Search } from 'lucide-react';
 import { SpotifyIcon } from '@/components/SpotifyIcon';
 import AppleIcon from '@/components/AppleIcon';
 
@@ -36,41 +32,10 @@ const Duration = ({ episodeDetails }: { episodeDetails: EpisodeDetails }) => {
     </span>
   );
 };
-export const PodcastDetails = () => {
-  const [episodeDetails, setEpisodeDetails] = React.useState<EpisodeDetails | null>(null);
 
-  const [episodeURL, setEpisodeURL] = React.useState<string>('');
+export const PodcastDetails = ({ episodeDetails }: { episodeDetails: EpisodeDetails | null }) => {
   return (
     <main className='flex min-h-screen flex-col items-center justify-between px-24 py-12'>
-      <div className='flex items-center gap-8 w-full pb-8'>
-        <form
-          onSubmit={async (e) => {
-            e.preventDefault();
-            const response = await fetch(`/api/episode`, {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json',
-              },
-              body: JSON.stringify({ url: episodeURL }),
-            });
-            const episodeDetails = await response.json();
-            setEpisodeDetails(episodeDetails);
-          }}
-          className='relative h-10 w-full'
-        >
-          <Input
-            className='pl-10 pr-3 py-2 text-md w-full border border-gray-300 rounded shadow-sm focus:outline-none focus:ring-2 focus:ring-[#6E23DD] focus:border-transparent'
-            value={episodeURL}
-            placeholder='enter a podcast episode URL'
-            onChange={(e) => {
-              setEpisodeURL(e.target.value);
-            }}
-          ></Input>
-          <Search className='absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 z-10' />
-        </form>
-
-        <Button type='submit'>Get Episode Details</Button>
-      </div>
       {episodeDetails && (
         <div className='flex flex-col gap-8 items-center justify-center'>
           <h1 className='text-3xl font-semibold text-center'>{episodeDetails.episode_name}</h1>

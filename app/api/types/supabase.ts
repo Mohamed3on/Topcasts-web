@@ -56,19 +56,19 @@ export type Database = {
       };
       episode_urls: {
         Row: {
-          episode_id: number | null;
+          episode_id: number;
           id: number;
           type: string;
           url: string;
         };
         Insert: {
-          episode_id?: number | null;
+          episode_id: number;
           id?: number;
           type: string;
           url: string;
         };
         Update: {
-          episode_id?: number | null;
+          episode_id?: number;
           id?: number;
           type?: string;
           url?: string;
