@@ -10,11 +10,10 @@ import {
 
 import { createServerClient, type CookieOptions } from '@supabase/ssr';
 import { cookies } from 'next/headers';
-import { Database } from '@/app/api/types/supabase';
+import { Database, SupabaseClient } from '@/app/api/types/supabase';
 
 export const dynamic = 'force-dynamic';
 
-export type SupabaseClient = ReturnType<typeof getSupabaseServerClient>;
 const getSupabaseServerClient = () => {
   const cookieStore = cookies();
 
@@ -61,7 +60,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
   return NextResponse.json({ ...data, urls: formatUrls(data.episode_urls) });
 }
 
-export const cleanUrl = (urlString: string) => {
+const cleanUrl = (urlString: string) => {
   const url = new URL(urlString);
   url.hostname = url.hostname.toLowerCase().replace(/^www\./, '');
   url.pathname = url.pathname.replace(/\/+$/, '');

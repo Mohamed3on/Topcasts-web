@@ -1,4 +1,8 @@
+import { createServerClient } from '@supabase/ssr';
+
 export type Json = string | number | boolean | null | { [key: string]: Json | undefined } | Json[];
+
+export type SupabaseClient = ReturnType<typeof createServerClient<Database>>;
 
 export type Database = {
   public: {

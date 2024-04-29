@@ -1,7 +1,7 @@
 import { load } from 'cheerio';
 import { EpisodeDetails } from '../types';
-import { SupabaseClient } from '@/app/api/episode/route';
 import slugify from 'slugify';
+import { SupabaseClient } from '@/app/api/types/supabase';
 
 export function formatUrls(urlsArray: { url: string; type: string }[]): Record<string, string> {
   return urlsArray.reduce((acc, { type, url }) => ({ ...acc, [type]: url }), {});
