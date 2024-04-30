@@ -4,7 +4,6 @@ import './globals.css';
 import { cn } from '@/lib/utils';
 
 import { Toaster } from 'sonner';
-import { EpisodeUrlSearch } from '@/app/EpisodeUrlSearch';
 import Header from '@/app/Header';
 
 const inter = Inter({ subsets: ['latin'], variable: '--font-sans' });
@@ -24,7 +23,6 @@ export default async function RootLayout({
       <body className={cn('min-h-screen bg-background font-sans antialiased', inter.variable)}>
         <main>
           <Header />
-          <EpisodeUrlSearch />
           {children}
           <Toaster />
         </main>

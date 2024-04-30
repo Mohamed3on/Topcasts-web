@@ -1,10 +1,9 @@
 import React from 'react';
 
-import Logout from './logout/LogOutButton';
-import Image from 'next/image';
 import { createClient } from '@/utils/supabase/server';
+import Image from 'next/image';
 import Link from 'next/link';
-import { useAuth } from '@/app/auth/AuthContext';
+import Logout from './logout/LogOutButton';
 
 const Header: React.FC = async () => {
   const supabase = createClient();
@@ -15,7 +14,7 @@ const Header: React.FC = async () => {
     <header className='flex items-center justify-between p-4 bg-gray-200'>
       <div className='font-bold'>Topcasts</div>
       {user && (
-        <div className='flex items-center space-x-2'>
+        <div className='flex items-center space-x-1'>
           {user.user_metadata && (
             <Image
               width={32}

@@ -27,19 +27,21 @@ export const EpisodeUrlSearch = () => {
     setUrl('');
   };
   return (
-    <form onSubmit={handleSubmit} className='flex flex-col items-center gap-8 w-full p-8'>
-      <div className='relative h-10 w-full'>
-        <Input
-          value={url}
-          onChange={(e) => setUrl(e.target.value)}
-          className='pl-10 pr-3 py-2 text-md w-full border border-gray-300 rounded shadow-sm focus:outline-none focus:ring-2 focus:ring-[#6E23DD] focus:border-transparent'
-          name='url'
-          placeholder='enter a podcast episode URL'
-        ></Input>
-        <Search className='absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 z-10' />
-      </div>
+    <div>
+      <form onSubmit={handleSubmit} className='flex flex-col items-center gap-8 w-full p-8'>
+        <div className='relative h-10 w-full'>
+          <Input
+            value={url}
+            onChange={(e) => setUrl(e.target.value)}
+            className='pl-10 pr-3 py-2 text-md w-full border border-gray-300 rounded shadow-sm focus:outline-none focus:ring-2 focus:ring-[#6E23DD] focus:border-transparent'
+            name='url'
+            placeholder='enter a podcast episode URL'
+          ></Input>
+          <Search className='absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 z-10' />
+        </div>
 
-      <Button type='submit'>Get Episode Details</Button>
-    </form>
+        <Button type='submit'>Get Episode Details</Button>
+      </form>
+    </div>
   );
 };

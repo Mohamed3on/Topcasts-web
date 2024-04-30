@@ -1,7 +1,7 @@
+import { SupabaseClient } from '@/app/api/types/SupabaseClient';
 import { load } from 'cheerio';
-import { EpisodeDetails } from '../types';
 import slugify from 'slugify';
-import { SupabaseClient } from '@/app/api/types/supabase';
+import { ScrapedEpisodeDetails } from '../types';
 
 export function formatUrls(urlsArray: { url: string; type: string }[]): Record<string, string> {
   return urlsArray.reduce((acc, { type, url }) => ({ ...acc, [type]: url }), {});
@@ -23,7 +23,7 @@ export async function updateEpisodeDetails({
 }: {
   type: 'apple' | 'spotify' | 'castro';
   cleanedUrl: string;
-  scrapedData: EpisodeDetails;
+  scrapedData: ScrapedEpisodeDetails;
   supabase: SupabaseClient;
 }): Promise<{ id: number; slug: string } | null> {
   try {
@@ -88,7 +88,7 @@ export async function scrapeSpotifyEpisodeDetails(html: string) {
 
   const episodeImage = $('[data-testid=entity-header-entity-image]').attr('src');
 
-  const returnObject: EpisodeDetails = {
+  const returnObject = {
     episode_name,
     description,
     podcast_name,
@@ -129,9 +129,10 @@ export async function scrapeApplePodcastsEpisodeDetails(html: string) {
     .replace('{h}', '400')
     .replace('{f}', 'png');
 
-  const podcastiTunesID = episodeInfo.relationships.podcast.data[0].id;
+  const podcast_itunes_id = episodeInfo.relationships.podcast.data[0].id;
 
   const episode_itunes_id = episodeInfo.id;
+  const date_published = episodeInfo.attributes.releaseDateTime;
 
   const duration = episodeInfo.attributes.durationInMilliseconds;
 
@@ -139,9 +140,10 @@ export async function scrapeApplePodcastsEpisodeDetails(html: string) {
 
   const guid = episodeInfo.attributes.guid;
 
+  const rss_feed = episodeInfo.attributes.rssFeedUrl;
   const audio_url = episodeInfo.attributes.assetUrl;
 
-  const returnObject: EpisodeDetails = {
+  const returnObject = {
     episode_name,
     description,
     duration,
@@ -150,8 +152,9 @@ export async function scrapeApplePodcastsEpisodeDetails(html: string) {
     artist_name,
     guid,
     audio_url,
-    podcast_itunes_id: podcastiTunesID,
+    podcast_itunes_id,
     episode_itunes_id,
+    date_published,
   };
 
   return returnObject;
@@ -175,7 +178,7 @@ export async function scrapeCastroEpisodeDetails(html: string) {
   // inside of #artwork-container
   const image_url = $('#artwork-container img').attr('src');
 
-  const returnObject: EpisodeDetails = {
+  const returnObject = {
     episode_name,
     description,
     podcast_name,
@@ -204,8 +207,6 @@ interface ParsedUrlResult {
 export function determineType(urlString: string): 'apple' | 'spotify' | 'castro' | null {
   const url = new URL(urlString);
 
-  console.log(url.searchParams.get('i')); // Debugging output
-
   if (url.hostname.includes('podcasts.apple.com') && url.searchParams.get('i')) {
     return 'apple';
   } else if (url.hostname.includes('open.spotify.com') && url.pathname.includes('/episode/')) {
@@ -216,33 +217,14 @@ export function determineType(urlString: string): 'apple' | 'spotify' | 'castro'
   return null;
 }
 
-// Main parsing function
 export async function getHtml(url: string): Promise<string> {
   const response = await fetch(url, { method: 'GET' });
-  const html = await response.text();
-
-  return html;
-  // const parsedUrl = new URL(url);
-
-  // const cleanedUrl =
-  //   type === 'apple'
-  //     ? `https://podcasts.apple.com${parsedUrl.pathname}?i=${parsedUrl.searchParams.get('i')}`
-  //     : type === 'spotify'
-  //     ? `https://open.spotify.com${parsedUrl.pathname}`
-  //     : type === 'castro'
-  //     ? `https://castro.fm/episode/${parsedUrl.pathname.split('/').pop()}`
-  //     : '';
-
-  // return {
-  //   cleanedUrl,
-  //   type,
-  //   html,
-  // };
+  return await response.text();
 }
 
 export function slugifyDetails(episode_name: string, podcast_name: string): string {
   return slugify(`${podcast_name} ${episode_name}`, {
-    lower: true, // Convert to lower case
-    strict: true, // Strip special characters except replacement
+    lower: true,
+    strict: true,
   });
 }
