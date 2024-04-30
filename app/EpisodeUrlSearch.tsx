@@ -1,10 +1,10 @@
 'use client';
-import React from 'react';
-import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { Search } from 'lucide-react';
-import { toast } from 'sonner';
 import { useRouter } from 'next/navigation';
+import React from 'react';
+import { toast } from 'sonner';
 
 export const EpisodeUrlSearch = () => {
   const router = useRouter();
@@ -12,19 +12,33 @@ export const EpisodeUrlSearch = () => {
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    const response = await fetch(`/api/episode`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ url }),
-    });
-    const data = await response.json();
-    if (!data || data.error) {
-      toast.error('Failed to add episode details');
+    try {
+      const response = await fetch(`/api/episode`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ url }),
+      });
+      const data = await response.json();
+      if (!data || data.error) {
+        throw data.error;
+      }
+      router.push(`/episode/${data.id}/${data.slug}`);
+      setUrl('');
+    } catch (error) {
+      toast(
+        <div>
+          <p>Error getting episode details. Are you sure this is a valid episode URL?</p>
+          <p className='font-semibold'>
+            Hint: Only Apple Podcasts, Spotify, and Castro URLs are supported.
+          </p>
+        </div>,
+        {
+          className: 'bg-red-500 text-white',
+        }
+      );
     }
-    router.push(`/episode/${data.id}/${data.slug}`);
-    setUrl('');
   };
   return (
     <div>
