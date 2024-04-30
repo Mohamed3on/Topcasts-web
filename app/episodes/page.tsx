@@ -29,7 +29,7 @@ const fetchEpisodes = async ({
     return data;
   }
 
-  const { data, error } = await supabase.from('episode_details').select('*').order('id');
+  const { data, error } = await supabase.from('episode_details').select('*').order('podcast_name');
 
   if (error) {
     throw error;
