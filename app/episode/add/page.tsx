@@ -1,5 +1,5 @@
-import { EpisodeUrlSearch } from '@/app/EpisodeUrlSearch';
+import { ImportEpisodeUrl } from '@/app/ImportEpisodeUrl';
 
 export default async function AddEpisode() {
-  return <EpisodeUrlSearch />;
+  return <ImportEpisodeUrl />;
 }

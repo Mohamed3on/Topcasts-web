@@ -1,25 +1,23 @@
 import { ReviewButtons } from '@/app/ReviewButtons';
 import { ReviewType } from '@/app/api/types';
-import { Database } from '@/app/api/types/supabase';
-import { CookieOptions, createServerClient } from '@supabase/ssr';
-import { cookies } from 'next/headers';
+import { createClient } from '@/utils/supabase/server';
 
 export const ReviewSection = async ({ episodeId }: { episodeId: number }) => {
-  const supabase = createServerClient<Database>(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    {
-      cookies: cookies() as CookieOptions,
-    }
-  );
+  let reviewType: ReviewType | undefined = undefined;
+  const supabase = createClient();
 
-  const { data } = await supabase
-    .from('episode_reviews')
-    .select('review_type')
-    .eq('episode_id', episodeId)
-    .single();
+  const { data: userData } = await supabase.auth.getUser();
 
-  const reviewType = data?.review_type as ReviewType;
+  if (userData?.user) {
+    const { data } = await supabase
+      .from('episode_reviews')
+      .select('review_type')
+      .eq('episode_id', episodeId)
+      .eq('user_id', userData.user.id)
+      .single();
 
-  return <ReviewButtons reviewType={reviewType} episodeId={episodeId} />;
+    reviewType = data?.review_type as ReviewType;
+  }
+
+  return <ReviewButtons intitialReviewType={reviewType} episodeId={episodeId} />;
 };

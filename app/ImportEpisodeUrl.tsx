@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation';
 import React from 'react';
 import { toast } from 'sonner';
 
-export const EpisodeUrlSearch = () => {
+export const ImportEpisodeUrl = () => {
   const router = useRouter();
   const [url, setUrl] = React.useState('');
 

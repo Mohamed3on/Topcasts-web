@@ -1,74 +1,90 @@
 'use client';
+import { ReviewType } from '@/app/api/types';
+import { useUser } from '@/app/auth/useUser';
 import { Button } from '@/components/ui/button';
 import { createClient } from '@/utils/supabase/client';
-import { ThumbsDownIcon, ThumbsUp } from 'lucide-react';
+import { Loader2Icon, ThumbsDownIcon, ThumbsUp } from 'lucide-react';
 import { useRouter } from 'next/navigation';
-import React from 'react';
+import { useCallback, useState } from 'react';
+import { toast } from 'sonner';
 
 const reviewOptions = [
   { type: 'like', Icon: ThumbsUp, color: 'text-green-500' },
   { type: 'dislike', Icon: ThumbsDownIcon, color: 'text-red-500' },
 ] as const;
 
-export const ReviewButtons = ({
-  episodeId,
-  reviewType,
-}: {
-  episodeId: number;
-  reviewType?: 'like' | 'dislike' | 'meh';
-}) => {
+const useReview = (episodeId: number, initialReviewType?: ReviewType) => {
+  const [reviewType, setReviewType] = useState(initialReviewType);
+  const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
+  const user = useUser();
   const supabase = createClient();
 
-  const getUser = async () => {
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
-    return user;
-  };
+  const toggleReview = useCallback(
+    async (type: ReviewType) => {
+      if (!user?.id) return router.replace('/login');
 
-  const toggleReview = async (type: 'like' | 'dislike' | 'meh') => {
-    const user = await getUser();
-    if (!user?.id) return;
+      setIsLoading(true);
+      const { data, error } =
+        reviewType === type
+          ? await supabase
+              .from('episode_reviews')
+              .delete()
+              .eq('episode_id', episodeId)
+              .eq('user_id', user.id)
+          : await supabase
+              .from('episode_reviews')
+              .upsert(
+                {
+                  episode_id: episodeId,
+                  user_id: user.id,
+                  review_type: type,
+                  updated_at: new Date().toISOString(),
+                },
+                {
+                  onConflict: 'user_id, episode_id',
+                }
+              )
+              .select('review_type')
+              .single();
 
-    const { data, error } =
-      reviewType === type
-        ? await supabase
-            .from('episode_reviews')
-            .delete()
-            .eq('episode_id', episodeId)
-            .eq('user_id', user.id)
-        : await supabase
-            .from('episode_reviews')
-            .upsert(
-              {
-                episode_id: episodeId,
-                user_id: user.id,
-                review_type: type,
-                updated_at: new Date().toISOString(),
-              },
-              {
-                onConflict: 'user_id, episode_id',
-              }
-            )
-            .select('review_type');
+      if (error) {
+        toast('Error updating your rating, please try again later', {
+          className: 'bg-red-500 text-white',
+        });
+      } else {
+        setReviewType(data?.review_type as ReviewType);
+      }
+      setIsLoading(false);
+    },
+    [user?.id, router, reviewType, supabase, episodeId]
+  );
 
-    console.log(data, error);
-    router.refresh();
-  };
+  return { reviewType, toggleReview, isLoading };
+};
+
+export const ReviewButtons = ({
+  episodeId,
+  intitialReviewType,
+}: {
+  episodeId: number;
+  intitialReviewType?: ReviewType;
+}) => {
+  const { reviewType, toggleReview, isLoading } = useReview(episodeId, intitialReviewType);
 
   return (
     <div className='flex gap-4'>
       {reviewOptions.map(({ type, Icon, color }) => (
         <Button
+          disabled={isLoading}
           key={type}
           variant='secondary'
-          className={`flex items-center gap-2 hover:bg-slate-300 active:bg-slate-200 ${
+          className={`flex items-center gap-2 hover:bg-slate-300 active:bg-slate-200 transition-colors ${
             reviewType === type ? color : ''
           }`}
           onClick={() => toggleReview(type)}
         >
-          <Icon size={24} />
+          {!isLoading ? <Icon size={24} /> : <Loader2Icon size={24} className='animate-spin' />}
           <span>{type.charAt(0).toUpperCase() + type.slice(1)}</span>
         </Button>
       ))}

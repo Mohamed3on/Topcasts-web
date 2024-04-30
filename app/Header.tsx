@@ -13,15 +13,18 @@ const Header: React.FC = async () => {
 
   return (
     <header className='flex items-center justify-between p-4'>
-      <div className='font-bold'>Topcasts</div>
+      <Button className='font-bold text-primary text-lg' asChild variant={'link'}>
+        <Link href='/'>Topcasts</Link>
+      </Button>
       <div className='flex items-center space-x-1 text-gray-500'>
         <Button asChild variant={'link'}>
           <Link href='/episodes'>Browse Episodes</Link>
         </Button>
-
-        <Button asChild variant={'link'}>
-          <Link href='/episode/add'>Add an episode</Link>
-        </Button>
+        {data?.user && (
+          <Button asChild variant={'link'}>
+            <Link href='/episode/add'>Add an episode</Link>
+          </Button>
+        )}
       </div>
       {user && (
         <div className='flex items-center space-x-1'>
@@ -42,7 +45,9 @@ const Header: React.FC = async () => {
       )}
       {!user && (
         <div>
-          <Link href='/login'>Login</Link>
+          <Button asChild variant={'link'}>
+            <Link href='/login'>Login</Link>
+          </Button>
         </div>
       )}
     </header>

@@ -1,6 +1,8 @@
 import { createServerClient, type CookieOptions } from '@supabase/ssr';
 import { NextResponse, type NextRequest } from 'next/server';
 
+export const PROTECTED_ROUTES = ['/episode/add'];
+
 export async function updateSession(request: NextRequest) {
   let response = NextResponse.next({
     request: {
@@ -54,7 +56,11 @@ export async function updateSession(request: NextRequest) {
     }
   );
 
-  await supabase.auth.getUser();
+  const user = await supabase.auth.getUser();
+
+  if (PROTECTED_ROUTES.includes(new URL(request.url).pathname) && user.error) {
+    return NextResponse.redirect(new URL('/login', request.url));
+  }
 
   return response;
 }

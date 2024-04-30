@@ -9,6 +9,6 @@ export async function GET(req: NextRequest) {
   if (code) {
     await supabase.auth.exchangeCodeForSession(code);
   }
-
+  // TODO: implement redirect to the previous page
   return NextResponse.redirect(`${origin}/`);
 }

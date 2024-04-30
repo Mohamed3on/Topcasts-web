@@ -1,6 +1,6 @@
 'use client';
+import { Button } from '@/components/ui/button';
 import { createClient } from '@/utils/supabase/client';
-import React from 'react';
 
 export const LoginWithGoogle = () => {
   const signIn = async () => {
@@ -13,11 +13,8 @@ export const LoginWithGoogle = () => {
     });
   };
   return (
-    <button
-      onClick={signIn}
-      className='w-full text-white bg-gray-600 hover:bg-gray-700 focus:ring-4 focus:outline-none focus:ring-primary-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center dark:bg-gray-600 dark:hover:bg-gray-700 dark:focus:ring-primary-800'
-    >
+    <Button onClick={signIn} className='text-center active:bg-primary/80'>
       Sign in with Google
-    </button>
+    </Button>
   );
 };

@@ -1,5 +1,6 @@
 'use server';
 import { createClient } from '@/utils/supabase/server';
+import { revalidatePath } from 'next/cache';
 
 export const logout = async () => {
   const supabase = createClient();
@@ -8,5 +9,6 @@ export const logout = async () => {
     console.error('Error logging out:', error);
     return null;
   }
+  revalidatePath('/', 'layout');
   return true;
 };
