@@ -53,7 +53,7 @@ export default async function Episodes({
           <Link
             href={`/episode/${episode.id}/${episode.slug}`}
             key={episode.id}
-            className='flex flex-col md:flex-row items-center border rounded-lg text-center md:text-left no-underline hover:shadow-md transition duration-100 ease-in-out hover:underline overflow-hidden'
+            className='flex flex-col md:flex-row items-center border rounded-lg text-center md:text-left hover:shadow-md transition duration-100 ease-in-out hover:underline overflow-hidden'
           >
             <img
               src={episode.image_url}

@@ -44,19 +44,13 @@ export const PodcastDetails = ({ episodeDetails }: { episodeDetails: EpisodeDeta
         <div className='flex flex-col gap-8 items-center justify-center'>
           <div className='flex justify-between w-full'>
             <Button asChild variant={'link'}>
-              <Link
-                href={`${getHost()}/episode/${episodeDetails.id - 1}`}
-                className='flex gap-1 no-underline'
-              >
+              <Link href={`${getHost()}/episode/${episodeDetails.id - 1}`} className='flex gap-1'>
                 <ArrowLeft></ArrowLeft>
                 {'Previous Episode'}
               </Link>
             </Button>
             <Button asChild variant={'link'}>
-              <Link
-                href={`${getHost()}/episode/${episodeDetails.id + 1}`}
-                className='flex gap-1 no-underline'
-              >
+              <Link href={`${getHost()}/episode/${episodeDetails.id + 1}`} className='flex gap-1'>
                 {'Next Episode'}
                 <ArrowLeft className='transform rotate-180'></ArrowLeft>
               </Link>

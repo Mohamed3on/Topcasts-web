@@ -4,8 +4,7 @@
 
 @layer base {
   a {
-    @apply underline;
-    @apply hover:no-underline;
+    @apply no-underline;
   }
   :root {
     --background: 0 0% 100%;

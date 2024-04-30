@@ -1,5 +1,6 @@
 import React from 'react';
 
+import { Button } from '@/components/ui/button';
 import { createClient } from '@/utils/supabase/server';
 import Image from 'next/image';
 import Link from 'next/link';
@@ -11,8 +12,17 @@ const Header: React.FC = async () => {
   const user = data?.user;
 
   return (
-    <header className='flex items-center justify-between p-4 bg-gray-200'>
+    <header className='flex items-center justify-between p-4'>
       <div className='font-bold'>Topcasts</div>
+      <div className='flex items-center space-x-1 text-gray-500'>
+        <Button asChild variant={'link'}>
+          <Link href='/episodes'>Browse Episodes</Link>
+        </Button>
+
+        <Button asChild variant={'link'}>
+          <Link href='/episode/add'>Add an episode</Link>
+        </Button>
+      </div>
       {user && (
         <div className='flex items-center space-x-1'>
           {user.user_metadata && (
