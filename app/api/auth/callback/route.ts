@@ -6,9 +6,13 @@ export async function GET(req: NextRequest) {
   const { searchParams, origin } = req.nextUrl;
   const code = searchParams.get('code');
 
-  if (code) {
-    await supabase.auth.exchangeCodeForSession(code);
-    return NextResponse.redirect(`${origin}/episode/2`);
-  } else return NextResponse.redirect(`${origin}/login`);
-  // TODO: implement redirect to the previous page
+  try {
+    if (code) {
+      // TODO: implement redirect to the previous page
+      await supabase.auth.exchangeCodeForSession(code);
+    }
+  } catch (error) {
+    console.log('Error exchanging code for session:', error);
+  }
+  return NextResponse.redirect(`${origin}/`);
 }
