@@ -19,5 +19,5 @@ export const ReviewSection = async ({ episodeId }: { episodeId: number }) => {
     reviewType = data?.review_type as ReviewType;
   }
 
-  return <ReviewButtons intitialReviewType={reviewType} episodeId={episodeId} />;
+  return <ReviewButtons reviewType={reviewType} episodeId={episodeId} />;
 };

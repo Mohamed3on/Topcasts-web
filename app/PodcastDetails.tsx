@@ -4,6 +4,7 @@ import { getHost } from '@/app/utils';
 import AppleIcon from '@/components/AppleIcon';
 import { SpotifyIcon } from '@/components/SpotifyIcon';
 import { Button } from '@/components/ui/button';
+import DOMPurify from 'isomorphic-dompurify';
 import { ArrowLeft } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
@@ -78,7 +79,6 @@ export const PodcastDetails = ({ episodeDetails }: { episodeDetails: EpisodeDeta
                 })}
               </p>
             )}
-            {/* <p>{JSON.stringify(episodeDetails)}</p> */}
             <Duration episodeDetails={episodeDetails} />
             <ReviewSection episodeId={episodeDetails.id} />
             <div className='flex gap-4 justify-center items-center'>
@@ -95,9 +95,13 @@ export const PodcastDetails = ({ episodeDetails }: { episodeDetails: EpisodeDeta
               )}
             </div>
           </div>
-          <p className=''>
-            <span>{episodeDetails?.description}</span>
-          </p>
+
+          {episodeDetails.description && (
+            <span
+              className='[&_a]:text-foreground/60 [&_a:hover]:text-foreground/80 [&_a:hover]:underline'
+              dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(episodeDetails.description) }}
+            ></span>
+          )}
         </div>
       )}
     </main>

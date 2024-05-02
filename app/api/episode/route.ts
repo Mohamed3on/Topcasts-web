@@ -1,17 +1,17 @@
 import { NextRequest, NextResponse } from 'next/server';
 
 import {
+  determineType,
+  formatUrls,
+  getHtml,
   scrapeDataByType,
   updateEpisodeDetails,
-  getHtml,
-  formatUrls,
-  determineType,
 } from './utils';
 
+import { SupabaseClient } from '@/app/api/types/SupabaseClient';
+import { Database } from '@/app/api/types/supabase';
 import { createServerClient, type CookieOptions } from '@supabase/ssr';
 import { cookies } from 'next/headers';
-import { Database } from '@/app/api/types/supabase';
-import { SupabaseClient } from '@/app/api/types/SupabaseClient';
 
 const getSupabaseServerClient = () => {
   const cookieStore = cookies();

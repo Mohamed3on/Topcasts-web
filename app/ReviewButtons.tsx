@@ -13,8 +13,7 @@ const reviewOptions = [
   { type: 'dislike', Icon: ThumbsDownIcon, color: 'text-red-500' },
 ] as const;
 
-const useReview = (episodeId: number, initialReviewType?: ReviewType) => {
-  const [reviewType, setReviewType] = useState(initialReviewType);
+const useReview = (episodeId: number, reviewType?: ReviewType) => {
   const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
   const user = useUser();
@@ -22,10 +21,11 @@ const useReview = (episodeId: number, initialReviewType?: ReviewType) => {
 
   const toggleReview = useCallback(
     async (type: ReviewType) => {
-      if (!user?.id) return router.replace('/login');
+      if (!user?.id) return router.replace(`/login?next=${window.location.pathname}`);
 
       setIsLoading(true);
-      const { data, error } =
+
+      const { error } =
         reviewType === type
           ? await supabase
               .from('episode_reviews')
@@ -53,24 +53,24 @@ const useReview = (episodeId: number, initialReviewType?: ReviewType) => {
           className: 'bg-red-500 text-white',
         });
       } else {
-        setReviewType(data?.review_type as ReviewType);
+        router.refresh();
       }
       setIsLoading(false);
     },
     [user?.id, router, reviewType, supabase, episodeId]
   );
 
-  return { reviewType, toggleReview, isLoading };
+  return { toggleReview, isLoading };
 };
 
 export const ReviewButtons = ({
   episodeId,
-  intitialReviewType,
+  reviewType,
 }: {
   episodeId: number;
-  intitialReviewType?: ReviewType;
+  reviewType?: ReviewType;
 }) => {
-  const { reviewType, toggleReview, isLoading } = useReview(episodeId, intitialReviewType);
+  const { toggleReview, isLoading } = useReview(episodeId, reviewType);
 
   return (
     <div className='flex gap-4'>
