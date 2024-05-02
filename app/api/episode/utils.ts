@@ -29,7 +29,6 @@ export async function updateEpisodeDetails({
   try {
     const slug = slugifyDetails(scrapedData.episode_name, scrapedData.podcast_name);
 
-    // Perform a conditional upsert based on the slug
     const { data, error } = await supabase
       .from('episode_details')
       .upsert({ ...scrapedData, slug }, { onConflict: 'slug' })
@@ -38,13 +37,12 @@ export async function updateEpisodeDetails({
 
     if (error) throw error;
     if (!data) throw new Error('Failed to upsert episode details');
-
     const episodeId = data.id;
 
-    // Upsert the URL with episode_id
+    // save the url to the episode_urls table
     const urlUpsert = await supabase
       .from('episode_urls')
-      .upsert({ url: cleanedUrl, episode_id: episodeId, type }, { onConflict: 'url' })
+      .insert({ url: cleanedUrl, episode_id: episodeId, type })
       .select('episode_id')
       .single();
 
