@@ -1,17 +1,15 @@
 'use client';
-import { getHost } from '@/app/utils';
 import { Button } from '@/components/ui/button';
 import { createClient } from '@/utils/supabase/client';
 
 export const LoginWithGoogle = () => {
   const signIn = async () => {
     const supabase = createClient();
-    // wait 2 seconds
-    await new Promise((resolve) => setTimeout(resolve, 2000));
+
     await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: {
-        redirectTo: `${getHost()}/api/auth/callback`,
+        redirectTo: `${window.location.origin}/api/auth/callback`,
       },
     });
   };
