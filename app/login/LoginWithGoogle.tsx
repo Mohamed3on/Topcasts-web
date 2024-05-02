@@ -1,14 +1,17 @@
 'use client';
+import { getHost } from '@/app/utils';
 import { Button } from '@/components/ui/button';
 import { createClient } from '@/utils/supabase/client';
 
 export const LoginWithGoogle = () => {
   const signIn = async () => {
     const supabase = createClient();
+    // wait 2 seconds
+    await new Promise((resolve) => setTimeout(resolve, 2000));
     await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: {
-        redirectTo: `${window.location.origin}/api/auth/callback`,
+        redirectTo: `${getHost()}/api/auth/callback`,
       },
     });
   };
@@ -22,7 +25,7 @@ export const LoginWithGoogle = () => {
           fill='none'
           xmlns='http://www.w3.org/2000/svg'
         >
-          <g clip-path='url(#clip0_710_6219)'>
+          <g clipPath='url(#clip0_710_6219)'>
             <path
               d='M29.6 20.2273C29.6 19.5182 29.5364 18.8364 29.4182 18.1818H20V22.05H25.3818C25.15 23.3 24.4455 24.3591 23.3864 25.0682V27.5773H26.6182C28.5091 25.8364 29.6 23.2727 29.6 20.2273Z'
               fill='#4285F4'
