@@ -1,5 +1,4 @@
-import { CookieOptions, createServerClient } from '@supabase/ssr';
-import { cookies } from 'next/headers';
+import { createClient } from '@/utils/supabase/server';
 import Link from 'next/link';
 
 const fetchEpisodes = async ({
@@ -9,13 +8,7 @@ const fetchEpisodes = async ({
     [key: string]: string;
   };
 }) => {
-  const supabase = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    {
-      cookies: cookies() as CookieOptions,
-    }
-  );
+  const supabase = createClient();
 
   if (searchParams?.q) {
     const { data, error } = await supabase.rpc('search_episodes_by_terms', {

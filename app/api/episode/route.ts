@@ -8,27 +8,10 @@ import {
   updateEpisodeDetails,
 } from './utils';
 
-import { SupabaseClient } from '@/app/api/types/SupabaseClient';
-import { Database } from '@/app/api/types/supabase';
-import { createServerClient, type CookieOptions } from '@supabase/ssr';
-import { cookies } from 'next/headers';
-
-const getSupabaseServerClient = () => {
-  const cookieStore = cookies();
-
-  const supabase = createServerClient<Database>(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    {
-      cookies: cookieStore as CookieOptions,
-    }
-  );
-
-  return supabase;
-};
+import { createClient } from '@/utils/supabase/server';
 
 export async function GET(request: NextRequest): Promise<NextResponse> {
-  const supabase = getSupabaseServerClient();
+  const supabase = createClient();
 
   const { searchParams } = request.nextUrl;
   const episode_id = searchParams.get('episode_id') || '';
@@ -80,7 +63,8 @@ async function handlePodcastURL({
   url: string;
   html?: string;
 }): Promise<NextResponse> {
-  const supabase = getSupabaseServerClient();
+  const supabase = createClient();
+
   const urlInput = url.trim();
   const cleanedUrl = cleanUrl(urlInput); // Assume this function exists to standardize URLs.
   const type = determineType(cleanedUrl);
@@ -110,12 +94,11 @@ async function handlePodcastURL({
     type,
     html,
     cleanedUrl,
-    supabase,
   });
 }
 
 const getEpisodeDetailsFromDb = async (episodeId: number) => {
-  const supabase = getSupabaseServerClient();
+  const supabase = createClient();
   const { data, error } = await supabase
     .from('episode_details')
     .select(
@@ -167,14 +150,13 @@ async function handleNewEpisodeData({
   type,
   html,
   cleanedUrl,
-  supabase,
 }: {
   type: 'apple' | 'spotify' | 'castro';
   html: string;
   cleanedUrl: string;
-  supabase: SupabaseClient;
 }) {
   try {
+    const supabase = createClient();
     const scrapedData = await scrapeDataByType(type, html);
 
     const response = await updateEpisodeDetails({
