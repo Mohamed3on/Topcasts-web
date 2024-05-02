@@ -40,7 +40,7 @@ const Duration = ({ episodeDetails }: { episodeDetails: EpisodeDetails }) => {
 
 export const PodcastDetails = ({ episodeDetails }: { episodeDetails: EpisodeDetails | null }) => {
   return (
-    <main className='flex min-h-screen flex-col items-center justify-between px-24 py-12'>
+    <main className='flex min-h-screen flex-col items-center justify-between p-12 '>
       {episodeDetails && (
         <div className='flex flex-col gap-8 items-center justify-center'>
           <div className='flex justify-between w-full'>
