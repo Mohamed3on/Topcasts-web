@@ -1,84 +1,102 @@
-import React from 'react';
-
 import { getHost } from '@/app/utils';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { createClient } from '@/utils/supabase/server';
-import { SearchIcon } from 'lucide-react';
+import { Plus, SearchIcon } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import Logout from './logout/LogOutButton';
 
-const Header: React.FC = async () => {
+import MobileNav from '@/app/MobileNav';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+
+const Header = async () => {
   const supabase = createClient();
   const { data } = await supabase.auth.getUser();
   const user = data?.user;
 
   return (
-    <header className="border-b-1 flex items-center justify-between border px-4 py-2 shadow-sm">
+    <header className="flex items-center justify-between border-b px-4 py-2 shadow-sm">
+      <div className="md:hidden">
+        <MobileNav isLoggedIn={!!user} />
+      </div>
+
       <Button
-        className="duration-30 transition-duration-100 text-lg font-bold text-primary transition-colors hover:text-primary/50"
+        className="text-lg font-bold text-primary transition-colors hover:text-primary/50"
         asChild
-        variant={'link'}
+        variant="link"
       >
         <Link href="/">Topcasts</Link>
       </Button>
-      <div className="flex items-center gap-1">
-        <Button asChild variant={'link'}>
+
+      <div className="flex items-center gap-4">
+        <Button className="text-sm" asChild variant="link">
           <Link href="/episodes">Browse Episodes</Link>
         </Button>
-        {data?.user && (
-          <Button asChild variant={'link'}>
-            <Link href="/episode/add">Add an episode</Link>
+        {user && (
+          <Button asChild variant="link">
+            <Link className="flex items-center gap-1" href="/episode/add">
+              <Plus className="h-4 w-4" />
+              <span>Add an episode</span>
+            </Link>
           </Button>
         )}
       </div>
-      <div>
-        <form
-          action={async (formData) => {
-            'use server';
-            const search = formData.get('search');
 
-            if (search) {
-              const href = `${getHost()}/episodes?q=${search}`;
-              redirect(href);
-            }
-          }}
-        >
-          <Input
-            name="search"
-            type="search"
-            placeholder="Search"
-            endIcon={SearchIcon}
-          />
-        </form>
-      </div>
-      {user && (
-        <div className="flex items-center space-x-1">
-          {user.user_metadata && (
-            <Image
-              width={32}
-              height={32}
-              unoptimized
-              src={user.user_metadata.avatar_url || ''}
-              alt={user.user_metadata.name || ''}
-              className="h-8 w-8 rounded-full"
-              referrerPolicy="no-referrer"
-            />
-          )}
-          <span className="text-sm font-semibold text-primary/60">
-            {user.user_metadata.name}
-          </span>
-          <Logout />
-        </div>
+      <form
+        action={async (formData) => {
+          'use server';
+          const search = formData.get('search');
+
+          const href = `${getHost()}/episodes${search ? `?q=${search}` : ''}`;
+          redirect(href);
+        }}
+      >
+        <Input
+          name="search"
+          type="search"
+          className="w-64 xl:w-96"
+          placeholder="Search"
+          endIcon={SearchIcon}
+        />
+      </form>
+
+      {user?.user_metadata && (
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <div className="flex cursor-pointer items-center gap-2">
+              <Image
+                width={32}
+                height={32}
+                src={user.user_metadata.avatar_url || ''}
+                alt={user.user_metadata.name || ''}
+                className="h-8 w-8 rounded-full"
+                unoptimized
+                referrerPolicy="no-referrer"
+              />
+              <span className="hidden text-sm font-semibold text-primary/80 lg:block">
+                {user.user_metadata.name}
+              </span>
+            </div>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent>
+            <DropdownMenuItem>
+              <Logout />
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       )}
+
       {!user && (
-        <div>
-          <Button asChild variant={'link'}>
-            <Link href="/login">Login</Link>
-          </Button>
-        </div>
+        <Button asChild variant="link">
+          <Link href="/login">Login</Link>
+        </Button>
       )}
     </header>
   );

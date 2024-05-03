@@ -3,8 +3,13 @@ import { load } from 'cheerio';
 import slugify from 'slugify';
 import { ScrapedEpisodeDetails } from '../types';
 
-export function formatUrls(urlsArray: { url: string; type: string }[]): Record<string, string> {
-  return urlsArray.reduce((acc, { type, url }) => ({ ...acc, [type]: url }), {});
+export function formatUrls(
+  urlsArray: { url: string; type: string }[],
+): Record<string, string> {
+  return urlsArray.reduce(
+    (acc, { type, url }) => ({ ...acc, [type]: url }),
+    {},
+  );
 }
 
 const getCheerio = async (html: string) => {
@@ -27,7 +32,10 @@ export async function updateEpisodeDetails({
   supabase: SupabaseClient;
 }): Promise<{ id: number; slug: string } | null> {
   try {
-    const slug = slugifyDetails(scrapedData.episode_name, scrapedData.podcast_name);
+    const slug = slugifyDetails(
+      scrapedData.episode_name,
+      scrapedData.podcast_name,
+    );
 
     const { data, error } = await supabase
       .from('episode_details')
@@ -56,7 +64,10 @@ export async function updateEpisodeDetails({
   }
 }
 
-export async function scrapeDataByType(type: 'apple' | 'spotify' | 'castro', html: string) {
+export async function scrapeDataByType(
+  type: 'apple' | 'spotify' | 'castro',
+  html: string,
+) {
   switch (type) {
     case 'apple':
       return await scrapeApplePodcastsEpisodeDetails(html);
@@ -84,7 +95,9 @@ export async function scrapeSpotifyEpisodeDetails(html: string) {
   const date_published = parsedJson?.datePublished;
   const duration = $('[data-testid=episode-progress-not-played]').text();
 
-  const episodeImage = $('[data-testid=entity-header-entity-image]').attr('src');
+  const episodeImage = $('[data-testid=entity-header-entity-image]').attr(
+    'src',
+  );
 
   const returnObject = {
     episode_name,
@@ -118,7 +131,8 @@ export async function scrapeApplePodcastsEpisodeDetails(html: string) {
   const episodeInfo = episodeData.d[0];
 
   const episode_name = episodeInfo.attributes.name;
-  const podcast_name = episodeInfo.relationships.podcast.data[0].attributes.name;
+  const podcast_name =
+    episodeInfo.relationships.podcast.data[0].attributes.name;
 
   const description = episodeInfo.attributes.description.standard;
 
@@ -202,14 +216,25 @@ interface ParsedUrlResult {
 }
 
 // Utility function to determine URL type
-export function determineType(urlString: string): 'apple' | 'spotify' | 'castro' | null {
+export function determineType(
+  urlString: string,
+): 'apple' | 'spotify' | 'castro' | null {
   const url = new URL(urlString);
 
-  if (url.hostname.includes('podcasts.apple.com') && url.searchParams.get('i')) {
+  if (
+    url.hostname.includes('podcasts.apple.com') &&
+    url.searchParams.get('i')
+  ) {
     return 'apple';
-  } else if (url.hostname.includes('open.spotify.com') && url.pathname.includes('/episode/')) {
+  } else if (
+    url.hostname.includes('open.spotify.com') &&
+    url.pathname.includes('/episode/')
+  ) {
     return 'spotify';
-  } else if (url.hostname.includes('castro.fm') && url.pathname.includes('/episode/')) {
+  } else if (
+    url.hostname.includes('castro.fm') &&
+    url.pathname.includes('/episode/')
+  ) {
     return 'castro';
   }
   return null;
@@ -220,7 +245,10 @@ export async function getHtml(url: string): Promise<string> {
   return await response.text();
 }
 
-export function slugifyDetails(episode_name: string, podcast_name: string): string {
+export function slugifyDetails(
+  episode_name: string,
+  podcast_name: string,
+): string {
   return slugify(`${podcast_name} ${episode_name}`, {
     lower: true,
     strict: true,

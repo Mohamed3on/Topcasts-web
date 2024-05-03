@@ -33,9 +33,12 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
           {...props}
         />
         {EndIcon && (
-          <div className="absolute right-3 top-1/2 -translate-y-1/2 transform">
+          <button
+            type="submit"
+            className="absolute right-3 top-1/2 -translate-y-1/2 transform"
+          >
             <EndIcon className="text-muted-foreground" size={18} />
-          </div>
+          </button>
         )}
       </div>
     );
