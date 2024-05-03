@@ -28,14 +28,14 @@ const Header = async () => {
       </div>
 
       <Button
-        className="text-lg font-bold text-primary transition-colors hover:text-primary/50"
+        className="hidden text-lg font-bold text-primary transition-colors hover:text-primary/50 md:block"
         asChild
         variant="link"
       >
         <Link href="/">Topcasts</Link>
       </Button>
 
-      <div className="flex items-center gap-4">
+      <div className=" hidden items-center gap-4 md:flex">
         <Button className="text-sm" asChild variant="link">
           <Link href="/episodes">Browse Episodes</Link>
         </Button>
