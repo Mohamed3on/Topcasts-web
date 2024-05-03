@@ -11,7 +11,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     return NextResponse.json({ error: 'Invalid search query' }, { status: 400 });
   }
 
-  const { data, error } = await supabase.rpc('search_episodes_by_terms', {
+  const { data, error } = await supabase.rpc('search_episodes', {
     // replace space with + for supabase API
     search_query: searchQuery.replace(/ /g, '+'),
   });
