@@ -14,11 +14,12 @@ export const useReview = (episodeId: number, reviewType?: ReviewType) => {
 
   const toggleReview = useCallback(
     async (type: ReviewType) => {
-      if (!user?.id) return router.replace(`/login?next=${window.location.pathname}`);
+      if (!user?.id)
+        return router.replace(`/login?next=${window.location.pathname}`);
 
       setIsLoading(true);
 
-      const { error } =
+      const { error, data } =
         reviewType === type
           ? await supabase
               .from('episode_reviews')
@@ -36,7 +37,7 @@ export const useReview = (episodeId: number, reviewType?: ReviewType) => {
                 },
                 {
                   onConflict: 'user_id, episode_id',
-                }
+                },
               )
               .select('review_type')
               .single();
@@ -50,7 +51,7 @@ export const useReview = (episodeId: number, reviewType?: ReviewType) => {
       }
       setIsLoading(false);
     },
-    [user?.id, router, reviewType, supabase, episodeId]
+    [user?.id, router, reviewType, supabase, episodeId],
   );
 
   return { toggleReview, isLoading };

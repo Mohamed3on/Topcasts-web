@@ -1,4 +1,5 @@
 'use client';
+import { ReviewType } from '@/app/api/types';
 import { useReview } from '@/app/useReview';
 import { Button } from '@/components/ui/button';
 import { Loader2Icon, ThumbsDownIcon, ThumbsUp } from 'lucide-react';
@@ -14,7 +15,10 @@ interface RatingButtonsProps {
 }
 
 const RatingButtons: React.FC<RatingButtonsProps> = ({ episode }) => {
-  const { toggleReview, isLoading } = useReview(episode.id);
+  const { toggleReview, isLoading } = useReview(
+    episode.id,
+    episode.review_type as ReviewType,
+  );
   return (
     <div className="flex gap-1">
       <Button
@@ -39,7 +43,7 @@ const RatingButtons: React.FC<RatingButtonsProps> = ({ episode }) => {
         <span className="text-xs font-medium">{episode.likes}</span>
       </Button>
       <Button
-        onClick={(e) => {
+        onClick={async (e) => {
           e.preventDefault();
           toggleReview('dislike');
         }}
