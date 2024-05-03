@@ -1,9 +1,13 @@
 import React from 'react';
 
+import { getHost } from '@/app/utils';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { createClient } from '@/utils/supabase/server';
+import { SearchIcon } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
+import { redirect } from 'next/navigation';
 import Logout from './logout/LogOutButton';
 
 const Header: React.FC = async () => {
@@ -29,6 +33,26 @@ const Header: React.FC = async () => {
             <Link href="/episode/add">Add an episode</Link>
           </Button>
         )}
+      </div>
+      <div>
+        <form
+          action={async (formData) => {
+            'use server';
+            const search = formData.get('search');
+
+            if (search) {
+              const href = `${getHost()}/episodes?q=${search}`;
+              redirect(href);
+            }
+          }}
+        >
+          <Input
+            name="search"
+            type="search"
+            placeholder="Search"
+            endIcon={SearchIcon}
+          />
+        </form>
       </div>
       {user && (
         <div className="flex items-center space-x-1">
