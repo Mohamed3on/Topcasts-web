@@ -5,7 +5,6 @@ import { notFound } from 'next/navigation';
 
 type EpisodeDetailsResponse = EpisodeDetails & { error: string };
 
-export const dynamic = 'force-dynamic';
 async function getEpisodeDetails(episode_id: string): Promise<EpisodeDetailsResponse> {
   const response = await fetch(`${getHost()}/api/episode?episode_id=${episode_id}`);
   return response.json();

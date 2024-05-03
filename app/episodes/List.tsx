@@ -1,10 +1,10 @@
-import { EpisodeDetails } from '@/app/api/types';
+import { EpisodeDetailsForList } from '@/app/episodes/page';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { ThumbsDownIcon } from 'lucide-react';
+import { ThumbsDownIcon, ThumbsUp } from 'lucide-react';
 import Link from 'next/link';
 
-export default function EpisodesList({ episodes }: { episodes: EpisodeDetails[] }) {
+export default function EpisodesList({ episodes }: { episodes: EpisodeDetailsForList }) {
   return (
     <div className='container pb-24'>
       <h1 className='text-2xl font-semibold grid place-items-center mb-8 mt-6'>
@@ -16,20 +16,12 @@ export default function EpisodesList({ episodes }: { episodes: EpisodeDetails[] 
             key={episode.id}
             className=' rounded-lg shadow-sm hover:shadow-lg transition duration-100 ease-in-out '
           >
-            <Link href={`/episode/${episode.id}/${episode.slug}`}>
-              <div className='aspect-auto overflow-hidden rounded-lg'>
+            <Link className='block h-full' href={`/episode/${episode.id}/${episode.slug}`}>
+              <div className='overflow-hidden rounded-lg'>
                 <img
-                  alt={episode.episode_name}
-                  className='object-cover object-center'
-                  src={
-                    episode.image_url ||
-                    'https://res.cloudinary.com/dkkf9iqnd/image/upload/v1634264307/placeholder.svg'
-                  }
-                  style={{
-                    aspectRatio: '600/400',
-                    objectFit: 'cover',
-                  }}
-                  width={600}
+                  alt={episode.episode_name || ''}
+                  className='object-cover w-full h-48 sm:h-56'
+                  src={episode.image_url || ''}
                 />
               </div>
               <CardContent className='p-4'>
@@ -42,24 +34,24 @@ export default function EpisodesList({ episodes }: { episodes: EpisodeDetails[] 
                       {episode.podcast_name}
                     </p>
                   </div>
-                  <div className='flex items-center space-x-3'>
+                  <div className='flex  gap-1'>
                     <Button
-                      className='text-green-500 hover:text-green-600 dark:text-green-500 dark:hover:text-green-400 flex gap-1 justify-center items-center'
+                      className='  flex gap-1 justify-center items-center'
                       size='icon'
                       variant='ghost'
                     >
-                      <ThumbsDownIcon className='h-5 w-5' />
-                      <span className='sr-only'>Dislike</span>
-                      <span className='text-xs font-medium'>0</span>
+                      <ThumbsUp className='h-5 w-5' />
+                      <span className='sr-only'>Like</span>
+                      <span className='text-xs font-medium'>{episode.likes}</span>
                     </Button>
                     <Button
-                      className='text-red-500 hover:text-red-600 dark:text-red-500 dark:hover:text-red-400 flex gap-1 justify-center items-center'
+                      className=' flex gap-1 justify-center items-center'
                       size='icon'
                       variant='ghost'
                     >
                       <ThumbsDownIcon className='h-5 w-5' />
                       <span className='sr-only'>Dislike</span>
-                      <span className='text-xs font-medium'>0</span>
+                      <span className='text-xs font-medium'>{episode.dislikes}</span>
                     </Button>
                   </div>
                 </div>

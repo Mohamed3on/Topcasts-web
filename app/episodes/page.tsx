@@ -10,19 +10,14 @@ const fetchEpisodes = async ({
 }) => {
   const supabase = createClient();
 
-  if (searchParams?.q) {
-    const { data, error } = await supabase.rpc('search_episodes_by_terms', {
-      search_query: searchParams.q.replace(/ /g, '+'),
-    });
+  const { data: userData } = await supabase.auth.getUser();
 
-    if (error) {
-      throw error;
-    }
+  const userId = userData?.user?.id;
 
-    return data;
-  }
-
-  const { data, error } = await supabase.from('episode_details').select('*').order('podcast_name');
+  const { data, error } = await supabase.rpc('search_episodes', {
+    search_query: searchParams?.q?.replace(/ /g, '+'),
+    current_user_id: userId,
+  });
 
   if (error) {
     throw error;
@@ -30,6 +25,9 @@ const fetchEpisodes = async ({
 
   return data;
 };
+
+export type EpisodeDetailsForList = Awaited<ReturnType<typeof fetchEpisodes>>;
+
 export default async function Episodes({
   searchParams,
 }: {
