@@ -8,7 +8,10 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
   const searchQuery = searchParams.get('q') || '';
 
   if (!searchQuery) {
-    return NextResponse.json({ error: 'Invalid search query' }, { status: 400 });
+    return NextResponse.json(
+      { error: 'Invalid search query' },
+      { status: 400 },
+    );
   }
 
   const { data, error } = await supabase.rpc('search_episodes', {
@@ -20,7 +23,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     console.error('Error fetching search results:', error);
     return NextResponse.json(
       { error: `Failed to fetch search results: ${error?.message}` },
-      { status: 500 }
+      { status: 500 },
     );
   }
 

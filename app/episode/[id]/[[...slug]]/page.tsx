@@ -5,12 +5,20 @@ import { notFound } from 'next/navigation';
 
 type EpisodeDetailsResponse = EpisodeDetails & { error: string };
 
-async function getEpisodeDetails(episode_id: string): Promise<EpisodeDetailsResponse> {
-  const response = await fetch(`${getHost()}/api/episode?episode_id=${episode_id}`);
+async function getEpisodeDetails(
+  episode_id: string,
+): Promise<EpisodeDetailsResponse> {
+  const response = await fetch(
+    `${getHost()}/api/episode?episode_id=${episode_id}`,
+  );
   return response.json();
 }
 
-export default async function Page({ params }: { params: { id: string; slug: string } }) {
+export default async function Page({
+  params,
+}: {
+  params: { id: string; slug: string };
+}) {
   const response = await getEpisodeDetails(params.id);
 
   if (response?.error) {
