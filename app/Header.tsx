@@ -12,15 +12,15 @@ const Header: React.FC = async () => {
   const user = data?.user;
 
   return (
-    <header className="flex items-center justify-between p-4">
+    <header className="border-b-1 flex items-center justify-between border px-4 py-2 shadow-sm">
       <Button
-        className="text-lg font-bold text-primary"
+        className="duration-30 transition-duration-100 text-lg font-bold text-primary transition-colors hover:text-primary/50"
         asChild
         variant={'link'}
       >
         <Link href="/">Topcasts</Link>
       </Button>
-      <div className="flex items-center space-x-1 text-gray-500">
+      <div className="flex items-center gap-1">
         <Button asChild variant={'link'}>
           <Link href="/episodes">Browse Episodes</Link>
         </Button>
@@ -43,7 +43,9 @@ const Header: React.FC = async () => {
               referrerPolicy="no-referrer"
             />
           )}
-          <div>{user.user_metadata.name}</div>
+          <span className="text-sm font-semibold text-primary/60">
+            {user.user_metadata.name}
+          </span>
           <Logout />
         </div>
       )}
