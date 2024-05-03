@@ -34,7 +34,11 @@ export const EpisodeCard = ({
             <RatingButtons episode={episode}></RatingButtons>
           </div>
           <p className="mt-3 line-clamp-3 text-sm text-gray-500">
-            {episode.description}
+            <span
+              dangerouslySetInnerHTML={{
+                __html: episode.description,
+              }}
+            ></span>
           </p>
         </CardContent>
       </Link>
