@@ -12,22 +12,26 @@ const Header: React.FC = async () => {
   const user = data?.user;
 
   return (
-    <header className='flex items-center justify-between p-4'>
-      <Button className='font-bold text-primary text-lg' asChild variant={'link'}>
-        <Link href='/'>Topcasts</Link>
+    <header className="flex items-center justify-between p-4">
+      <Button
+        className="text-lg font-bold text-primary"
+        asChild
+        variant={'link'}
+      >
+        <Link href="/">Topcasts</Link>
       </Button>
-      <div className='flex items-center space-x-1 text-gray-500'>
+      <div className="flex items-center space-x-1 text-gray-500">
         <Button asChild variant={'link'}>
-          <Link href='/episodes'>Browse Episodes</Link>
+          <Link href="/episodes">Browse Episodes</Link>
         </Button>
         {data?.user && (
           <Button asChild variant={'link'}>
-            <Link href='/episode/add'>Add an episode</Link>
+            <Link href="/episode/add">Add an episode</Link>
           </Button>
         )}
       </div>
       {user && (
-        <div className='flex items-center space-x-1'>
+        <div className="flex items-center space-x-1">
           {user.user_metadata && (
             <Image
               width={32}
@@ -35,18 +39,18 @@ const Header: React.FC = async () => {
               unoptimized
               src={user.user_metadata.avatar_url || ''}
               alt={user.user_metadata.name || ''}
-              className='w-8 h-8 rounded-full'
-              referrerPolicy='no-referrer'
+              className="h-8 w-8 rounded-full"
+              referrerPolicy="no-referrer"
             />
           )}
-          <div>{user.email}</div>
+          <div>{user.user_metadata.name}</div>
           <Logout />
         </div>
       )}
       {!user && (
         <div>
           <Button asChild variant={'link'}>
-            <Link href='/login'>Login</Link>
+            <Link href="/login">Login</Link>
           </Button>
         </div>
       )}
