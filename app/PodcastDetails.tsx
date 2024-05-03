@@ -44,96 +44,96 @@ export const PodcastDetails = ({
   episodeDetails: EpisodeDetails;
 }) => {
   return (
-    <main className="flex min-h-screen flex-col items-center justify-between p-12 ">
-      {episodeDetails && (
-        <div className="flex flex-col items-center justify-center gap-8">
-          <div className="flex w-full justify-between">
-            <Button asChild variant={'link'}>
-              <Link
-                href={`${getHost()}/episode/${episodeDetails.id - 1}`}
-                className="flex gap-1"
-              >
-                <ArrowLeft></ArrowLeft>
-                {'Previous Episode'}
-              </Link>
-            </Button>
-            <Button asChild variant={'link'}>
-              <Link
-                href={`${getHost()}/episode/${episodeDetails.id + 1}`}
-                className="flex gap-1"
-              >
-                {'Next Episode'}
-                <ArrowLeft className="rotate-180 transform"></ArrowLeft>
-              </Link>
-            </Button>
-          </div>
-          <h1 className="text-center text-2xl font-semibold">
-            {episodeDetails.episode_name}
-          </h1>
-          {episodeDetails.image_url && (
-            <Image
-              width={300}
-              height={300}
-              unoptimized
-              className="h-64 w-64 rounded-lg object-cover"
-              src={episodeDetails.image_url}
-              alt={episodeDetails.episode_name}
-            />
+    <main className="flex flex-col items-center justify-between p-4 md:p-12">
+      <div className="flex w-full flex-col items-center justify-center gap-8">
+        <div className="flex w-full justify-between">
+          <Button asChild variant={'link'}>
+            <Link
+              href={`${getHost()}/episode/${episodeDetails.id - 1}`}
+              className="flex gap-1"
+            >
+              <ArrowLeft></ArrowLeft>
+              {'Previous Episode'}
+            </Link>
+          </Button>
+          <Button asChild variant={'link'}>
+            <Link
+              href={`${getHost()}/episode/${episodeDetails.id + 1}`}
+              className="flex gap-1"
+            >
+              {'Next Episode'}
+              <ArrowLeft className="rotate-180 transform"></ArrowLeft>
+            </Link>
+          </Button>
+        </div>
+        <h1 className="text-center text-2xl font-semibold">
+          {episodeDetails.episode_name}
+        </h1>
+        {episodeDetails.image_url && (
+          <Image
+            width={300}
+            height={300}
+            unoptimized
+            className="h-64 w-64 rounded-lg object-cover"
+            src={episodeDetails.image_url}
+            alt={episodeDetails.episode_name}
+          />
+        )}
+        <a
+          href={`/episodes?q="${episodeDetails.podcast_name}"`}
+          className="text-2xl font-bold text-primary/80 transition-all hover:text-primary/60 hover:underline"
+        >
+          {episodeDetails.podcast_name}
+        </a>
+        <div className="flex flex-col items-center gap-4">
+          {episodeDetails.date_published && (
+            <p className="text-gray-500">
+              {new Date(episodeDetails.date_published).toLocaleDateString(
+                'en-gb',
+                {
+                  year: 'numeric',
+                  month: 'long',
+                  day: 'numeric',
+                },
+              )}
+            </p>
           )}
-          <a
-            href={`/episodes?q="${episodeDetails.podcast_name}"`}
-            className="text-2xl font-bold text-primary/80 transition-all hover:text-primary/60 hover:underline"
-          >
-            {episodeDetails.podcast_name}
-          </a>
-          <div className="flex flex-col items-center gap-4">
-            {episodeDetails.date_published && (
-              <p className="text-gray-500">
-                {new Date(episodeDetails.date_published).toLocaleDateString(
-                  'en-gb',
-                  {
-                    year: 'numeric',
-                    month: 'long',
-                    day: 'numeric',
-                  },
-                )}
-              </p>
+          <Duration episodeDetails={episodeDetails} />
+          <ReviewSection episodeId={episodeDetails.id} />
+          <div className="flex items-center justify-center gap-4">
+            <span className="text-lg font-semibold">Listen on:</span>
+            {episodeDetails.urls?.spotify && (
+              <PlayerIcon url={episodeDetails.urls.spotify}>
+                <SpotifyIcon />
+              </PlayerIcon>
             )}
-            <Duration episodeDetails={episodeDetails} />
-            <ReviewSection episodeId={episodeDetails.id} />
-            <div className="flex items-center justify-center gap-4">
-              <span className="text-lg font-semibold">Listen on:</span>
-              {episodeDetails.urls?.spotify && (
-                <PlayerIcon url={episodeDetails.urls.spotify}>
-                  <SpotifyIcon />
-                </PlayerIcon>
-              )}
-              {episodeDetails.urls?.apple && (
-                <PlayerIcon url={episodeDetails.urls.apple}>
-                  <AppleIcon></AppleIcon>
-                </PlayerIcon>
-              )}
-              {episodeDetails.urls?.castro && (
-                <PlayerIcon url={episodeDetails.urls.castro}>
-                  <img
-                    src="https://castro.fm/assets/images/Bitmap.svg"
-                    alt="Castro"
-                  ></img>
-                </PlayerIcon>
-              )}
-            </div>
+            {episodeDetails.urls?.apple && (
+              <PlayerIcon url={episodeDetails.urls.apple}>
+                <AppleIcon></AppleIcon>
+              </PlayerIcon>
+            )}
+            {episodeDetails.urls?.castro && (
+              <PlayerIcon url={episodeDetails.urls.castro}>
+                <img
+                  src="https://castro.fm/assets/images/Bitmap.svg"
+                  alt="Castro"
+                ></img>
+              </PlayerIcon>
+            )}
           </div>
+        </div>
 
-          {episodeDetails.description && (
+        {episodeDetails.description && (
+          <div className="w-full">
             <span
-              className="[&_a:hover]:text-foreground/80 [&_a:hover]:underline [&_a]:text-foreground/60"
+              className="break-words [&_a:hover]:text-foreground/80 [&_a:hover]:underline [&_a]:text-foreground/60"
               dangerouslySetInnerHTML={{
                 __html: DOMPurify.sanitize(episodeDetails.description),
               }}
             ></span>
-          )}
-        </div>
-      )}
+          </div>
+        )}
+      </div>
     </main>
   );
 };
