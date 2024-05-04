@@ -5,7 +5,7 @@ import { Menu, Plus } from 'lucide-react';
 import Link from 'next/link';
 import { useState } from 'react';
 
-const MobileNav = ({ isLoggedIn }: { isLoggedIn: boolean }) => {
+const MobileNav = () => {
   const [open, setOpen] = useState(false);
   return (
     <Sheet open={open} onOpenChange={setOpen}>
@@ -33,7 +33,7 @@ const MobileNav = ({ isLoggedIn }: { isLoggedIn: boolean }) => {
               <span>Browse Episodes</span>
             </Link>
           </Button>
-          {isLoggedIn && (
+          {
             <Button
               onClick={() => setOpen(false)}
               className="text-sm"
@@ -45,7 +45,7 @@ const MobileNav = ({ isLoggedIn }: { isLoggedIn: boolean }) => {
                 <span>Add an episode</span>
               </Link>
             </Button>
-          )}
+          }
         </div>
       </SheetContent>
     </Sheet>

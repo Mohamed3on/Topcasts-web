@@ -24,7 +24,7 @@ const Header = async () => {
   return (
     <header className="flex items-center justify-between border-b px-4 py-2 shadow-sm">
       <div className="md:hidden">
-        <MobileNav isLoggedIn={!!user} />
+        <MobileNav />
       </div>
 
       <Button
@@ -39,14 +39,13 @@ const Header = async () => {
         <Button className="text-sm" asChild variant="link">
           <Link href="/episodes">Browse Episodes</Link>
         </Button>
-        {user && (
-          <Button asChild variant="link">
-            <Link className="flex items-center gap-1" href="/episode/add">
-              <Plus className="h-4 w-4" />
-              <span>Add an episode</span>
-            </Link>
-          </Button>
-        )}
+
+        <Button asChild variant="link">
+          <Link className="flex items-center gap-1" href="/episode/add">
+            <Plus className="h-4 w-4" />
+            <span>Add an episode</span>
+          </Link>
+        </Button>
       </div>
 
       <form

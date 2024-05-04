@@ -1,10 +1,10 @@
 import { PlayerIcon } from '@/app/PlayerIcon';
 import { ReviewSection } from '@/app/ReviewSection';
+import { EpisodeDescription } from '@/app/episodes/EpisodeDescription';
 import { getHost } from '@/app/utils';
 import AppleIcon from '@/components/AppleIcon';
 import { SpotifyIcon } from '@/components/SpotifyIcon';
 import { Button } from '@/components/ui/button';
-import DOMPurify from 'isomorphic-dompurify';
 import { ArrowLeft } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
@@ -124,13 +124,8 @@ export const PodcastDetails = ({
         </div>
 
         {episodeDetails.description && (
-          <div className="w-full">
-            <span
-              className="break-words [&_a:hover]:text-foreground/80 [&_a:hover]:underline [&_a]:text-foreground/60"
-              dangerouslySetInnerHTML={{
-                __html: DOMPurify.sanitize(episodeDetails.description),
-              }}
-            ></span>
+          <div className="prose">
+            <EpisodeDescription description={episodeDetails.description} />
           </div>
         )}
       </div>

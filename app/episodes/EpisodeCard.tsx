@@ -1,6 +1,8 @@
+import { EpisodeDescription } from '@/app/episodes/EpisodeDescription';
 import RatingButtons from '@/app/episodes/RatingButtons';
 import { EpisodeDetailsForList } from '@/app/episodes/page';
 import { Card, CardContent } from '@/components/ui/card';
+
 import Link from 'next/link';
 
 export const EpisodeCard = ({
@@ -9,7 +11,7 @@ export const EpisodeCard = ({
   episode: EpisodeDetailsForList[number];
 }) => {
   return (
-    <Card className="rounded-lg shadow-sm transition duration-100 ease-in-out hover:shadow-lg ">
+    <Card className="max-h-[480px] rounded-lg shadow-sm transition duration-100 ease-in-out hover:shadow-lg">
       <Link
         className="block h-full"
         href={`/episode/${episode.id}/${episode.slug}`}
@@ -27,19 +29,15 @@ export const EpisodeCard = ({
               <h3 className="line-clamp-4 text-lg font-medium text-gray-900 hover:h-auto">
                 {episode.episode_name}
               </h3>
-              <p className="mt-1 text-sm text-gray-500">
+              <p className="mt-1 text-sm font-semibold text-gray-500">
                 {episode.podcast_name}
               </p>
             </div>
             <RatingButtons episode={episode}></RatingButtons>
           </div>
-          <p className="mt-3 line-clamp-3 text-sm text-gray-500">
-            <span
-              dangerouslySetInnerHTML={{
-                __html: episode.description,
-              }}
-            ></span>
-          </p>
+          <div className="prose mt-3 line-clamp-3 text-sm text-gray-500">
+            <EpisodeDescription description={episode.description} />
+          </div>
         </CardContent>
       </Link>
     </Card>

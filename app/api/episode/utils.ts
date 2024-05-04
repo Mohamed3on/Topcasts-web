@@ -136,6 +136,9 @@ export async function scrapeApplePodcastsEpisodeDetails(html: string) {
 
   const description = episodeInfo.attributes.description.standard;
 
+  const genres =
+    episodeInfo.relationships.podcast.data[0].attributes.genreNames;
+
   const image_url = episodeInfo.attributes.artwork.url
     .replace('{w}', '400')
     .replace('{h}', '400')
@@ -167,6 +170,7 @@ export async function scrapeApplePodcastsEpisodeDetails(html: string) {
     podcast_itunes_id,
     episode_itunes_id,
     date_published,
+    podcast_genres: genres,
   };
 
   return returnObject;
