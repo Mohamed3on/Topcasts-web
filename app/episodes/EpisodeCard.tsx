@@ -11,7 +11,7 @@ export const EpisodeCard = ({
   episode: EpisodeDetailsForList[number];
 }) => {
   return (
-    <Card className="max-h-[480px] rounded-lg shadow-sm transition duration-100 ease-in-out hover:shadow-lg">
+    <Card className="rounded-lg shadow-sm transition duration-100 ease-in-out hover:shadow-lg">
       <Link
         className="block h-full"
         href={`/episode/${episode.id}/${episode.slug}`}
