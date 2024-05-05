@@ -1,6 +1,6 @@
 'use client';
 import { ReviewType } from '@/app/api/types';
-import { useReview } from '@/app/useReview';
+import { useReview } from '@/app/hooks/useReview';
 import { Button } from '@/components/ui/button';
 import { Loader2Icon, ThumbsDownIcon, ThumbsUp } from 'lucide-react';
 import React from 'react';

@@ -1,6 +1,5 @@
 import { getHost } from '@/app/utils';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { createClient } from '@/utils/supabase/server';
 import { Plus, SearchIcon } from 'lucide-react';
 import Image from 'next/image';
@@ -15,6 +14,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import { Input } from '@/components/ui/input';
 
 const Header = async () => {
   const supabase = createClient();
@@ -57,13 +57,21 @@ const Header = async () => {
           redirect(href);
         }}
       >
-        <Input
-          name="search"
-          type="search"
-          className="w-64 xl:w-96"
-          placeholder="Search"
-          endIcon={SearchIcon}
-        />
+        <div className="relative w-full">
+          <Input
+            name="search"
+            type="search"
+            className="w-64 xl:w-96"
+            placeholder="Search"
+          />
+
+          <button
+            type="submit"
+            className="absolute right-3 top-1/2 -translate-y-1/2 transform"
+          >
+            <SearchIcon className="text-muted-foreground" size={18} />
+          </button>
+        </div>
       </form>
 
       {user?.user_metadata && (
