@@ -43,7 +43,7 @@ export const PodcastDetails = ({
 }: {
   episodeDetails: EpisodeDetails;
 }) => {
-  return (
+  return process.env.NODE_ENV === 'development' ? (
     <main className="flex flex-col items-center justify-between p-4 md:p-12">
       <div className="flex w-full flex-col items-center justify-center gap-8">
         <div className="flex w-full justify-between">
@@ -130,5 +130,5 @@ export const PodcastDetails = ({
         )}
       </div>
     </main>
-  );
+  ) : null;
 };
