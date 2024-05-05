@@ -7,6 +7,7 @@ import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import Logout from './logout/LogOutButton';
 
+import { AddEpisodeDrawer } from '@/app/AddEpisodeDrawer';
 import MobileNav from '@/app/MobileNav';
 import {
   DropdownMenu,
@@ -24,7 +25,7 @@ const Header = async () => {
   return (
     <header className="flex items-center justify-between border-b px-4 py-2 shadow-sm">
       <div className="md:hidden">
-        <MobileNav />
+        <MobileNav user={user} />
       </div>
 
       <Button
@@ -39,13 +40,21 @@ const Header = async () => {
         <Button className="text-sm" asChild variant="link">
           <Link href="/episodes">Browse Episodes</Link>
         </Button>
-
-        <Button asChild variant="link">
-          <Link className="flex items-center gap-1" href="/episode/add">
-            <Plus className="h-4 w-4" />
-            <span>Add episode</span>
-          </Link>
-        </Button>
+        {user ? (
+          <AddEpisodeDrawer>
+            <Button variant="link" className="flex items-center gap-1">
+              <Plus className="h-4 w-4" />
+              <span>Add episode</span>
+            </Button>
+          </AddEpisodeDrawer>
+        ) : (
+          <Button asChild variant="link">
+            <Link className="flex items-center gap-1" href="/episode/add">
+              <Plus className="h-4 w-4" />
+              <span>Add episode</span>
+            </Link>
+          </Button>
+        )}
       </div>
 
       <form

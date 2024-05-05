@@ -28,7 +28,11 @@ Valid URLs look like:
   `),
 });
 
-export const ImportEpisodeUrl = () => {
+export const ImportEpisodeUrl = ({
+  onSuccessfulSubmit,
+}: {
+  onSuccessfulSubmit?: () => void;
+}) => {
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -63,6 +67,7 @@ export const ImportEpisodeUrl = () => {
         throw data.error;
       }
       router.push(`/episode/${data.id}/${data.slug}`);
+      onSuccessfulSubmit?.();
     } catch (error) {
       toast(
         <div>
