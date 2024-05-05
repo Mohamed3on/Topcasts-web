@@ -1,7 +1,7 @@
 import { getHost } from '@/app/utils';
 import { Button } from '@/components/ui/button';
 import { createClient } from '@/utils/supabase/server';
-import { Plus, SearchIcon } from 'lucide-react';
+import { LogInIcon, Plus, SearchIcon } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
@@ -43,7 +43,7 @@ const Header = async () => {
         <Button asChild variant="link">
           <Link className="flex items-center gap-1" href="/episode/add">
             <Plus className="h-4 w-4" />
-            <span>Add an episode</span>
+            <span>Add episode</span>
           </Link>
         </Button>
       </div>
@@ -102,7 +102,10 @@ const Header = async () => {
 
       {!user && (
         <Button asChild variant="link">
-          <Link href="/login">Login</Link>
+          <Link href="/login" className="flex  gap-1">
+            <LogInIcon className="h-5 w-5" />
+            <span>Login</span>
+          </Link>
         </Button>
       )}
     </header>
