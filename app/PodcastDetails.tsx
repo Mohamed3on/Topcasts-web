@@ -43,29 +43,31 @@ export const PodcastDetails = ({
 }: {
   episodeDetails: EpisodeDetails;
 }) => {
-  return process.env.NODE_ENV === 'development' ? (
+  return (
     <main className="flex flex-col items-center justify-between p-4 md:p-12">
       <div className="flex w-full flex-col items-center justify-center gap-8">
-        <div className="flex w-full justify-between">
-          <Button asChild variant={'link'}>
-            <Link
-              href={`${getHost()}/episode/${episodeDetails.id - 1}`}
-              className="flex gap-1"
-            >
-              <ArrowLeft></ArrowLeft>
-              {'Previous Episode'}
-            </Link>
-          </Button>
-          <Button asChild variant={'link'}>
-            <Link
-              href={`${getHost()}/episode/${episodeDetails.id + 1}`}
-              className="flex gap-1"
-            >
-              {'Next Episode'}
-              <ArrowLeft className="rotate-180 transform"></ArrowLeft>
-            </Link>
-          </Button>
-        </div>
+        {process.env.NODE_ENV === 'development' ? (
+          <div className="flex w-full justify-between">
+            <Button asChild variant={'link'}>
+              <Link
+                href={`${getHost()}/episode/${episodeDetails.id - 1}`}
+                className="flex gap-1"
+              >
+                <ArrowLeft></ArrowLeft>
+                {'Previous Episode'}
+              </Link>
+            </Button>
+            <Button asChild variant={'link'}>
+              <Link
+                href={`${getHost()}/episode/${episodeDetails.id + 1}`}
+                className="flex gap-1"
+              >
+                {'Next Episode'}
+                <ArrowLeft className="rotate-180 transform"></ArrowLeft>
+              </Link>
+            </Button>
+          </div>
+        ) : null}
         <h1 className="text-center text-2xl font-semibold">
           {episodeDetails.episode_name}
         </h1>
@@ -130,5 +132,5 @@ export const PodcastDetails = ({
         )}
       </div>
     </main>
-  ) : null;
+  );
 };
