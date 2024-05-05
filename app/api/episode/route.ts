@@ -26,7 +26,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
       `
       *,
       episode_urls (url, type)
-    `
+    `,
     )
     .eq('id', episode_id)
     .single();
@@ -35,7 +35,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     console.error('Error fetching episode details:', error);
     return NextResponse.json(
       { error: `Failed to fetch episode details: ${error?.message}` },
-      { status: 500 }
+      { status: 500 },
     );
   }
 
@@ -66,7 +66,7 @@ async function handlePodcastURL({
   const supabase = createClient();
 
   const urlInput = url.trim();
-  const cleanedUrl = cleanUrl(urlInput); // Assume this function exists to standardize URLs.
+  const cleanedUrl = cleanUrl(urlInput);
   const type = determineType(cleanedUrl);
 
   if (!type) {
@@ -105,7 +105,7 @@ const getEpisodeDetailsFromDb = async (episodeId: number) => {
       `
       *,
       episode_urls (url, type)
-    `
+    `,
     )
     .eq('id', episodeId)
     .single();
@@ -119,7 +119,10 @@ const getEpisodeDetailsFromDb = async (episodeId: number) => {
 };
 
 async function handleNonPodcastURL(cleanedUrl: string) {
-  const response = await fetch(cleanedUrl, { redirect: 'follow', method: 'GET' });
+  const response = await fetch(cleanedUrl, {
+    redirect: 'follow',
+    method: 'GET',
+  });
   const finalUrl = response.url;
 
   const type = determineType(finalUrl);
@@ -166,11 +169,17 @@ async function handleNewEpisodeData({
       supabase,
     });
 
-    return NextResponse.json(response || { error: 'Failed to update episode details' }, {
-      status: response ? 200 : 500,
-    });
+    return NextResponse.json(
+      response || { error: 'Failed to update episode details' },
+      {
+        status: response ? 200 : 500,
+      },
+    );
   } catch (error) {
     console.error('Error scraping data:', error);
-    return NextResponse.json({ error: 'Error scraping episode details', status: 500 });
+    return NextResponse.json({
+      error: 'Error scraping episode details',
+      status: 500,
+    });
   }
 }

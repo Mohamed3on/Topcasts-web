@@ -1,5 +1,6 @@
 'use client';
 import { LoaderButton } from '@/app/LoaderButton';
+import { determineType } from '@/app/api/episode/utils';
 import { useClipboardIcon } from '@/app/hooks/useClipboardIcon';
 import {
   Form,
@@ -19,13 +20,22 @@ import { toast } from 'sonner';
 import { z } from 'zod';
 
 const formSchema = z.object({
-  episode_url: z.string()
-    .url(`Please enter a valid Apple Podcasts/Spotify/Castro episode URL.
-Valid URLs look like:
-- https://podcasts.apple.com/us/podcast/episode-title/id123456789?i=1000000000000
-- https://open.spotify.com/episode/episode-id
-- https://castro.fm/episode/episode-id
-  `),
+  episode_url: z.string().refine(
+    (url) => {
+      try {
+        const type = determineType(url);
+        return !!type;
+      } catch (e) {
+        return false;
+      }
+    },
+    `Please enter a valid Apple Podcasts/Spotify/Castro episode URL.
+    Valid URLs look like:
+    - https://podcasts.apple.com/us/podcast/episode-title/id123456789?i=1000000000000
+    - https://open.spotify.com/episode/episode-id
+    - https://castro.fm/episode/episode-id
+      `,
+  ),
 });
 
 export const ImportEpisodeUrl = ({

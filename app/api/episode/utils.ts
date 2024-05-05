@@ -207,19 +207,6 @@ export async function scrapeCastroEpisodeDetails(html: string) {
   return returnObject;
 }
 
-interface ParsedUrlResult {
-  cleanedUrl: string;
-  type: 'apple' | 'spotify' | 'castro';
-  html: string;
-}
-
-interface ParsedUrlResult {
-  cleanedUrl: string;
-  type: 'apple' | 'spotify' | 'castro';
-  html: string;
-}
-
-// Utility function to determine URL type
 export function determineType(
   urlString: string,
 ): 'apple' | 'spotify' | 'castro' | null {
