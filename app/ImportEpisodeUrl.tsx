@@ -55,9 +55,13 @@ export const ImportEpisodeUrl = ({
   const { IconComponent, toggleIcon } = useClipboardIcon();
 
   const handleIconClick = async () => {
-    const clipboardText = await navigator.clipboard.readText();
-    form.setValue('episode_url', clipboardText);
-    toggleIcon();
+    try {
+      const clipboardText = await navigator.clipboard.readText();
+      form.setValue('episode_url', clipboardText);
+      toggleIcon();
+    } catch (error) {
+      toast('Clipboard access denied. Please paste manually.');
+    }
   };
 
   const handleSubmit = async (values: z.infer<typeof formSchema>) => {
