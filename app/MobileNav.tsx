@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { Globe, Menu, Plus } from 'lucide-react';
 import Link from 'next/link';
-import { useState } from 'react';
+import { Suspense, useState } from 'react';
 
 const MobileNav = ({ user }: { user: User | null }) => {
   const [open, setOpen] = useState(false);
@@ -41,7 +41,9 @@ const MobileNav = ({ user }: { user: User | null }) => {
             </Link>
           </Button>
           {user ? (
-            <AddEpisodeButton onClick={() => setOpen(false)} />
+            <Suspense>
+              <AddEpisodeButton onClick={() => setOpen(false)} />
+            </Suspense>
           ) : (
             <Button onClick={() => setOpen(false)} asChild variant="link">
               <Link

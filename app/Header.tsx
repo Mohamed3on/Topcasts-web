@@ -16,6 +16,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Input } from '@/components/ui/input';
+import { Suspense } from 'react';
 
 const Header = async () => {
   const supabase = createClient();
@@ -41,7 +42,9 @@ const Header = async () => {
           <Link href="/episodes">Browse Episodes</Link>
         </Button>
         {user ? (
-          <AddEpisodeButton />
+          <Suspense>
+            <AddEpisodeButton />
+          </Suspense>
         ) : (
           <Button asChild variant="link">
             <Link className="flex items-center gap-1" href="/episode/add">
