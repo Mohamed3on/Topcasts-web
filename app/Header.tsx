@@ -86,7 +86,10 @@ const Header = async () => {
       {user?.user_metadata && (
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <div className="flex cursor-pointer items-center gap-2">
+            <Button
+              variant={'outline'}
+              className="flex cursor-pointer items-center gap-2 hover:bg-primary/10"
+            >
               <Image
                 width={32}
                 height={32}
@@ -99,7 +102,7 @@ const Header = async () => {
               <span className="hidden text-sm font-semibold text-primary/80 lg:block">
                 {user.user_metadata.name}
               </span>
-            </div>
+            </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent>
             <DropdownMenuItem>
