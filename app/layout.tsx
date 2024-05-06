@@ -3,6 +3,7 @@ import type { Metadata } from 'next';
 import { Inter } from 'next/font/google';
 import './globals.css';
 
+import { AddEpisodeDrawer } from '@/app/AddEpisodeDrawer';
 import Header from '@/app/Header';
 import { Toaster } from 'sonner';
 
@@ -29,6 +30,7 @@ export default async function RootLayout({
         <main>
           <Header />
           {children}
+          <AddEpisodeDrawer />
           <Toaster />
         </main>
       </body>

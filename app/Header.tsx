@@ -7,7 +7,7 @@ import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import Logout from './logout/LogOutButton';
 
-import { AddEpisodeDrawer } from '@/app/AddEpisodeDrawer';
+import AddEpisodeButton from '@/app/AddEpisodeButton';
 import MobileNav from '@/app/MobileNav';
 import {
   DropdownMenu,
@@ -37,16 +37,11 @@ const Header = async () => {
       </Button>
 
       <div className=" hidden items-center gap-4 md:flex">
-        <Button className="text-sm" asChild variant="link">
+        <Button className="" asChild variant="link">
           <Link href="/episodes">Browse Episodes</Link>
         </Button>
         {user ? (
-          <AddEpisodeDrawer>
-            <Button variant="link" className="flex items-center gap-1">
-              <Plus className="h-4 w-4" />
-              <span>Add episode</span>
-            </Button>
-          </AddEpisodeDrawer>
+          <AddEpisodeButton />
         ) : (
           <Button asChild variant="link">
             <Link className="flex items-center gap-1" href="/episode/add">

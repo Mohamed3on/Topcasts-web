@@ -10,7 +10,7 @@ const fetchUserEpisodes = async (id: string) => {
     .from('episodes_with_rating_data')
     .select(
       `*,
-  episode_reviews!inner(review_type, user_id)
+  episode_reviews!inner(review_type, user_id,created_at, updated_at)
   `,
     )
     .eq('episode_reviews.user_id', id);
@@ -38,6 +38,17 @@ const Page = async ({ params }: { params: { id: string } }) => {
   }
 
   let mappedEpisodes = userEpisodes
+
+    .sort(
+      (a, b) =>
+        // Sort by updated_at date
+        new Date(
+          b.episode_reviews[0]?.updated_at || b.episode_reviews[0]?.created_at,
+        ).getTime() -
+        new Date(
+          a.episode_reviews[0]?.updated_at || a.episode_reviews[0]?.created_at,
+        ).getTime(),
+    )
     .map((episode) => {
       const { episode_reviews, ...rest } = episode;
 
@@ -45,12 +56,7 @@ const Page = async ({ params }: { params: { id: string } }) => {
         ...rest,
         review_type: episode_reviews[0]?.review_type,
       };
-    })
-    .sort(
-      (a, b) =>
-        // Sort by review type, with likes first
-        Number(b.review_type === 'like') - Number(a.review_type === 'like'),
-    );
+    });
 
   return (
     <div className="container pb-24">
