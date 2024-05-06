@@ -1,7 +1,7 @@
 import { getHost } from '@/app/utils';
 import { Button } from '@/components/ui/button';
 import { createClient } from '@/utils/supabase/server';
-import { LogInIcon, Plus, SearchIcon } from 'lucide-react';
+import { HeartIcon, LogInIcon, Plus, SearchIcon } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
@@ -102,6 +102,14 @@ const Header = async () => {
             </div>
           </DropdownMenuTrigger>
           <DropdownMenuContent>
+            <DropdownMenuItem>
+              <Button asChild variant="link" className="">
+                <Link className="flex gap-2" href={`/user/${user.id}/ratings`}>
+                  <HeartIcon className="h-5 w-5" />
+                  <span>My Ratings</span>
+                </Link>
+              </Button>
+            </DropdownMenuItem>
             <DropdownMenuItem>
               <Logout />
             </DropdownMenuItem>

@@ -20,8 +20,7 @@
       "command": "bun run dev",
       "serverReadyAction": {
         "pattern": "- Local:.+(https?://.+)",
-        "uriFormat": "%s",
-        "action": "debugWithChrome"
+        "uriFormat": "%s"
       }
     }
   ]
