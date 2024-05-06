@@ -1,7 +1,7 @@
 import { getHost } from '@/app/utils';
 import { Button } from '@/components/ui/button';
 import { createClient } from '@/utils/supabase/server';
-import { HeartIcon, LogInIcon, Plus, SearchIcon } from 'lucide-react';
+import { HeartIcon, LogInIcon, PlusCircle, SearchIcon } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
@@ -26,7 +26,7 @@ const Header = async () => {
   return (
     <header className="flex items-center justify-between border-b px-4 py-2 shadow-sm">
       <div className="md:hidden">
-        <MobileNav user={user} />
+        <MobileNav />
       </div>
 
       <Button
@@ -37,22 +37,16 @@ const Header = async () => {
         <Link href="/">Topcasts</Link>
       </Button>
 
-      <div className=" hidden items-center gap-4 md:flex">
-        <Button className="" asChild variant="link">
+      <div className=" flex items-center gap-4 ">
+        <Button className="hidden md:flex" asChild variant="link">
           <Link href="/episodes">Browse Episodes</Link>
         </Button>
-        {user ? (
-          <Suspense>
-            <AddEpisodeButton />
-          </Suspense>
-        ) : (
-          <Button asChild variant="link">
-            <Link className="flex items-center gap-1" href="/episode/add">
-              <Plus className="h-4 w-4" />
-              <span>Add episode</span>
-            </Link>
-          </Button>
-        )}
+        <Suspense>
+          <AddEpisodeButton>
+            <PlusCircle className="h-6 w-6" />
+            <span className="hidden md:block">Add episode</span>
+          </AddEpisodeButton>
+        </Suspense>
       </div>
 
       <form
@@ -68,7 +62,7 @@ const Header = async () => {
           <Input
             name="search"
             type="search"
-            className="w-64 xl:w-96"
+            className="w-44 xl:w-96"
             placeholder="Search"
           />
 
@@ -85,8 +79,8 @@ const Header = async () => {
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button
-              variant={'outline'}
-              className="flex cursor-pointer items-center gap-2 hover:bg-primary/10"
+              variant="outline"
+              className="flex cursor-pointer items-center gap-2 border-none"
             >
               <Image
                 width={32}

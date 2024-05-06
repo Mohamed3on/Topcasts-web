@@ -1,13 +1,12 @@
 'use client';
 import AddEpisodeButton from '@/app/AddEpisodeButton';
-import { User } from '@/app/supabase';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
-import { Globe, Menu, Plus } from 'lucide-react';
+import { Globe, Menu } from 'lucide-react';
 import Link from 'next/link';
 import { Suspense, useState } from 'react';
 
-const MobileNav = ({ user }: { user: User | null }) => {
+const MobileNav = () => {
   const [open, setOpen] = useState(false);
 
   return (
@@ -40,21 +39,9 @@ const MobileNav = ({ user }: { user: User | null }) => {
               <span>Browse Episodes</span>
             </Link>
           </Button>
-          {user ? (
-            <Suspense>
-              <AddEpisodeButton onClick={() => setOpen(false)} />
-            </Suspense>
-          ) : (
-            <Button onClick={() => setOpen(false)} asChild variant="link">
-              <Link
-                className="flex items-center justify-start gap-1"
-                href="/episode/add"
-              >
-                <Plus className="h-4 w-4" />
-                <span>Add episode</span>
-              </Link>
-            </Button>
-          )}
+          <Suspense>
+            <AddEpisodeButton onClick={() => setOpen(false)} />
+          </Suspense>
         </div>
       </SheetContent>
     </Sheet>

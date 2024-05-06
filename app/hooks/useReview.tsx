@@ -1,7 +1,7 @@
 'use client';
 import { ReviewType } from '@/app/api/types';
-import { useUser } from '@/app/auth/useUser';
-import { createClient } from '@/utils/supabase/client';
+import { useUser } from '@/app/auth/UserContext';
+import { supabase } from '@/utils/supabase/client';
 import { useRouter } from 'next/navigation';
 import { useCallback, useState } from 'react';
 import { toast } from 'sonner';
@@ -10,7 +10,6 @@ export const useReview = (episodeId: number, reviewType?: ReviewType) => {
   const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
   const user = useUser();
-  const supabase = createClient();
 
   const toggleReview = useCallback(
     async (type: ReviewType) => {
@@ -51,7 +50,7 @@ export const useReview = (episodeId: number, reviewType?: ReviewType) => {
       }
       setIsLoading(false);
     },
-    [user?.id, router, reviewType, supabase, episodeId],
+    [user?.id, router, reviewType, episodeId],
   );
 
   return { toggleReview, isLoading };

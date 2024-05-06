@@ -1,11 +1,20 @@
 'use client';
+import { useUser } from '@/app/auth/UserContext';
+
 import { Button } from '@/components/ui/button';
 import { Plus } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname, useSearchParams } from 'next/navigation';
-import { useCallback } from 'react';
+import React, { useCallback } from 'react';
 
-const AddEpisodeButton = ({ onClick }: { onClick?: () => void }) => {
+const AddEpisodeButton = ({
+  onClick,
+  children,
+}: {
+  onClick?: () => void;
+  children?: React.ReactNode;
+}) => {
+  const user = useUser();
   const pathname = usePathname();
   const searchParams = useSearchParams();
 
@@ -21,11 +30,21 @@ const AddEpisodeButton = ({ onClick }: { onClick?: () => void }) => {
   return (
     <Button asChild variant="link" onClick={onClick}>
       <Link
-        href={`${pathname}?${createQueryString('modal', 'add-episode')}`}
+        href={
+          user
+            ? `${pathname}?${createQueryString('modal', 'add-episode')}`
+            : `/login?${createQueryString('redirect', pathname)}`
+        }
         className="flex items-center justify-start gap-1"
       >
-        <Plus className="h-4 w-4" />
-        <span>Add episode</span>
+        {children ? (
+          children
+        ) : (
+          <React.Fragment>
+            <Plus className="h-4 w-4" />
+            <span>Add episode</span>
+          </React.Fragment>
+        )}
       </Link>
     </Button>
   );

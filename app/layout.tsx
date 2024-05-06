@@ -5,6 +5,7 @@ import './globals.css';
 
 import { AddEpisodeDrawer } from '@/app/AddEpisodeDrawer';
 import Header from '@/app/Header';
+import { UserProvider } from '@/app/auth/UserContext';
 import { Suspense } from 'react';
 import { Toaster } from 'sonner';
 
@@ -29,12 +30,14 @@ export default async function RootLayout({
         )}
       >
         <main>
-          <Header />
-          {children}
-          <Suspense>
-            <AddEpisodeDrawer />
-          </Suspense>
-          <Toaster />
+          <UserProvider>
+            <Header />
+            {children}
+            <Suspense>
+              <AddEpisodeDrawer />
+            </Suspense>
+            <Toaster />
+          </UserProvider>
         </main>
       </body>
     </html>

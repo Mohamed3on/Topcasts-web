@@ -1,19 +1,13 @@
 'use client';
 
 import { ImportEpisodeUrl } from '@/app/ImportEpisodeUrl';
-import { Button } from '@/components/ui/button';
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-import {
-  Drawer,
-  DrawerClose,
-  DrawerContent,
-  DrawerFooter,
-} from '@/components/ui/drawer';
+import { Drawer, DrawerContent } from '@/components/ui/drawer';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { useMediaQuery } from 'usehooks-ts';
 
@@ -51,11 +45,6 @@ export function AddEpisodeDrawer() {
     <Drawer open={isOpen} onOpenChange={(open) => (open ? null : closeModal())}>
       <DrawerContent>
         <ImportEpisodeUrl onSuccessfulSubmit={closeModal} />
-        <DrawerFooter className="pt-2">
-          <DrawerClose asChild>
-            <Button variant="outline">Cancel</Button>
-          </DrawerClose>
-        </DrawerFooter>
       </DrawerContent>
     </Drawer>
   );
