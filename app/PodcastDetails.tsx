@@ -109,8 +109,13 @@ export const PodcastDetails = ({
                 <SpotifyIcon />
               </PlayerIcon>
             )}
-            {episodeDetails.urls?.apple && (
-              <PlayerIcon url={episodeDetails.urls.apple}>
+            {episodeDetails.podcast_itunes_id && (
+              <PlayerIcon
+                url={
+                  episodeDetails.urls?.apple ||
+                  `https://podcasts.apple.com/us/podcast/id${episodeDetails.podcast_itunes_id}`
+                }
+              >
                 <AppleIcon></AppleIcon>
               </PlayerIcon>
             )}
