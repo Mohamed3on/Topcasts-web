@@ -22,8 +22,10 @@ export type Database = {
           guid: string | null
           id: number
           image_url: string | null
+          podcast_genres: string[] | null
           podcast_itunes_id: string | null
           podcast_name: string
+          rss_feed: string | null
           slug: string | null
         }
         Insert: {
@@ -38,8 +40,10 @@ export type Database = {
           guid?: string | null
           id?: number
           image_url?: string | null
+          podcast_genres?: string[] | null
           podcast_itunes_id?: string | null
           podcast_name: string
+          rss_feed?: string | null
           slug?: string | null
         }
         Update: {
@@ -54,8 +58,10 @@ export type Database = {
           guid?: string | null
           id?: number
           image_url?: string | null
+          podcast_genres?: string[] | null
           podcast_itunes_id?: string | null
           podcast_name?: string
+          rss_feed?: string | null
           slug?: string | null
         }
         Relationships: []

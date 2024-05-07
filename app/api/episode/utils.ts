@@ -125,6 +125,7 @@ export async function scrapeApplePodcastsEpisodeDetails(html: string) {
     episode_itunes_id,
     date_published,
     podcast_genres: genres,
+    rss_feed,
   };
 
   return returnObject;
@@ -133,15 +134,18 @@ export async function scrapeApplePodcastsEpisodeDetails(html: string) {
 export async function scrapeCastroEpisodeDetails(html: string) {
   const $ = await getCheerio(html);
 
-  const episode_name = $('h1').text();
+  const episode_name = $('h1').first().text();
   if (episode_name === '404') {
     throw new Error('Episode not found');
   }
-  const podcast_name = $('h2').eq(0).text();
+  const podcast_name = $('h2').first().text();
   const description = $('.co-supertop-castro-show-notes').html();
 
   const pocketCastsLink = $('a[href*="pca.st"]').attr('href');
   const itunesId = pocketCastsLink?.split('/').pop();
+
+  // find the href of the parent element of the img whose alt contains Rss
+  const rss_feed = $('img[alt*="RSS"]').parent().attr('href');
 
   // second h2 is the date published
   // third h2 is the duration
@@ -159,6 +163,7 @@ export async function scrapeCastroEpisodeDetails(html: string) {
     formatted_duration,
     date_published,
     podcast_itunes_id: itunesId,
+    rss_feed,
   };
 
   return returnObject;

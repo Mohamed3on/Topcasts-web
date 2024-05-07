@@ -81,12 +81,12 @@ export const PodcastDetails = ({
             alt={episodeDetails.episode_name}
           />
         )}
-        <a
+        <Link
           href={`/episodes?q="${episodeDetails.podcast_name}"`}
-          className="text-2xl font-bold text-primary/80 transition-all hover:text-primary/60 hover:underline"
+          className="text-2xl font-bold text-primary/60 underline transition-all hover:text-primary/80 hover:no-underline"
         >
           {episodeDetails.podcast_name}
-        </a>
+        </Link>
         <div className="flex flex-col items-center gap-4">
           {episodeDetails.date_published && (
             <p className="text-gray-500">
@@ -131,7 +131,7 @@ export const PodcastDetails = ({
         </div>
 
         {episodeDetails.description && (
-          <div className="prose">
+          <div className="prose w-full">
             <EpisodeDescription description={episodeDetails.description} />
           </div>
         )}
