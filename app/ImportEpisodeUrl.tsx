@@ -12,7 +12,9 @@ import {
   FormMessage,
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { zodResolver } from '@hookform/resolvers/zod';
+import { Meh, ThumbsDown, ThumbsUp } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
@@ -36,6 +38,9 @@ const formSchema = z.object({
     - https://castro.fm/episode/episode-id
       `,
   ),
+  rating: z.enum(['like', 'dislike', 'meh'], {
+    required_error: 'Please rate the episode',
+  }),
 });
 
 export const ImportEpisodeUrl = ({
@@ -47,6 +52,7 @@ export const ImportEpisodeUrl = ({
     resolver: zodResolver(formSchema),
     defaultValues: {
       episode_url: '',
+      rating: 'like',
     },
   });
 
@@ -72,7 +78,10 @@ export const ImportEpisodeUrl = ({
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ url: values.episode_url }),
+        body: JSON.stringify({
+          url: values.episode_url,
+          rating: values.rating,
+        }),
       });
 
       const data = await response.json();
@@ -80,8 +89,8 @@ export const ImportEpisodeUrl = ({
       if (!data || data.error) {
         throw data.error;
       }
-      router.push(`/episode/${data.id}/${data.slug}`);
       onSuccessfulSubmit?.();
+      router.push(`/episode/${data.id}/${data.slug}`);
     } catch (error) {
       toast(
         <div>
@@ -133,6 +142,56 @@ export const ImportEpisodeUrl = ({
                   Valid Episode URLs include Apple Podcasts, Spotify, and
                   Castro.
                 </FormDescription>
+                <FormMessage />
+              </FormItem>
+            )}
+          ></FormField>
+          <FormField
+            control={form.control}
+            name="rating"
+            render={({ field }) => (
+              <FormItem className="w-full">
+                <FormControl>
+                  <RadioGroup
+                    onValueChange={field.onChange}
+                    defaultValue={field.value}
+                    className="flex w-full items-center justify-center gap-4"
+                  >
+                    <FormItem className="flex items-center space-x-3 space-y-0">
+                      <FormControl>
+                        <RadioGroupItem
+                          className="flex items-center gap-1 text-slate-500 data-[state=checked]:border-green-500 data-[state=checked]:text-green-500"
+                          value="like"
+                        >
+                          <ThumbsUp />
+                          <span className="">Like</span>
+                        </RadioGroupItem>
+                      </FormControl>
+                    </FormItem>
+                    <FormItem className="flex items-center space-x-3 space-y-0">
+                      <FormControl>
+                        <RadioGroupItem
+                          className="flex items-center gap-1 text-slate-500 data-[state=checked]:border-yellow-500 data-[state=checked]:text-yellow-500"
+                          value="meh"
+                        >
+                          <Meh />
+                          <span>Meh</span>
+                        </RadioGroupItem>
+                      </FormControl>
+                      <FormControl>
+                        <RadioGroupItem
+                          className="flex items-center gap-1 text-slate-500 data-[state=checked]:border-red-500 data-[state=checked]:text-red-500"
+                          value="dislike"
+                        >
+                          <ThumbsDown />
+                          <span>Dislike</span>
+                        </RadioGroupItem>
+                      </FormControl>
+                    </FormItem>
+                    <FormItem className="flex items-center space-x-3 space-y-0"></FormItem>
+                  </RadioGroup>
+                </FormControl>
+
                 <FormMessage />
               </FormItem>
             )}

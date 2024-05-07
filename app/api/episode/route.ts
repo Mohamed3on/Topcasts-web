@@ -144,10 +144,16 @@ async function handleNonPodcastURL(cleanedUrl: string) {
 
 export async function POST(request: NextRequest): Promise<NextResponse> {
   const body = await request.json();
+  const supabase = createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
 
   if (!body || !body?.url) {
     return NextResponse.json({ error: 'Invalid URL' }, { status: 400 });
   }
+
+  const rating = body.rating;
 
   const response = await handlePodcastURL({
     url: body.url,
@@ -167,6 +173,21 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       { status: response.status },
     );
   }
+
+  if (rating && user) {
+    await supabase.from('episode_reviews').upsert(
+      {
+        episode_id: response.id,
+        user_id: user.id,
+        review_type: rating,
+        updated_at: new Date().toISOString(),
+      },
+      {
+        onConflict: 'user_id, episode_id',
+      },
+    );
+  }
+
   return NextResponse.json(response);
 }
 
