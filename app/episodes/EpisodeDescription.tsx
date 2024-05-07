@@ -20,7 +20,6 @@ export const EpisodeDescription = ({
 
   return (
     <span
-      className="break-words"
       dangerouslySetInnerHTML={{
         __html: sanitizedHtml,
       }}

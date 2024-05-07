@@ -1,7 +1,5 @@
-import { SupabaseClient } from '@/app/api/types/SupabaseClient';
 import { load } from 'cheerio';
 import slugify from 'slugify';
-import { ScrapedEpisodeDetails } from '../types';
 
 export function formatUrls(
   urlsArray: { url: string; type: string }[],
@@ -19,50 +17,6 @@ const getCheerio = async (html: string) => {
     throw new Error('Failed to load HTML');
   }
 };
-
-export async function updateEpisodeDetails({
-  type,
-  cleanedUrl,
-  scrapedData,
-  supabase,
-}: {
-  type: 'apple' | 'spotify' | 'castro';
-  cleanedUrl: string;
-  scrapedData: ScrapedEpisodeDetails;
-  supabase: SupabaseClient;
-}): Promise<{ id: number; slug: string } | null> {
-  try {
-    const slug = slugifyDetails(
-      scrapedData.episode_name,
-      scrapedData.podcast_name,
-    );
-
-    const { data, error } = await supabase
-      .from('episode_details')
-      .upsert({ ...scrapedData, slug }, { onConflict: 'slug' })
-      .select('id')
-      .single();
-
-    if (error) throw error;
-    if (!data) throw new Error('Failed to upsert episode details');
-    const episodeId = data.id;
-
-    // save the url to the episode_urls table
-    const urlUpsert = await supabase
-      .from('episode_urls')
-      .insert({ url: cleanedUrl, episode_id: episodeId, type })
-      .select('episode_id')
-      .single();
-
-    if (urlUpsert.error) throw urlUpsert.error;
-    if (!urlUpsert.data) throw new Error('Failed to upsert episode URL');
-
-    return { id: episodeId, slug };
-  } catch (error) {
-    console.error('Error updating episode details:', error);
-    return null;
-  }
-}
 
 export async function scrapeDataByType(
   type: 'apple' | 'spotify' | 'castro',
@@ -180,6 +134,9 @@ export async function scrapeCastroEpisodeDetails(html: string) {
   const $ = await getCheerio(html);
 
   const episode_name = $('h1').text();
+  if (episode_name === '404') {
+    throw new Error('Episode not found');
+  }
   const podcast_name = $('h2').eq(0).text();
   const description = $('.co-supertop-castro-show-notes').html();
 

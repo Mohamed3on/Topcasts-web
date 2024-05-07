@@ -24,7 +24,7 @@ const Header = async () => {
   const user = data?.user;
 
   return (
-    <header className="flex items-center justify-between border-b px-4 py-2 shadow-sm">
+    <header className="sticky top-0  flex w-full items-center justify-between border-b bg-background/95 px-4 py-2 shadow-sm backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="md:hidden">
         <MobileNav />
       </div>

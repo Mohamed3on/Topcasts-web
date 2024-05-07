@@ -1,14 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-import {
-  determineType,
-  formatUrls,
-  getHtml,
-  scrapeDataByType,
-  updateEpisodeDetails,
-} from './utils';
+import { determineType, formatUrls, getHtml, scrapeDataByType } from './utils';
 
+import { ScrapedEpisodeDetails } from '@/app/api/types';
 import { createClient } from '@/utils/supabase/server';
+import { slugifyDetails } from './utils';
 
 export async function GET(request: NextRequest): Promise<NextResponse> {
   const supabase = createClient();
@@ -62,7 +58,16 @@ async function handlePodcastURL({
 }: {
   url: string;
   html?: string;
-}): Promise<NextResponse> {
+}): Promise<
+  | {
+      id: number;
+      slug: string | null;
+    }
+  | {
+      error: string;
+      status: number;
+    }
+> {
   const supabase = createClient();
 
   const urlInput = url.trim();
@@ -84,7 +89,7 @@ async function handlePodcastURL({
   if (data?.episode_id) {
     const episodeDetails = await getEpisodeDetailsFromDb(data.episode_id);
 
-    return NextResponse.json(episodeDetails);
+    if (episodeDetails) return episodeDetails;
   }
 
   if (!html) {
@@ -127,7 +132,7 @@ async function handleNonPodcastURL(cleanedUrl: string) {
 
   const type = determineType(finalUrl);
   if (!type) {
-    return NextResponse.json({ error: 'Invalid URL' }, { status: 400 });
+    return { error: 'Invalid URL', status: 400 };
   }
 
   const html = await response.text();
@@ -144,9 +149,25 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     return NextResponse.json({ error: 'Invalid URL' }, { status: 400 });
   }
 
-  return handlePodcastURL({
+  const response = await handlePodcastURL({
     url: body.url,
   });
+
+  if (!response) {
+    return NextResponse.json(
+      { error: 'Failed to fetch episode details' },
+      { status: 500 },
+    );
+  }
+  if ('error' in response) {
+    return NextResponse.json(
+      {
+        error: response.error,
+      },
+      { status: response.status },
+    );
+  }
+  return NextResponse.json(response);
 }
 
 async function handleNewEpisodeData({
@@ -159,27 +180,83 @@ async function handleNewEpisodeData({
   cleanedUrl: string;
 }) {
   try {
-    const supabase = createClient();
     const scrapedData = await scrapeDataByType(type, html);
 
-    const response = await updateEpisodeDetails({
+    if (!scrapedData.episode_name) {
+      return {
+        error: 'Episode does not exist or could not be scraped',
+        status: 400,
+      };
+    }
+
+    const episodeDetails = await updateEpisodeDetails({
       type,
       cleanedUrl,
       scrapedData,
-      supabase,
     });
 
-    return NextResponse.json(
-      response || { error: 'Failed to update episode details' },
-      {
-        status: response ? 200 : 500,
-      },
+    return (
+      episodeDetails || {
+        error: 'Failed to update episode details',
+        status: 500,
+      }
     );
   } catch (error) {
     console.error('Error scraping data:', error);
-    return NextResponse.json({
+    return {
       error: 'Error scraping episode details',
       status: 500,
-    });
+    };
+  }
+}
+export async function updateEpisodeDetails({
+  type,
+  cleanedUrl,
+  scrapedData,
+}: {
+  type: 'apple' | 'spotify' | 'castro';
+  cleanedUrl: string;
+  scrapedData: ScrapedEpisodeDetails;
+}): Promise<
+  | { id: number; slug: string }
+  | {
+      error: string;
+      status: number;
+    }
+> {
+  const supabase = createClient();
+  try {
+    const slug = slugifyDetails(
+      scrapedData.episode_name,
+      scrapedData.podcast_name,
+    );
+
+    const { data, error } = await supabase
+      .from('episode_details')
+      .upsert({ ...scrapedData, slug }, { onConflict: 'slug' })
+      .select('id')
+      .single();
+
+    if (error) throw error;
+    if (!data) throw new Error('Failed to upsert episode details');
+    const episodeId = data.id;
+
+    // save the url to the episode_urls table
+    const urlUpsert = await supabase
+      .from('episode_urls')
+      .insert({ url: cleanedUrl, episode_id: episodeId, type })
+      .select('episode_id')
+      .single();
+
+    if (urlUpsert.error) throw urlUpsert.error;
+    if (!urlUpsert.data) throw new Error('Failed to upsert episode URL');
+
+    return { id: episodeId, slug };
+  } catch (error) {
+    console.error('Error updating episode details:', error);
+    return {
+      error: 'Failed to update episode details',
+      status: 500,
+    };
   }
 }
