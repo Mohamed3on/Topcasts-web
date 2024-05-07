@@ -209,7 +209,8 @@ async function handleNewEpisodeData({
     };
   }
 }
-export async function updateEpisodeDetails({
+
+async function updateEpisodeDetails({
   type,
   cleanedUrl,
   scrapedData,
