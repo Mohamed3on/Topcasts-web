@@ -13,6 +13,7 @@ import {
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { Textarea } from '@/components/ui/textarea';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { ThumbsDown, ThumbsUp } from 'lucide-react';
 import { useRouter } from 'next/navigation';
@@ -41,6 +42,8 @@ const formSchema = z.object({
   rating: z.enum(['like', 'dislike'], {
     required_error: 'Please rate the episode',
   }),
+
+  review_text: z.string().optional(),
 });
 
 export const ImportEpisodeUrl = ({
@@ -79,8 +82,8 @@ export const ImportEpisodeUrl = ({
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
+          ...values,
           url: values.episode_url,
-          rating: values.rating,
         }),
       });
 
@@ -134,7 +137,10 @@ export const ImportEpisodeUrl = ({
                       className="absolute right-3 top-1/2 -translate-y-1/2 transform transition duration-300 ease-in-out"
                       onClick={handleIconClick}
                     >
-                      <IconComponent />
+                      {/* paste does not work as expected on iPhone */}
+                      {!navigator.userAgent.includes('iPhone') && (
+                        <IconComponent />
+                      )}
                     </button>
                   </div>
                 </FormControl>
@@ -181,6 +187,23 @@ export const ImportEpisodeUrl = ({
                       </FormControl>
                     </FormItem>
                   </RadioGroup>
+                </FormControl>
+
+                <FormMessage />
+              </FormItem>
+            )}
+          ></FormField>
+
+          <FormField
+            control={form.control}
+            name="review_text"
+            render={({ field }) => (
+              <FormItem className="w-full">
+                <FormControl>
+                  <Textarea
+                    {...field}
+                    placeholder="Write a review (optional)"
+                  />
                 </FormControl>
 
                 <FormMessage />

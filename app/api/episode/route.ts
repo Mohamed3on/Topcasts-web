@@ -155,6 +155,8 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
 
   const rating = body.rating;
 
+  const reviewText = body.review_text;
+
   const response = await handlePodcastURL({
     url: body.url,
   });
@@ -180,6 +182,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
         episode_id: response.id,
         user_id: user.id,
         review_type: rating,
+        text: reviewText,
         updated_at: new Date().toISOString(),
       },
       {
