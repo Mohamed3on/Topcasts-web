@@ -14,14 +14,17 @@ export type ScrapedEpisodeDetails = {
   podcast_itunes_id?: string | null;
   podcast_name: string;
   slug?: string | null;
+  rss_feed?: string | null;
+  podcast_genres?: string[] | null;
 };
 
-export type EpisodeDetails = Database['public']['Tables']['episode_details']['Row'] & {
-  urls?: {
-    spotify?: string;
-    apple?: string;
-    castro?: string;
+export type EpisodeDetails =
+  Database['public']['Tables']['episode_details']['Row'] & {
+    urls?: {
+      spotify?: string;
+      apple?: string;
+      castro?: string;
+    };
   };
-};
 
-export type ReviewType = 'like' | 'dislike' | 'meh';
+export type ReviewType = 'like' | 'dislike';

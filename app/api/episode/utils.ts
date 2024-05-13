@@ -147,6 +147,9 @@ export async function scrapeCastroEpisodeDetails(html: string) {
   // find the href of the parent element of the img whose alt contains Rss
   const rss_feed = $('img[alt*="RSS"]').parent().attr('href');
 
+  // <source inside of the audio tag
+  const audio_url = $('audio source').attr('src');
+
   // second h2 is the date published
   // third h2 is the duration
   const date_published = $('h2').eq(1).text();
@@ -164,6 +167,7 @@ export async function scrapeCastroEpisodeDetails(html: string) {
     date_published,
     podcast_itunes_id: itunesId,
     rss_feed,
+    audio_url,
   };
 
   return returnObject;

@@ -14,7 +14,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { Meh, ThumbsDown, ThumbsUp } from 'lucide-react';
+import { ThumbsDown, ThumbsUp } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
@@ -38,7 +38,7 @@ const formSchema = z.object({
     - https://castro.fm/episode/episode-id
       `,
   ),
-  rating: z.enum(['like', 'dislike', 'meh'], {
+  rating: z.enum(['like', 'dislike'], {
     required_error: 'Please rate the episode',
   }),
 });
@@ -168,16 +168,8 @@ export const ImportEpisodeUrl = ({
                         </RadioGroupItem>
                       </FormControl>
                     </FormItem>
+
                     <FormItem className="flex items-center space-x-3 space-y-0">
-                      <FormControl>
-                        <RadioGroupItem
-                          className="flex items-center gap-1 text-slate-500 data-[state=checked]:border-yellow-500 data-[state=checked]:text-yellow-500"
-                          value="meh"
-                        >
-                          <Meh />
-                          <span>Meh</span>
-                        </RadioGroupItem>
-                      </FormControl>
                       <FormControl>
                         <RadioGroupItem
                           className="flex items-center gap-1 text-slate-500 data-[state=checked]:border-red-500 data-[state=checked]:text-red-500"
@@ -188,7 +180,6 @@ export const ImportEpisodeUrl = ({
                         </RadioGroupItem>
                       </FormControl>
                     </FormItem>
-                    <FormItem className="flex items-center space-x-3 space-y-0"></FormItem>
                   </RadioGroup>
                 </FormControl>
 

@@ -1,12 +1,11 @@
 'use client';
 import { ReviewType } from '@/app/api/types';
 import { Button } from '@/components/ui/button';
-import { Loader2Icon, Meh, ThumbsDownIcon, ThumbsUp } from 'lucide-react';
+import { Loader2Icon, ThumbsDownIcon, ThumbsUp } from 'lucide-react';
 import { useReview } from './hooks/useReview';
 
 const reviewOptions = [
   { type: 'like', Icon: ThumbsUp, color: 'text-green-500' },
-  { type: 'meh', Icon: Meh, color: 'text-yellow-500' },
   { type: 'dislike', Icon: ThumbsDownIcon, color: 'text-red-500' },
 ] as const;
 
