@@ -24,7 +24,7 @@ const Header = async () => {
   const user = data?.user;
 
   return (
-    <header className="sticky top-0  flex w-full items-center justify-between border-b bg-background/95 px-4 py-2 shadow-sm backdrop-blur supports-[backdrop-filter]:bg-background/60">
+    <header className="sticky top-0 z-10  flex w-full items-center justify-between border-b bg-background/95 px-4 py-2 shadow-sm backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="md:hidden">
         <MobileNav />
       </div>
@@ -80,7 +80,7 @@ const Header = async () => {
           <DropdownMenuTrigger asChild>
             <Button
               variant="outline"
-              className="flex cursor-pointer items-center gap-2 border-none"
+              className="flex cursor-pointer items-center gap-2 border-none bg-inherit"
             >
               <Image
                 width={32}
