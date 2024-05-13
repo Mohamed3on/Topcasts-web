@@ -9,7 +9,66 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
-      episode_details: {
+      episode_reviews: {
+        Row: {
+          created_at: string
+          episode_id: number
+          id: number
+          review_type: string
+          text: string | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          episode_id: number
+          id?: number
+          review_type: string
+          text?: string | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          episode_id?: number
+          id?: number
+          review_type?: string
+          text?: string | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "episode_reviews_review_type_fkey"
+            columns: ["review_type"]
+            isOneToOne: false
+            referencedRelation: "review_type"
+            referencedColumns: ["type"]
+          },
+          {
+            foreignKeyName: "reviews_episode_id_fkey"
+            columns: ["episode_id"]
+            isOneToOne: false
+            referencedRelation: "episodes_with_rating_data"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "reviews_episode_id_fkey"
+            columns: ["episode_id"]
+            isOneToOne: false
+            referencedRelation: "podcast_episode"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "reviews_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profile"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      podcast_episode: {
         Row: {
           artist_name: string | null
           audio_url: string | null
@@ -66,66 +125,7 @@ export type Database = {
         }
         Relationships: []
       }
-      episode_reviews: {
-        Row: {
-          created_at: string
-          episode_id: number
-          id: number
-          review_type: string
-          text: string | null
-          updated_at: string | null
-          user_id: string
-        }
-        Insert: {
-          created_at?: string
-          episode_id: number
-          id?: number
-          review_type: string
-          text?: string | null
-          updated_at?: string | null
-          user_id: string
-        }
-        Update: {
-          created_at?: string
-          episode_id?: number
-          id?: number
-          review_type?: string
-          text?: string | null
-          updated_at?: string | null
-          user_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "episode_reviews_review_type_fkey"
-            columns: ["review_type"]
-            isOneToOne: false
-            referencedRelation: "review_types"
-            referencedColumns: ["type"]
-          },
-          {
-            foreignKeyName: "reviews_episode_id_fkey"
-            columns: ["episode_id"]
-            isOneToOne: false
-            referencedRelation: "episode_details"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "reviews_episode_id_fkey"
-            columns: ["episode_id"]
-            isOneToOne: false
-            referencedRelation: "episodes_with_rating_data"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "reviews_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      episode_urls: {
+      podcast_episode_url: {
         Row: {
           episode_id: number
           id: number
@@ -149,19 +149,19 @@ export type Database = {
             foreignKeyName: "public_episode_urls_new_episode_id_fkey"
             columns: ["episode_id"]
             isOneToOne: false
-            referencedRelation: "episode_details"
+            referencedRelation: "episodes_with_rating_data"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "public_episode_urls_new_episode_id_fkey"
             columns: ["episode_id"]
             isOneToOne: false
-            referencedRelation: "episodes_with_rating_data"
+            referencedRelation: "podcast_episode"
             referencedColumns: ["id"]
           },
         ]
       }
-      profiles: {
+      profile: {
         Row: {
           avatar_url: string | null
           id: string
@@ -196,7 +196,7 @@ export type Database = {
           },
         ]
       }
-      review_types: {
+      review_type: {
         Row: {
           type: string
         }
@@ -207,6 +207,36 @@ export type Database = {
           type?: string
         }
         Relationships: []
+      }
+      social_share: {
+        Row: {
+          episode_id: number
+          shared_by: string
+        }
+        Insert: {
+          episode_id: number
+          shared_by: string
+        }
+        Update: {
+          episode_id?: number
+          shared_by?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "social_shares_episode_id_fkey"
+            columns: ["episode_id"]
+            isOneToOne: false
+            referencedRelation: "episodes_with_rating_data"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "social_shares_episode_id_fkey"
+            columns: ["episode_id"]
+            isOneToOne: false
+            referencedRelation: "podcast_episode"
+            referencedColumns: ["id"]
+          },
+        ]
       }
     }
     Views: {

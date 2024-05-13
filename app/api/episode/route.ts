@@ -17,11 +17,11 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
   }
 
   const { data, error } = await supabase
-    .from('episode_details')
+    .from('podcast_episode')
     .select(
       `
       *,
-      episode_urls (url, type)
+      podcast_episode_url (url, type)
     `,
     )
     .eq('id', episode_id)
@@ -35,7 +35,10 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     );
   }
 
-  return NextResponse.json({ ...data, urls: formatUrls(data.episode_urls) });
+  return NextResponse.json({
+    ...data,
+    urls: formatUrls(data.podcast_episode_url),
+  });
 }
 
 const cleanUrl = (urlString: string) => {
@@ -81,7 +84,7 @@ async function handlePodcastURL({
 
   // find url in supabase
   const { data } = await supabase
-    .from('episode_urls')
+    .from('podcast_episode_url')
     .select('episode_id')
     .eq('url', cleanedUrl)
     .single();
@@ -105,11 +108,11 @@ async function handlePodcastURL({
 const getEpisodeDetailsFromDb = async (episodeId: number) => {
   const supabase = createClient();
   const { data, error } = await supabase
-    .from('episode_details')
+    .from('podcast_episode')
     .select(
       `
       *,
-      episode_urls (url, type)
+      podcast_episode_url (url, type)
     `,
     )
     .eq('id', episodeId)
@@ -120,7 +123,7 @@ const getEpisodeDetailsFromDb = async (episodeId: number) => {
     return null;
   }
 
-  return { ...data, urls: formatUrls(data.episode_urls) };
+  return { ...data, urls: formatUrls(data.podcast_episode_url) };
 };
 
 async function handleNonPodcastURL(cleanedUrl: string) {
@@ -257,7 +260,7 @@ async function updateEpisodeDetails({
     );
 
     const { data, error } = await supabase
-      .from('episode_details')
+      .from('podcast_episode')
       .upsert({ ...scrapedData, slug }, { onConflict: 'slug' })
       .select('id')
       .single();
@@ -266,9 +269,9 @@ async function updateEpisodeDetails({
     if (!data) throw new Error('Failed to upsert episode details');
     const episodeId = data.id;
 
-    // save the url to the episode_urls table
+    // save the url to the podcast_episode_url table
     const urlUpsert = await supabase
-      .from('episode_urls')
+      .from('podcast_episode_url')
       .insert({ url: cleanedUrl, episode_id: episodeId, type })
       .select('episode_id')
       .single();
