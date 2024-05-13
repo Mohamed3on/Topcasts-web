@@ -3,10 +3,8 @@ import type { Metadata } from 'next';
 import { Inter } from 'next/font/google';
 import './globals.css';
 
-import { AddEpisodeDrawer } from '@/app/AddEpisodeDrawer';
 import Header from '@/app/Header';
 import { UserProvider } from '@/app/auth/UserContext';
-import { Suspense } from 'react';
 import { Toaster } from 'sonner';
 
 const inter = Inter({ subsets: ['latin'], variable: '--font-sans' });
@@ -33,9 +31,7 @@ export default async function RootLayout({
           <UserProvider>
             <Header />
             {children}
-            <Suspense>
-              <AddEpisodeDrawer />
-            </Suspense>
+
             <Toaster />
           </UserProvider>
         </main>

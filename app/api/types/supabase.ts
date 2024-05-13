@@ -211,15 +211,15 @@ export type Database = {
       social_share: {
         Row: {
           episode_id: number
-          shared_by: string
+          twitter_screen_name: string
         }
         Insert: {
           episode_id: number
-          shared_by: string
+          twitter_screen_name: string
         }
         Update: {
           episode_id?: number
-          shared_by?: string
+          twitter_screen_name?: string
         }
         Relationships: [
           {

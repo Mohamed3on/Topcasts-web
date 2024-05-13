@@ -1,10 +1,9 @@
 'use client';
-import AddEpisodeButton from '@/app/AddEpisodeButton';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { Globe, Menu } from 'lucide-react';
 import Link from 'next/link';
-import { Suspense, useState } from 'react';
+import { useState } from 'react';
 
 const MobileNav = () => {
   const [open, setOpen] = useState(false);
@@ -39,9 +38,6 @@ const MobileNav = () => {
               <span>Browse Episodes</span>
             </Link>
           </Button>
-          <Suspense>
-            <AddEpisodeButton onClick={() => setOpen(false)} />
-          </Suspense>
         </div>
       </SheetContent>
     </Sheet>
