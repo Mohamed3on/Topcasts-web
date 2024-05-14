@@ -6,6 +6,7 @@ import './globals.css';
 import Header from '@/app/Header';
 import { UserProvider } from '@/app/auth/UserContext';
 import { createClient } from '@/utils/supabase/server';
+import { Analytics } from '@vercel/analytics/react';
 import type { Viewport } from 'next';
 import { Toaster } from 'sonner';
 
@@ -39,6 +40,7 @@ export default async function RootLayout({
           inter.variable,
         )}
       >
+        <Analytics />
         <main>
           <UserProvider user={user}>
             <Header />
