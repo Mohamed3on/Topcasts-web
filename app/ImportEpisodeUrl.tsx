@@ -49,7 +49,7 @@ const formSchema = z.object({
 export const ImportEpisodeUrl = ({
   onSuccessfulSubmit,
 }: {
-  onSuccessfulSubmit?: () => void;
+  onSuccessfulSubmit: () => void;
 }) => {
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -92,7 +92,7 @@ export const ImportEpisodeUrl = ({
       if (!data || data.error) {
         throw data.error;
       }
-      onSuccessfulSubmit?.();
+      onSuccessfulSubmit();
       router.push(`/episode/${data.id}/${data.slug}`);
     } catch (error) {
       toast(
