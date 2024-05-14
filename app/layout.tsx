@@ -5,6 +5,7 @@ import './globals.css';
 
 import Header from '@/app/Header';
 import { UserProvider } from '@/app/auth/UserContext';
+import { createClient } from '@/utils/supabase/server';
 import { Toaster } from 'sonner';
 
 const inter = Inter({ subsets: ['latin'], variable: '--font-sans' });
@@ -19,6 +20,10 @@ export default async function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const supabase = createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
   return (
     <html lang="en">
       <meta
@@ -32,7 +37,7 @@ export default async function RootLayout({
         )}
       >
         <main>
-          <UserProvider>
+          <UserProvider user={user}>
             <Header />
             {children}
 

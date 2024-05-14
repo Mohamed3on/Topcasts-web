@@ -30,20 +30,20 @@ const AddEpisodeButton = ({
     ? `${pathname}?${createQueryString('modal', 'add-episode')}`
     : `/login?${createQueryString('redirect', pathname)}`;
 
-  const LinkComponent = () => (
+  return user ? (
+    <AddEpisodeDrawer>
+      <Button asChild variant="link">
+        <Link href={href} className="flex items-center justify-start gap-1">
+          {children}
+        </Link>
+      </Button>
+    </AddEpisodeDrawer>
+  ) : (
     <Button asChild variant="link">
       <Link href={href} className="flex items-center justify-start gap-1">
         {children}
       </Link>
     </Button>
-  );
-
-  return user ? (
-    <AddEpisodeDrawer>
-      <LinkComponent />
-    </AddEpisodeDrawer>
-  ) : (
-    <LinkComponent />
   );
 };
 

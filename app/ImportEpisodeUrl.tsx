@@ -123,12 +123,12 @@ export const ImportEpisodeUrl = ({
             control={form.control}
             name="episode_url"
             render={({ field }) => (
-              <FormItem className="w-full">
+              <FormItem className="w-full sm:w-1/2">
                 <FormLabel>Enter the Episode URL to add to Topcasts</FormLabel>
                 <FormControl>
                   <div className="relative">
                     <Input
-                      className="text-md w-full overflow-hidden pr-10"
+                      className="text-md  overflow-hidden pr-10 "
                       {...field}
                       placeholder="https://open.spotify.com/episode/4TVeJ7kvd9SqEKWGVZYDUU"
                     />
@@ -198,7 +198,7 @@ export const ImportEpisodeUrl = ({
             control={form.control}
             name="review_text"
             render={({ field }) => (
-              <FormItem className="w-full">
+              <FormItem className="h-auto w-full sm:w-1/3">
                 <FormControl>
                   <Textarea
                     {...field}

@@ -2,27 +2,17 @@
 
 import type { AuthUser as User } from '@supabase/supabase-js';
 
-import { supabase } from '@/utils/supabase/client';
-import { createContext, useContext, useEffect, useState } from 'react';
+import { createContext, useContext } from 'react';
 
 const UserContext = createContext<User | null>(null);
 
-export const UserProvider = ({ children }: { children: React.ReactNode }) => {
-  const [user, setUser] = useState<User | null>(null);
-
-  useEffect(() => {
-    const fetchUser = async () => {
-      const {
-        data: { user },
-        error,
-      } = await supabase.auth.getUser();
-      if (!error) {
-        setUser(user);
-      }
-    };
-    fetchUser();
-  }, []);
-
+export const UserProvider = ({
+  children,
+  user,
+}: {
+  children: React.ReactNode;
+  user: User | null;
+}) => {
   return <UserContext.Provider value={user}>{children}</UserContext.Provider>;
 };
 
