@@ -1,5 +1,11 @@
 import EpisodesList from '@/app/episodes/List';
 import { createClient } from '@/utils/supabase/server';
+import { Metadata } from 'next';
+
+export const metadata: Metadata = {
+  title: 'Browse Episodes',
+  description: 'Discover the best podcast episodes on the internet.',
+};
 
 const fetchEpisodes = async ({
   searchParams,
