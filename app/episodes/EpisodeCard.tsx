@@ -23,7 +23,7 @@ export const EpisodeCard = ({
           />
         </div>
         <CardContent className="p-4">
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between gap-1">
             <div>
               <h3 className="line-clamp-4 text-lg font-medium text-gray-900 hover:h-auto">
                 {episode.episode_name}
