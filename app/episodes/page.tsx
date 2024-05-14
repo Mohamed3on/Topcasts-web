@@ -22,7 +22,7 @@ const fetchEpisodes = async ({
 
   const { data, error } = await supabase
     .rpc('search_episodes', {
-      search_query: searchParams?.q?.replace(/ /g, '+'),
+      search_query: searchParams?.q?.replace(/ /g, '+') || '',
       current_user_id: userId,
     })
     .limit(30);

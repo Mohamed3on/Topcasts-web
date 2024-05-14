@@ -9,65 +9,6 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
-      episode_reviews: {
-        Row: {
-          created_at: string
-          episode_id: number
-          id: number
-          review_type: string
-          text: string | null
-          updated_at: string | null
-          user_id: string
-        }
-        Insert: {
-          created_at?: string
-          episode_id: number
-          id?: number
-          review_type: string
-          text?: string | null
-          updated_at?: string | null
-          user_id: string
-        }
-        Update: {
-          created_at?: string
-          episode_id?: number
-          id?: number
-          review_type?: string
-          text?: string | null
-          updated_at?: string | null
-          user_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "episode_reviews_review_type_fkey"
-            columns: ["review_type"]
-            isOneToOne: false
-            referencedRelation: "review_type"
-            referencedColumns: ["type"]
-          },
-          {
-            foreignKeyName: "reviews_episode_id_fkey"
-            columns: ["episode_id"]
-            isOneToOne: false
-            referencedRelation: "episodes_with_rating_data"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "reviews_episode_id_fkey"
-            columns: ["episode_id"]
-            isOneToOne: false
-            referencedRelation: "podcast_episode"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "reviews_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "profile"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       podcast_episode: {
         Row: {
           artist_name: string | null
@@ -125,6 +66,72 @@ export type Database = {
         }
         Relationships: []
       }
+      podcast_episode_review: {
+        Row: {
+          created_at: string
+          episode_id: number
+          id: number
+          review_type: string
+          text: string | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          episode_id: number
+          id?: number
+          review_type: string
+          text?: string | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          episode_id?: number
+          id?: number
+          review_type?: string
+          text?: string | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "episode_reviews_review_type_fkey"
+            columns: ["review_type"]
+            isOneToOne: false
+            referencedRelation: "review_type"
+            referencedColumns: ["type"]
+          },
+          {
+            foreignKeyName: "reviews_episode_id_fkey"
+            columns: ["episode_id"]
+            isOneToOne: false
+            referencedRelation: "episode_with_rating_data"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "reviews_episode_id_fkey"
+            columns: ["episode_id"]
+            isOneToOne: false
+            referencedRelation: "episodes_with_rating_data"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "reviews_episode_id_fkey"
+            columns: ["episode_id"]
+            isOneToOne: false
+            referencedRelation: "podcast_episode"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "reviews_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profile"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       podcast_episode_url: {
         Row: {
           episode_id: number
@@ -145,6 +152,13 @@ export type Database = {
           url?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "public_episode_urls_new_episode_id_fkey"
+            columns: ["episode_id"]
+            isOneToOne: false
+            referencedRelation: "episode_with_rating_data"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "public_episode_urls_new_episode_id_fkey"
             columns: ["episode_id"]
@@ -226,6 +240,13 @@ export type Database = {
             foreignKeyName: "social_shares_episode_id_fkey"
             columns: ["episode_id"]
             isOneToOne: false
+            referencedRelation: "episode_with_rating_data"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "social_shares_episode_id_fkey"
+            columns: ["episode_id"]
+            isOneToOne: false
             referencedRelation: "episodes_with_rating_data"
             referencedColumns: ["id"]
           },
@@ -240,6 +261,72 @@ export type Database = {
       }
     }
     Views: {
+      episode_with_rating_data: {
+        Row: {
+          artist_name: string | null
+          audio_url: string | null
+          date_published: string | null
+          description: string | null
+          dislikes: number | null
+          duration: number | null
+          episode_itunes_id: string | null
+          episode_name: string | null
+          formatted_duration: string | null
+          guid: string | null
+          id: number | null
+          image_url: string | null
+          likes: number | null
+          podcast_genres: string[] | null
+          podcast_itunes_id: string | null
+          podcast_name: string | null
+          rss_feed: string | null
+          slug: string | null
+          twitter_shares: number | null
+        }
+        Insert: {
+          artist_name?: string | null
+          audio_url?: string | null
+          date_published?: string | null
+          description?: string | null
+          dislikes?: never
+          duration?: number | null
+          episode_itunes_id?: string | null
+          episode_name?: string | null
+          formatted_duration?: string | null
+          guid?: string | null
+          id?: number | null
+          image_url?: string | null
+          likes?: never
+          podcast_genres?: string[] | null
+          podcast_itunes_id?: string | null
+          podcast_name?: string | null
+          rss_feed?: string | null
+          slug?: string | null
+          twitter_shares?: never
+        }
+        Update: {
+          artist_name?: string | null
+          audio_url?: string | null
+          date_published?: string | null
+          description?: string | null
+          dislikes?: never
+          duration?: number | null
+          episode_itunes_id?: string | null
+          episode_name?: string | null
+          formatted_duration?: string | null
+          guid?: string | null
+          id?: number | null
+          image_url?: string | null
+          likes?: never
+          podcast_genres?: string[] | null
+          podcast_itunes_id?: string | null
+          podcast_name?: string | null
+          rss_feed?: string | null
+          slug?: string | null
+          twitter_shares?: never
+        }
+        Relationships: []
+      }
       episodes_with_rating_data: {
         Row: {
           artist_name: string | null

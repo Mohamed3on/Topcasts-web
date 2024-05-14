@@ -10,7 +10,7 @@ export const ReviewSection = async ({ episodeId }: { episodeId: number }) => {
 
   if (userData?.user) {
     const { data } = await supabase
-      .from('episode_reviews')
+      .from('podcast_episode_review')
       .select('review_type')
       .eq('episode_id', episodeId)
       .eq('user_id', userData.user.id)

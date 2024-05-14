@@ -6,18 +6,17 @@ export async function GET(
   request: NextRequest,
   { params }: { params: { id: string } },
 ): Promise<NextResponse> {
-  console.log('🚀 ~ params:', params);
   const supabase = createClient();
 
   const { data, error } = await supabase
-    .from('episodes_with_rating_data')
+    .from('episode_with_rating_data')
     .select(
       `
     *,
-    episode_reviews!inner(review_type, user_id, episode_id)
+    podcast_episode_review!inner(review_type, user_id, episode_id)
     `,
     )
-    .eq('episode_reviews.user_id', 0);
+    .eq('podcast_episode_review.user_id', 0);
 
   if (error || !data) {
     console.error('Error fetching user ratings:', error);

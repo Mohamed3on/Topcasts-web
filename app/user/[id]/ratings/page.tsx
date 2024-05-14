@@ -7,13 +7,13 @@ const fetchUserEpisodes = async (id: string) => {
   const supabase = createClient();
 
   const { data, error } = await supabase
-    .from('episodes_with_rating_data')
+    .from('episode_with_rating_data')
     .select(
       `*,
-  episode_reviews!inner(review_type, user_id,created_at, updated_at)
+  podcast_episode_review!inner(review_type, user_id,created_at, updated_at)
   `,
     )
-    .eq('episode_reviews.user_id', id);
+    .eq('podcast_episode_review.user_id', id);
 
   if (error || !data) {
     console.error('Error fetching user ratings:', error);
@@ -43,18 +43,20 @@ const Page = async ({ params }: { params: { id: string } }) => {
       (a, b) =>
         // Sort by updated_at date
         new Date(
-          b.episode_reviews[0]?.updated_at || b.episode_reviews[0]?.created_at,
+          b.podcast_episode_review[0]?.updated_at ||
+            b.podcast_episode_review[0]?.created_at,
         ).getTime() -
         new Date(
-          a.episode_reviews[0]?.updated_at || a.episode_reviews[0]?.created_at,
+          a.podcast_episode_review[0]?.updated_at ||
+            a.podcast_episode_review[0]?.created_at,
         ).getTime(),
     )
     .map((episode) => {
-      const { episode_reviews, ...rest } = episode;
+      const { podcast_episode_review, ...rest } = episode;
 
       return {
         ...rest,
-        review_type: episode_reviews[0]?.review_type,
+        review_type: podcast_episode_review[0]?.review_type,
       };
     });
 

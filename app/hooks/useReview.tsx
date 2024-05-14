@@ -21,12 +21,12 @@ export const useReview = (episodeId: number, reviewType?: ReviewType) => {
       const { error, data } =
         reviewType === type
           ? await supabase
-              .from('episode_reviews')
+              .from('podcast_episode_review')
               .delete()
               .eq('episode_id', episodeId)
               .eq('user_id', user.id)
           : await supabase
-              .from('episode_reviews')
+              .from('podcast_episode_review')
               .upsert(
                 {
                   episode_id: episodeId,

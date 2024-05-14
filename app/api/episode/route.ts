@@ -180,7 +180,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
   }
 
   if (rating && user) {
-    await supabase.from('episode_reviews').upsert(
+    await supabase.from('podcast_episode_review').upsert(
       {
         episode_id: response.id,
         user_id: user.id,
