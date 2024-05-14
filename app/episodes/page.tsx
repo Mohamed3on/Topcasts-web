@@ -20,10 +20,12 @@ const fetchEpisodes = async ({
 
   const userId = userData?.user?.id;
 
-  const { data, error } = await supabase.rpc('search_episodes', {
-    search_query: searchParams?.q?.replace(/ /g, '+'),
-    current_user_id: userId,
-  });
+  const { data, error } = await supabase
+    .rpc('search_episodes', {
+      search_query: searchParams?.q?.replace(/ /g, '+'),
+      current_user_id: userId,
+    })
+    .limit(30);
 
   if (error) {
     throw error;
