@@ -3,7 +3,6 @@ import { AddEpisodeDrawer } from '@/app/AddEpisodeDrawer';
 import { useUser } from '@/app/auth/UserContext';
 
 import { Button } from '@/components/ui/button';
-import { Plus } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname, useSearchParams } from 'next/navigation';
 import React, { useCallback } from 'react';
@@ -27,28 +26,24 @@ const AddEpisodeButton = ({
     },
     [searchParams],
   );
-  return (
+  const href = user
+    ? `${pathname}?${createQueryString('modal', 'add-episode')}`
+    : `/login?${createQueryString('redirect', pathname)}`;
+
+  const LinkComponent = () => (
+    <Button asChild variant="link">
+      <Link href={href} className="flex items-center justify-start gap-1">
+        {children}
+      </Link>
+    </Button>
+  );
+
+  return user ? (
     <AddEpisodeDrawer>
-      <Button asChild variant="link">
-        <Link
-          href={
-            user
-              ? `${pathname}?${createQueryString('modal', 'add-episode')}`
-              : `/login?${createQueryString('redirect', pathname)}`
-          }
-          className="flex items-center justify-start gap-1"
-        >
-          {children ? (
-            children
-          ) : (
-            <React.Fragment>
-              <Plus className="h-4 w-4" />
-              <span>Add episode</span>
-            </React.Fragment>
-          )}
-        </Link>
-      </Button>
+      <LinkComponent />
     </AddEpisodeDrawer>
+  ) : (
+    <LinkComponent />
   );
 };
 

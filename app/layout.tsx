@@ -21,6 +21,10 @@ export default async function RootLayout({
 }>) {
   return (
     <html lang="en">
+      <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1, maximum-scale=1"
+      ></meta>
       <body
         className={cn(
           'min-h-screen bg-background font-sans antialiased',
