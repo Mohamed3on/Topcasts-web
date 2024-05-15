@@ -408,6 +408,7 @@ export type Database = {
           slug: string
           likes: number
           dislikes: number
+          twitter_shares: number
           review_type: string
         }[]
       }

@@ -19,7 +19,7 @@ export type ScrapedEpisodeDetails = {
 };
 
 export type EpisodeDetails =
-  Database['public']['Tables']['podcast_episode']['Row'] & {
+  Database['public']['Views']['episode_with_rating_data']['Row'] & {
     urls?: {
       spotify?: string;
       apple?: string;

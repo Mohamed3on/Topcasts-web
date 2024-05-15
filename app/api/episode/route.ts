@@ -17,7 +17,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
   }
 
   const { data, error } = await supabase
-    .from('podcast_episode')
+    .from('episode_with_rating_data')
     .select(
       `
       *,

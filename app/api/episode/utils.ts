@@ -71,64 +71,69 @@ export async function scrapeApplePodcastsEpisodeDetails(html: string) {
   if (!jsonData) {
     throw new Error('No JSON data found');
   }
+  try {
+    const parsedJson = JSON.parse(jsonData);
 
-  const parsedJson = JSON.parse(jsonData);
+    let episodeData;
 
-  let episodeData;
+    const key = Object.keys(parsedJson).find((key) => key.includes('episodes'));
 
-  const key = Object.keys(parsedJson).find((key) => key.includes('episodes'));
+    if (key) {
+      episodeData = JSON.parse(parsedJson[key]);
+    }
 
-  if (key) {
-    episodeData = JSON.parse(parsedJson[key]);
+    const episodeInfo = episodeData.d[0];
+
+    const episode_name = episodeInfo.attributes.name;
+
+    const podcast_name =
+      episodeInfo.relationships.podcast.data[0].attributes.name;
+
+    const description = episodeInfo.attributes.description.standard;
+
+    const genres =
+      episodeInfo.relationships.podcast.data[0].attributes.genreNames;
+
+    const image_url = episodeInfo.attributes.artwork.url
+      .replace('{w}', '400')
+      .replace('{h}', '400')
+      .replace('{f}', 'png');
+
+    const podcast_itunes_id = episodeInfo.relationships.podcast.data[0].id;
+
+    const episode_itunes_id = episodeInfo.id;
+    const date_published = episodeInfo.attributes.releaseDateTime;
+
+    const duration = episodeInfo.attributes.durationInMilliseconds;
+
+    const artist_name = episodeInfo.attributes.artist_name;
+
+    const guid = episodeInfo.attributes.guid;
+
+    const rss_feed = episodeInfo.attributes.rssFeedUrl;
+    const audio_url = episodeInfo.attributes.assetUrl;
+
+    const returnObject = {
+      episode_name,
+      description,
+      duration,
+      podcast_name,
+      image_url,
+      artist_name,
+      guid,
+      audio_url,
+      podcast_itunes_id,
+      episode_itunes_id,
+      date_published,
+      podcast_genres: genres,
+      rss_feed,
+    };
+
+    return returnObject;
+  } catch (e) {
+    console.log(e);
+    throw new Error('Failed to parse JSON');
   }
-
-  const episodeInfo = episodeData.d[0];
-
-  const episode_name = episodeInfo.attributes.name;
-  const podcast_name =
-    episodeInfo.relationships.podcast.data[0].attributes.name;
-
-  const description = episodeInfo.attributes.description.standard;
-
-  const genres =
-    episodeInfo.relationships.podcast.data[0].attributes.genreNames;
-
-  const image_url = episodeInfo.attributes.artwork.url
-    .replace('{w}', '400')
-    .replace('{h}', '400')
-    .replace('{f}', 'png');
-
-  const podcast_itunes_id = episodeInfo.relationships.podcast.data[0].id;
-
-  const episode_itunes_id = episodeInfo.id;
-  const date_published = episodeInfo.attributes.releaseDateTime;
-
-  const duration = episodeInfo.attributes.durationInMilliseconds;
-
-  const artist_name = episodeInfo.attributes.artist_name;
-
-  const guid = episodeInfo.attributes.guid;
-
-  const rss_feed = episodeInfo.attributes.rssFeedUrl;
-  const audio_url = episodeInfo.attributes.assetUrl;
-
-  const returnObject = {
-    episode_name,
-    description,
-    duration,
-    podcast_name,
-    image_url,
-    artist_name,
-    guid,
-    audio_url,
-    podcast_itunes_id,
-    episode_itunes_id,
-    date_published,
-    podcast_genres: genres,
-    rss_feed,
-  };
-
-  return returnObject;
 }
 
 export async function scrapeCastroEpisodeDetails(html: string) {

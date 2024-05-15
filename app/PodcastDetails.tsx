@@ -3,6 +3,7 @@ import { ReviewSection } from '@/app/ReviewSection';
 import { EpisodeDescription } from '@/app/episodes/EpisodeDescription';
 import AppleIcon from '@/components/AppleIcon';
 import { SpotifyIcon } from '@/components/SpotifyIcon';
+import { Twitter } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { EpisodeDetails } from './api/types';
@@ -53,7 +54,7 @@ export const PodcastDetails = ({
             unoptimized
             className="h-64 w-64 rounded-lg object-cover"
             src={episodeDetails.image_url}
-            alt={episodeDetails.episode_name}
+            alt={episodeDetails.episode_name!}
           />
         )}
         <Link
@@ -76,7 +77,11 @@ export const PodcastDetails = ({
             </p>
           )}
           <Duration episodeDetails={episodeDetails} />
-          <ReviewSection episodeId={episodeDetails.id} />
+          <ReviewSection episodeId={episodeDetails.id!} />
+          <div className="flex items-center gap-1 text-blue-500">
+            <Twitter className="h-6 w-6" />
+            <span className="">{episodeDetails.twitter_shares} Shares</span>
+          </div>
           <div className="flex items-center justify-center gap-4">
             <span className="text-lg font-semibold">Listen on:</span>
             {episodeDetails.urls?.spotify && (
