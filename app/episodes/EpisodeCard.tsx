@@ -1,6 +1,7 @@
 import RatingButtons from '@/app/episodes/RatingButtons';
 import { EpisodeDetailsForList } from '@/app/episodes/page';
-import { Card, CardContent } from '@/components/ui/card';
+import { Card, CardContent, CardFooter } from '@/components/ui/card';
+import { Twitter } from 'lucide-react';
 
 import Link from 'next/link';
 
@@ -11,10 +12,7 @@ export const EpisodeCard = ({
 }) => {
   return (
     <Card className="overflow-hidden rounded-lg shadow-sm transition duration-100 ease-in-out hover:shadow-lg ">
-      <Link
-        className="block h-full"
-        href={`/episode/${episode.id}/${episode.slug}`}
-      >
+      <Link className="h-full" href={`/episode/${episode.id}/${episode.slug}`}>
         <div className="overflow-hidden rounded-lg">
           <img
             alt={episode.episode_name || ''}
@@ -22,7 +20,7 @@ export const EpisodeCard = ({
             src={episode.image_url || ''}
           />
         </div>
-        <CardContent className="p-4">
+        <CardContent className="pt-4">
           <div className="flex items-center justify-between gap-1">
             <div>
               <h3 className="line-clamp-4 text-lg font-medium text-gray-900 hover:h-auto">
@@ -32,7 +30,7 @@ export const EpisodeCard = ({
                 {episode.podcast_name}
               </p>
             </div>
-            <RatingButtons episode={episode}></RatingButtons>
+            <RatingButtons episode={episode} />
           </div>
           <div
             suppressHydrationWarning
@@ -41,6 +39,12 @@ export const EpisodeCard = ({
             <span>{episode.description}</span>
           </div>
         </CardContent>
+        <CardFooter className="justify-between">
+          <div className="flex items-center gap-1 text-blue-400">
+            <Twitter className="h-4 w-4" />
+            <span> Shared by {episode.twitter_shares} Twitter users </span>
+          </div>
+        </CardFooter>
       </Link>
     </Card>
   );

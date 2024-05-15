@@ -22,17 +22,14 @@ const RatingButtons: React.FC<RatingButtonsProps> = ({ episode }) => {
   return (
     <div className="flex gap-1">
       <Button
-        className={`flex gap-1 ${
-          episode.review_type === 'like'
-            ? 'text-green-500 transition-colors hover:text-green-600'
-            : ''
-        }`}
+        className={`flex gap-1 transition-colors hover:text-green-600 active:text-green-700
+         ${episode.review_type === 'like' ? 'text-green-500' : ''}`}
         size="icon"
         onClick={(e) => {
           e.preventDefault();
           toggleReview('like');
         }}
-        variant="ghost"
+        variant="link"
       >
         {isLoading ? (
           <Loader2Icon className="h-5 w-5 animate-spin" />
@@ -47,13 +44,11 @@ const RatingButtons: React.FC<RatingButtonsProps> = ({ episode }) => {
           e.preventDefault();
           toggleReview('dislike');
         }}
-        className={`flex gap-1 ${
-          episode.review_type === 'dislike'
-            ? 'text-red-500 transition-colors hover:text-red-600'
-            : ''
+        className={`flex gap-1 transition-colors hover:text-red-600 active:text-red-700 ${
+          episode.review_type === 'dislike' ? 'text-red-500 ' : ''
         }`}
         size="icon"
-        variant="ghost"
+        variant="link"
       >
         {isLoading ? (
           <Loader2Icon className="h-5 w-5 animate-spin" />
