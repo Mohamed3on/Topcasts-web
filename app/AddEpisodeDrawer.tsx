@@ -25,7 +25,7 @@ export function AddEpisodeDrawer({ children }: { children?: React.ReactNode }) {
     >
       <DrawerTrigger asChild>{children}</DrawerTrigger>
 
-      <DrawerContent>
+      <DrawerContent className="h-[90%] lg:h-[75%]">
         <ImportEpisodeUrl onSuccessfulSubmit={closeModal} />
       </DrawerContent>
     </Drawer>

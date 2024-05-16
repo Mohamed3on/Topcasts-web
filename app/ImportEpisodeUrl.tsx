@@ -15,7 +15,7 @@ import { Input } from '@/components/ui/input';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Textarea } from '@/components/ui/textarea';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { ThumbsDown, ThumbsUp } from 'lucide-react';
+import { ArrowRight, ThumbsDown, ThumbsUp } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
@@ -118,7 +118,7 @@ export const ImportEpisodeUrl = ({
       <Form {...form}>
         <form
           onSubmit={form.handleSubmit(handleSubmit)}
-          className="flex w-full flex-col items-center gap-8 p-8"
+          className="flex w-full flex-col items-center gap-7 p-7"
         >
           <FormField
             control={form.control}
@@ -134,6 +134,7 @@ export const ImportEpisodeUrl = ({
                       autoFocus
                       className="text-md  overflow-hidden pr-10 "
                       {...field}
+
                       placeholder="https://open.spotify.com/episode/4TVeJ7kvd9SqEKWGVZYDUU"
                     />
                     <button
@@ -214,7 +215,12 @@ export const ImportEpisodeUrl = ({
               </FormItem>
             )}
           ></FormField>
-          <LoaderButton isLoading={isLoading}>Add Episode</LoaderButton>
+          <LoaderButton isLoading={isLoading} className="group">
+            <div className="flex items-center gap-1">
+              <span>Add Episode</span>
+              <ArrowRight className="h-4 w-4 translate-x-0 transform transition-transform duration-300 group-hover:translate-x-1" />
+            </div>
+          </LoaderButton>
         </form>
       </Form>
     </div>
