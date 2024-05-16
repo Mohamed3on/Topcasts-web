@@ -1,8 +1,16 @@
-export function PlayerIcon({ url, children }: { url: string; children: React.ReactNode }) {
+export function PlayerIcon({
+  url,
+  children,
+}: {
+  url: string;
+  children: React.ReactNode;
+}) {
   return (
     <a
-      className='w-8 h-8 hover:scale-105 active:scale-95 transform transition-transform'
+      className="h-8 w-8 transform transition-transform hover:scale-105 active:scale-95"
       href={url}
+      target="_blank"
+      rel="noopener noreferrer"
     >
       {children}
     </a>
