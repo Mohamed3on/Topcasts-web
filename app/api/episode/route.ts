@@ -113,22 +113,20 @@ async function handlePodcastURL({
 const getEpisodeDetailsFromDb = async (episodeId: number) => {
   const supabase = createClient();
   const { data, error } = await supabase
-    .from('episode_with_rating_data')
+    .from('podcast_episode')
     .select(
-      `
-      *,
-      podcast_episode_url (url, type)
+      `id, slug
     `,
     )
     .eq('id', episodeId)
     .single();
 
-  if (error || !data) {
+  if (error || !data.id) {
     console.error('Episode ID not in DB:', error);
     return null;
   }
 
-  return { ...data, urls: formatUrls(data.podcast_episode_url) };
+  return data;
 };
 
 async function handleNonPodcastURL(cleanedUrl: string) {

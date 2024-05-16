@@ -18,7 +18,7 @@ const fetchUserEpisodes = async (id: string) => {
 
   if (error || !data) {
     console.error('Error fetching user ratings:', error);
-    return null;
+    return [];
   }
 
   return data;
@@ -45,28 +45,13 @@ const Page = async ({ params }: { params: { username: string } }) => {
     notFound();
   }
 
-  let mappedEpisodes = userEpisodes
-
-    .sort(
-      (a, b) =>
-        // Sort by updated_at date
-        new Date(
-          b.podcast_episode_review[0]?.updated_at ||
-            b.podcast_episode_review[0]?.created_at,
-        ).getTime() -
-        new Date(
-          a.podcast_episode_review[0]?.updated_at ||
-            a.podcast_episode_review[0]?.created_at,
-        ).getTime(),
-    )
-    .map((episode) => {
-      const { podcast_episode_review, ...rest } = episode;
-
-      return {
-        ...rest,
-        review_type: podcast_episode_review[0]?.review_type,
-      };
-    });
+  let mappedEpisodes = userEpisodes.map((episode) => {
+    const { podcast_episode_review, ...rest } = episode;
+    return {
+      ...rest,
+      review_type: podcast_episode_review[0]?.review_type,
+    };
+  });
 
   return (
     <div className="container pb-24">
@@ -74,7 +59,7 @@ const Page = async ({ params }: { params: { username: string } }) => {
         {name}&rsquo;s Rated Episodes
       </h1>
       <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
-        {(mappedEpisodes as EpisodeDetailsForList).map((episode) => (
+        {(mappedEpisodes as unknown as EpisodeDetailsForList).map((episode) => (
           <EpisodeCard key={episode.id} episode={episode} />
         ))}
       </div>

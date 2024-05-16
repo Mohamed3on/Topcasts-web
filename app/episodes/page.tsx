@@ -21,7 +21,7 @@ const fetchEpisodes = async ({
   const userId = userData?.user?.id;
 
   const { data, error } = await supabase
-    .rpc('search_episodes', {
+    .rpc('search_episodes_by_relevance', {
       search_query: searchParams?.q?.replace(/ /g, '+') || '',
       current_user_id: userId,
     })
