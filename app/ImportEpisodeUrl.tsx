@@ -96,8 +96,8 @@ export const ImportEpisodeUrl = ({
       if (!data || data.error) {
         throw data.error;
       }
-      onSuccessfulSubmit();
       router.push(`/episode/${data.id}/${data.slug}`);
+      onSuccessfulSubmit();
     } catch (error) {
       toast.error(
         <div>
@@ -134,7 +134,6 @@ export const ImportEpisodeUrl = ({
                       autoFocus
                       className="text-md  overflow-hidden pr-10 "
                       {...field}
-
                       placeholder="https://open.spotify.com/episode/4TVeJ7kvd9SqEKWGVZYDUU"
                     />
                     <button
