@@ -78,10 +78,12 @@ export const PodcastDetails = ({
           )}
           <Duration episodeDetails={episodeDetails} />
           <ReviewSection episodeId={episodeDetails.id!} />
-          <div className="flex items-center gap-1 text-blue-500">
-            <Twitter className="h-6 w-6" />
-            <span className="">{episodeDetails.twitter_shares} Shares</span>
-          </div>
+          {episodeDetails.twitter_shares! > 0 && (
+            <div className="flex items-center gap-1 text-blue-500">
+              <Twitter className="h-6 w-6" />
+              <span className="">{episodeDetails.twitter_shares} Shares</span>
+            </div>
+          )}
           <div className="flex items-center justify-center gap-4">
             <span className="text-lg font-semibold">Listen on:</span>
             {episodeDetails.urls?.spotify && (

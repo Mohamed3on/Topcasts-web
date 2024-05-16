@@ -49,6 +49,11 @@ export async function scrapeSpotifyEpisodeDetails(html: string) {
   const date_published = parsedJson?.datePublished;
   const duration = $('[data-testid=episode-progress-not-played]').text();
 
+  const show_Id = $('meta[name="music:album"]')
+    ?.attr('content')
+    ?.split('/')
+    .pop();
+
   const episodeImage = $('[data-testid=entity-header-entity-image]').attr(
     'src',
   );
@@ -60,6 +65,7 @@ export async function scrapeSpotifyEpisodeDetails(html: string) {
     formatted_duration: duration,
     date_published,
     image_url: episodeImage || null,
+    spotify_show_id: show_Id,
   };
 
   return returnObject;

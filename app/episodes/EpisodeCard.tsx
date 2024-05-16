@@ -40,10 +40,12 @@ export const EpisodeCard = ({
           </div>
         </CardContent>
         <CardFooter className="justify-between">
-          <div className="flex items-center gap-1 text-blue-400">
-            <Twitter className="h-4 w-4" />
-            <span> Shared by {episode.twitter_shares} Twitter users </span>
-          </div>
+          {episode.twitter_shares > 0 && (
+            <div className="flex items-center gap-1 text-blue-400">
+              <Twitter className="h-4 w-4" />
+              <span> Shared by {episode.twitter_shares} Twitter users </span>
+            </div>
+          )}
         </CardFooter>
       </Link>
     </Card>

@@ -108,7 +108,7 @@ async function handlePodcastURL({
 const getEpisodeDetailsFromDb = async (episodeId: number) => {
   const supabase = createClient();
   const { data, error } = await supabase
-    .from('podcast_episode')
+    .from('episode_with_rating_data')
     .select(
       `
       *,
@@ -259,14 +259,50 @@ async function updateEpisodeDetails({
       scrapedData.podcast_name,
     );
 
+    const podcastData = {
+      p_name: scrapedData.podcast_name,
+      p_itunes_id: scrapedData.podcast_itunes_id,
+      p_spotify_id: scrapedData.spotify_show_id,
+      p_genres: scrapedData.podcast_genres,
+      p_rss_feed: scrapedData.rss_feed,
+      p_artist_name: scrapedData.artist_name,
+    };
+
+    const episodeData = {
+      audio_url: scrapedData.audio_url,
+      date_published: scrapedData.date_published,
+      description: scrapedData.description,
+      duration: scrapedData.duration,
+      episode_itunes_id: scrapedData.episode_itunes_id,
+      episode_name: scrapedData.episode_name,
+      formatted_duration: scrapedData.formatted_duration,
+      guid: scrapedData.guid,
+      image_url: scrapedData.image_url,
+      slug: slug,
+    };
+
+    const { data: podcastUpsertData, error: podcastError } = await supabase
+      .rpc('upsert_podcast', podcastData)
+      .single();
+
+    if (podcastError)
+      throw new Error(
+        `Failed to upsert podcast details: ${JSON.stringify(podcastError)}`,
+      );
+
     const { data, error } = await supabase
       .from('podcast_episode')
-      .upsert({ ...scrapedData, slug }, { onConflict: 'slug' })
+      .upsert(
+        { ...episodeData, podcast_id: podcastUpsertData?.id },
+        { onConflict: 'slug' },
+      )
       .select('id')
       .single();
 
-    if (error) throw error;
-    if (!data) throw new Error('Failed to upsert episode details');
+    if (error || !data)
+      throw new Error(
+        `Failed to upsert episode details: ${JSON.stringify(error)}`,
+      );
     const episodeId = data.id;
 
     // save the url to the podcast_episode_url table
@@ -276,9 +312,10 @@ async function updateEpisodeDetails({
       .select('episode_id')
       .single();
 
-    if (urlUpsert.error) throw urlUpsert.error;
-    if (!urlUpsert.data) throw new Error('Failed to upsert episode URL');
-
+    if (urlUpsert.error)
+      throw new Error(
+        `Failed to upsert episode URL: ${JSON.stringify(urlUpsert.error)}`,
+      );
     return { id: episodeId, slug };
   } catch (error) {
     console.error('Error updating episode details:', error);
