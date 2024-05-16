@@ -19,8 +19,18 @@ import { Input } from '@/components/ui/input';
 
 const Header = async () => {
   const supabase = createClient();
-  const { data } = await supabase.auth.getUser();
-  const user = data?.user;
+  const { data: authData } = await supabase.auth.getUser();
+
+  let userInfo = null;
+  if (authData?.user) {
+    const { data } = await supabase
+      .from('profiles')
+      .select('username, avatar_url, name')
+      .eq('id', authData?.user?.id)
+      .single();
+
+    userInfo = data;
+  }
 
   return (
     <header className="sticky top-0 z-10  flex w-full items-center justify-between border-b bg-background/95 px-4 py-2 shadow-sm backdrop-blur supports-[backdrop-filter]:bg-background/60">
@@ -73,7 +83,7 @@ const Header = async () => {
         </div>
       </form>
 
-      {user?.user_metadata && (
+      {userInfo && (
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button
@@ -83,21 +93,24 @@ const Header = async () => {
               <Image
                 width={32}
                 height={32}
-                src={user.user_metadata.avatar_url || ''}
-                alt={user.user_metadata.name || ''}
+                src={userInfo.avatar_url || ''}
+                alt={userInfo.name || ''}
                 className="h-8 w-8 rounded-full"
                 unoptimized
                 referrerPolicy="no-referrer"
               />
               <span className="hidden text-sm font-semibold text-primary/80 lg:block">
-                {user.user_metadata.name}
+                {userInfo.name}
               </span>
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent>
             <DropdownMenuItem>
               <Button asChild variant="link" className="">
-                <Link className="flex gap-2" href={`/user/${user.id}/ratings`}>
+                <Link
+                  className="flex gap-2"
+                  href={`/user/${userInfo.username}/ratings`}
+                >
                   <HeartIcon className="h-5 w-5" />
                   <span>My Ratings</span>
                 </Link>
@@ -110,7 +123,7 @@ const Header = async () => {
         </DropdownMenu>
       )}
 
-      {!user && (
+      {!authData.user && (
         <Button asChild variant="link">
           <Link href="/login" className="flex  gap-1">
             <LogInIcon className="h-5 w-5" />

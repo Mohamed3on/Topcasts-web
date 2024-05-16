@@ -84,7 +84,7 @@ export type Database = {
         };
         Relationships: [
           {
-            foreignKeyName: 'fk_podcast';
+            foreignKeyName: 'podcast_episode_podcast_id_fkey';
             columns: ['podcast_id'];
             isOneToOne: false;
             referencedRelation: 'podcast';
@@ -146,7 +146,7 @@ export type Database = {
             foreignKeyName: 'reviews_user_id_fkey';
             columns: ['user_id'];
             isOneToOne: false;
-            referencedRelation: 'profile';
+            referencedRelation: 'profiles';
             referencedColumns: ['id'];
           },
         ];
@@ -187,13 +187,13 @@ export type Database = {
           },
         ];
       };
-      profile: {
+      profiles: {
         Row: {
           avatar_url: string | null;
           id: string;
           name: string | null;
           updated_at: string | null;
-          username: string | null;
+          username: string;
           website: string | null;
         };
         Insert: {
@@ -201,7 +201,7 @@ export type Database = {
           id: string;
           name?: string | null;
           updated_at?: string | null;
-          username?: string | null;
+          username: string;
           website?: string | null;
         };
         Update: {
@@ -209,7 +209,7 @@ export type Database = {
           id?: string;
           name?: string | null;
           updated_at?: string | null;
-          username?: string | null;
+          username: string;
           website?: string | null;
         };
         Relationships: [

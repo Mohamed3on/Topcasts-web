@@ -13,7 +13,8 @@ const fetchUserEpisodes = async (id: string) => {
   podcast_episode_review!inner(review_type, user_id,created_at, updated_at)
   `,
     )
-    .eq('podcast_episode_review.user_id', id);
+    .eq('podcast_episode_review.user_id', id)
+    .limit(30);
 
   if (error || !data) {
     console.error('Error fetching user ratings:', error);
@@ -23,17 +24,24 @@ const fetchUserEpisodes = async (id: string) => {
   return data;
 };
 
-const Page = async ({ params }: { params: { id: string } }) => {
+const Page = async ({ params }: { params: { username: string } }) => {
   const supabase = createClient();
 
-  const { data: userData } = await supabase.auth.getUser();
+  const { data: userData } = await supabase
+    .from('profiles')
+    .select('id, name')
+    .eq('username', params.username)
+    .single();
 
-  const name = userData?.user?.user_metadata?.full_name;
-  const { id } = params;
+  if (!userData) {
+    notFound();
+  }
 
-  const userEpisodes = await fetchUserEpisodes(id);
+  const name = userData.name;
 
-  if (!userEpisodes) {
+  const userEpisodes = await fetchUserEpisodes(userData.id);
+
+  if (!userEpisodes?.length) {
     notFound();
   }
 
