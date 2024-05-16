@@ -96,12 +96,10 @@ export const ImportEpisodeUrl = ({
       if (!data || data.error) {
         throw data.error;
       }
-      console.log('I AM HERE');
       onSuccessfulSubmit();
-      console.log('I AM STILL HERE');
       router.push(`/episode/${data.id}/${data.slug}`);
     } catch (error) {
-      toast(
+      toast.error(
         <div>
           <p>
             Error getting episode details. Are you sure this is a valid episode
@@ -111,9 +109,6 @@ export const ImportEpisodeUrl = ({
             Hint: Only Apple Podcasts, Spotify, and Castro URLs are supported.
           </p>
         </div>,
-        {
-          className: 'bg-red-500 text-white',
-        },
       );
     }
   };
@@ -130,10 +125,13 @@ export const ImportEpisodeUrl = ({
             name="episode_url"
             render={({ field }) => (
               <FormItem className="w-full sm:w-1/2">
-                <FormLabel>Enter the Episode URL to add to Topcasts</FormLabel>
+                <FormLabel>
+                  Enter the Episode URL to save to your list
+                </FormLabel>
                 <FormControl>
                   <div className="relative">
                     <Input
+                      autoFocus
                       className="text-md  overflow-hidden pr-10 "
                       {...field}
                       placeholder="https://open.spotify.com/episode/4TVeJ7kvd9SqEKWGVZYDUU"

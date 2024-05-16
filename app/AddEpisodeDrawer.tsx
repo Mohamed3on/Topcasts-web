@@ -2,12 +2,10 @@
 
 import { ImportEpisodeUrl } from '@/app/ImportEpisodeUrl';
 import { Drawer, DrawerContent, DrawerTrigger } from '@/components/ui/drawer';
-import { usePathname, useRouter, useSearchParams } from 'next/navigation';
+import { useSearchParams } from 'next/navigation';
 import { useState } from 'react';
 
 export function AddEpisodeDrawer({ children }: { children?: React.ReactNode }) {
-  const router = useRouter();
-  const pathname = usePathname();
   const searchParams = useSearchParams();
 
   const [isOpen, setIsOpen] = useState(
