@@ -46,7 +46,7 @@ export default async function RootLayout({
             <Header />
             {children}
 
-            <Toaster />
+            <Toaster closeButton richColors />
           </UserProvider>
         </main>
       </body>
