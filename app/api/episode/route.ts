@@ -2,7 +2,12 @@ import { NextRequest, NextResponse } from 'next/server';
 
 import { determineType, formatUrls, getHtml, scrapeDataByType } from './utils';
 
-import { ScrapedEpisodeDetails } from '@/app/api/types';
+import {
+  PodcastData,
+  ScrapedEpisodeData,
+  ScrapedEpisodeDetails,
+} from '@/app/api/types';
+import { SupabaseClient } from '@/app/api/types/SupabaseClient';
 import { createClient } from '@/utils/supabase/server';
 import { slugifyDetails } from './utils';
 
@@ -236,6 +241,85 @@ async function handleNewEpisodeData({
     };
   }
 }
+async function fetchPodcastByName(supabase: SupabaseClient, name: string) {
+  return supabase.from('podcast').select().eq('name', name).single();
+}
+
+async function insertPodcast(
+  supabase: SupabaseClient,
+  podcastData: PodcastData,
+) {
+  return supabase.from('podcast').insert(podcastData).select('id').single();
+}
+
+async function updatePodcast(
+  supabase: SupabaseClient,
+  name: string,
+  podcastData: PodcastData,
+) {
+  return supabase
+    .from('podcast')
+    .update(podcastData)
+    .eq('name', name)
+    .select('id')
+    .single();
+}
+
+async function upsertEpisode(
+  supabase: SupabaseClient,
+  episodeData: ScrapedEpisodeData,
+  podcastId: number,
+) {
+  return supabase
+    .from('podcast_episode')
+    .upsert({ ...episodeData, podcast_id: podcastId }, { onConflict: 'slug' })
+    .select('id')
+    .single();
+}
+
+async function upsertEpisodeUrl(
+  supabase: SupabaseClient,
+  cleanedUrl: string,
+  episodeId: number,
+  type: 'apple' | 'spotify' | 'castro',
+) {
+  return supabase
+    .from('podcast_episode_url')
+    .insert({ url: cleanedUrl, episode_id: episodeId, type })
+    .select('episode_id')
+    .single();
+}
+
+async function upsertPodcastDetails(
+  supabase: SupabaseClient,
+  podcastData: PodcastData,
+) {
+  const { data: existingPodcast } = await fetchPodcastByName(
+    supabase,
+    podcastData.name,
+  );
+
+  if (!existingPodcast) {
+    const { data: newPodcast, error: newError } = await insertPodcast(
+      supabase,
+      podcastData,
+    );
+    if (newError)
+      throw new Error(`Failed to insert podcast: ${JSON.stringify(newError)}`);
+    return newPodcast.id;
+  } else {
+    const { data: updatedPodcast, error: updateError } = await updatePodcast(
+      supabase,
+      podcastData.name,
+      podcastData,
+    );
+    if (updateError)
+      throw new Error(
+        `Failed to update podcast: ${JSON.stringify(updateError)}`,
+      );
+    return updatedPodcast.id;
+  }
+}
 
 async function updateEpisodeDetails({
   type,
@@ -245,13 +329,7 @@ async function updateEpisodeDetails({
   type: 'apple' | 'spotify' | 'castro';
   cleanedUrl: string;
   scrapedData: ScrapedEpisodeDetails;
-}): Promise<
-  | { id: number; slug: string }
-  | {
-      error: string;
-      status: number;
-    }
-> {
+}): Promise<{ id: number; slug: string } | { error: string; status: number }> {
   const supabase = createClient();
   try {
     const slug = slugifyDetails(
@@ -260,15 +338,15 @@ async function updateEpisodeDetails({
     );
 
     const podcastData = {
-      p_name: scrapedData.podcast_name,
-      p_itunes_id: scrapedData.podcast_itunes_id,
-      p_spotify_id: scrapedData.spotify_show_id,
-      p_genres: scrapedData.podcast_genres,
-      p_rss_feed: scrapedData.rss_feed,
-      p_artist_name: scrapedData.artist_name,
+      name: scrapedData.podcast_name,
+      itunes_id: scrapedData.podcast_itunes_id,
+      spotify_id: scrapedData.spotify_show_id,
+      genres: scrapedData.podcast_genres,
+      rss_feed: scrapedData.rss_feed,
+      artist_name: scrapedData.artist_name,
     };
 
-    const episodeData = {
+    const episodeData: ScrapedEpisodeData = {
       audio_url: scrapedData.audio_url,
       date_published: scrapedData.date_published,
       description: scrapedData.description,
@@ -281,47 +359,32 @@ async function updateEpisodeDetails({
       slug: slug,
     };
 
-    const { data: podcastUpsertData, error: podcastError } = await supabase
-      .rpc('upsert_podcast', podcastData)
-      .single();
+    const podcastId = await upsertPodcastDetails(supabase, podcastData);
 
-    if (podcastError)
+    const { data: episode, error: episodeError } = await upsertEpisode(
+      supabase,
+      episodeData,
+      podcastId,
+    );
+    if (episodeError || !episode)
       throw new Error(
-        `Failed to upsert podcast details: ${JSON.stringify(podcastError)}`,
+        `Failed to upsert episode: ${JSON.stringify(episodeError)}`,
       );
 
-    const { data, error } = await supabase
-      .from('podcast_episode')
-      .upsert(
-        { ...episodeData, podcast_id: podcastUpsertData?.id },
-        { onConflict: 'slug' },
-      )
-      .select('id')
-      .single();
-
-    if (error || !data)
+    const { error: urlError } = await upsertEpisodeUrl(
+      supabase,
+      cleanedUrl,
+      episode.id,
+      type,
+    );
+    if (urlError)
       throw new Error(
-        `Failed to upsert episode details: ${JSON.stringify(error)}`,
+        `Failed to upsert episode URL: ${JSON.stringify(urlError)}`,
       );
-    const episodeId = data.id;
 
-    // save the url to the podcast_episode_url table
-    const urlUpsert = await supabase
-      .from('podcast_episode_url')
-      .insert({ url: cleanedUrl, episode_id: episodeId, type })
-      .select('episode_id')
-      .single();
-
-    if (urlUpsert.error)
-      throw new Error(
-        `Failed to upsert episode URL: ${JSON.stringify(urlUpsert.error)}`,
-      );
-    return { id: episodeId, slug };
+    return { id: episode.id, slug };
   } catch (error) {
     console.error('Error updating episode details:', error);
-    return {
-      error: 'Failed to update episode details',
-      status: 500,
-    };
+    return { error: 'Failed to update episode details', status: 500 };
   }
 }
