@@ -1,7 +1,13 @@
 import { getHost } from '@/app/utils';
 import { Button } from '@/components/ui/button';
 import { createClient } from '@/utils/supabase/server';
-import { HeartIcon, LogInIcon, PlusCircle, SearchIcon } from 'lucide-react';
+import {
+  Flame,
+  HeartIcon,
+  LogInIcon,
+  PlusCircle,
+  SearchIcon,
+} from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
@@ -46,9 +52,13 @@ const Header = async () => {
         <Link href="/">Topcasts</Link>
       </Button>
 
-      <div className=" flex items-center gap-4 ">
-        <Button className="hidden md:flex" asChild variant="link">
-          <Link href="/episodes">Browse Episodes</Link>
+      <div className="flex items-center gap-4 ">
+        <Button className="group hidden md:flex" asChild variant="link">
+          <Link href="/episodes" className="flex items-center gap-1">
+            <Flame className="h-6 w-6 group-hover:text-orange-600" />
+
+            <span>Browse Top Episodes</span>
+          </Link>
         </Button>
 
         <AddEpisodeButton>

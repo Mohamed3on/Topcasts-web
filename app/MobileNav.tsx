@@ -1,7 +1,7 @@
 'use client';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
-import { Globe, Menu } from 'lucide-react';
+import { Flame, Menu } from 'lucide-react';
 import Link from 'next/link';
 import { useState } from 'react';
 
@@ -30,12 +30,10 @@ const MobileNav = () => {
             asChild
             variant={'link'}
           >
-            <Link
-              href="/episodes"
-              className="flex items-center justify-start gap-1"
-            >
-              <Globe className="h-4 w-4" />
-              <span>Browse Episodes</span>
+            <Link href="/episodes" className="group flex items-center gap-1">
+              <Flame className="h-6 w-6 group-hover:text-orange-600" />
+
+              <span>Browse Top Episodes</span>
             </Link>
           </Button>
         </div>
