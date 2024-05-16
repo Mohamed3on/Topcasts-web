@@ -59,7 +59,7 @@ export const PodcastDetails = ({
         )}
         <Link
           href={`/episodes?q="${episodeDetails.podcast_name}"`}
-          className="text-2xl font-bold text-primary/60 underline transition-all hover:text-primary/80 hover:no-underline"
+          className="text-2xl font-bold text-primary/80 underline transition-all hover:text-primary/60 hover:no-underline active:text-primary/40"
         >
           {episodeDetails.podcast_name}
         </Link>
