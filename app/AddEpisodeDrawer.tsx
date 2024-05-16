@@ -16,7 +16,6 @@ export function AddEpisodeDrawer({ children }: { children?: React.ReactNode }) {
 
   const closeModal = () => {
     setIsOpen(false);
-    router.push(pathname);
   };
 
   return (
