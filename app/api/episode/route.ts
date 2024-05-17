@@ -239,18 +239,21 @@ async function handleNewEpisodeData({
     };
   }
 }
-async function fetchPodcastByName(supabase: SupabaseClient, name: string) {
+export async function fetchPodcastByName(
+  supabase: SupabaseClient,
+  name: string,
+) {
   return supabase.from('podcast').select().eq('name', name).single();
 }
 
-async function insertPodcast(
+export async function insertPodcast(
   supabase: SupabaseClient,
   podcastData: PodcastData,
 ) {
   return supabase.from('podcast').insert(podcastData).select('id').single();
 }
 
-async function updatePodcast(
+export async function updatePodcast(
   supabase: SupabaseClient,
   name: string,
   podcastData: PodcastData,
@@ -263,7 +266,7 @@ async function updatePodcast(
     .single();
 }
 
-async function upsertEpisode(
+export async function upsertEpisode(
   supabase: SupabaseClient,
   episodeData: ScrapedEpisodeData,
   podcastId: number,
@@ -275,7 +278,7 @@ async function upsertEpisode(
     .single();
 }
 
-async function upsertEpisodeUrl(
+export async function upsertEpisodeUrl(
   supabase: SupabaseClient,
   cleanedUrl: string,
   episodeId: number,
@@ -288,7 +291,7 @@ async function upsertEpisodeUrl(
     .single();
 }
 
-async function upsertPodcastDetails(
+export async function upsertPodcastDetails(
   supabase: SupabaseClient,
   podcastData: PodcastData,
 ) {
