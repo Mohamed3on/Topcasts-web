@@ -16,4 +16,4 @@ export const UserProvider = ({
   return <UserContext.Provider value={user}>{children}</UserContext.Provider>;
 };
 
-export const useUser = () => useContext(UserContext);
+export const useUser: () => User | null = () => useContext(UserContext);

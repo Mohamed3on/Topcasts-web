@@ -7,12 +7,7 @@ import Link from 'next/link';
 import { usePathname, useSearchParams } from 'next/navigation';
 import React, { useCallback } from 'react';
 
-const AddEpisodeButton = ({
-  children,
-}: {
-  onClick?: () => void;
-  children?: React.ReactNode;
-}) => {
+const AddEpisodeButton = ({ children }: { children?: React.ReactNode }) => {
   const user = useUser();
   const pathname = usePathname();
   const searchParams = useSearchParams();

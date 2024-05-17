@@ -2,12 +2,13 @@
 
 import { ImportEpisodeUrl } from '@/app/ImportEpisodeUrl';
 import { Drawer, DrawerContent, DrawerTrigger } from '@/components/ui/drawer';
-import { useSearchParams } from 'next/navigation';
+import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { useState } from 'react';
 
 export function AddEpisodeDrawer({ children }: { children?: React.ReactNode }) {
   const searchParams = useSearchParams();
-
+  const router = useRouter();
+  const pathname = usePathname();
   const [isOpen, setIsOpen] = useState(
     searchParams.get('modal') === 'add-episode',
   );
@@ -16,11 +17,16 @@ export function AddEpisodeDrawer({ children }: { children?: React.ReactNode }) {
     setIsOpen(false);
   };
 
+  const closeAndResetParams = () => {
+    closeModal();
+    router.push(pathname);
+  };
+
   return (
     <Drawer
       open={isOpen}
       onOpenChange={(open) => {
-        open ? setIsOpen(true) : closeModal();
+        open ? setIsOpen(true) : closeAndResetParams();
       }}
     >
       <DrawerTrigger asChild>{children}</DrawerTrigger>
