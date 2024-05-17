@@ -81,16 +81,14 @@ export const PodcastDetails = ({
           {episodeDetails.twitter_shares! > 0 && (
             <div className="flex items-center gap-1 text-blue-500">
               <Twitter className="h-6 w-6" />
-              <span className="">{episodeDetails.twitter_shares} Shares</span>
+              <span className="">
+                {episodeDetails.twitter_shares} Recommendations
+              </span>
             </div>
           )}
           <div className="flex items-center justify-center gap-4">
             <span className="text-lg font-semibold">Listen on:</span>
-            {episodeDetails.urls?.spotify && (
-              <PlayerIcon url={episodeDetails.urls.spotify}>
-                <SpotifyIcon />
-              </PlayerIcon>
-            )}
+
             {episodeDetails.podcast_itunes_id && (
               <PlayerIcon
                 url={
@@ -99,6 +97,16 @@ export const PodcastDetails = ({
                 }
               >
                 <AppleIcon></AppleIcon>
+              </PlayerIcon>
+            )}
+            {episodeDetails.podcast_spotify_id && (
+              <PlayerIcon
+                url={
+                  episodeDetails.urls?.spotify ||
+                  `https://open.spotify.com/show/${episodeDetails.podcast_spotify_id}`
+                }
+              >
+                <SpotifyIcon />
               </PlayerIcon>
             )}
             {episodeDetails.urls?.castro && (

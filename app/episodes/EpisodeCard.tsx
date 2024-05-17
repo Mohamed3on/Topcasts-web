@@ -23,7 +23,7 @@ export const EpisodeCard = ({
         <CardContent className="pt-4">
           <div className="flex items-center justify-between gap-1">
             <div>
-              <h3 className="line-clamp-4 text-lg font-medium text-gray-900 hover:h-auto">
+              <h3 className="line-clamp-2 text-lg font-medium text-gray-900 hover:h-auto sm:line-clamp-4">
                 {episode.episode_name}
               </h3>
               <p className="mt-1 text-sm font-semibold text-gray-500">
@@ -34,7 +34,7 @@ export const EpisodeCard = ({
           </div>
           <div
             suppressHydrationWarning
-            className="prose mt-3 line-clamp-2 text-sm text-gray-500"
+            className="prose mt-3 line-clamp-1 text-sm text-gray-500 sm:line-clamp-2"
           >
             <span>{episode.description}</span>
           </div>
@@ -43,7 +43,10 @@ export const EpisodeCard = ({
           {episode.twitter_shares > 0 && (
             <div className="flex items-center gap-1 text-blue-400">
               <Twitter className="h-4 w-4" />
-              <span> Shared by {episode.twitter_shares} Twitter users </span>
+              <span>
+                {' '}
+                Recommended by {episode.twitter_shares} Twitter users{' '}
+              </span>
             </div>
           )}
         </CardFooter>
