@@ -20,7 +20,7 @@ export default async function Home() {
           <h1 className=" text-center text-4xl  font-extrabold text-black sm:text-6xl">
             Discover your next favourite
             <p className="via-light-blue-500 bg-gradient-to-r from-sky-500 to-blue-500 bg-clip-text text-transparent">
-              podcast episode
+              Podcast Episode
             </p>
           </h1>
           <h2 className="text-center text-lg text-foreground/50">

@@ -14,6 +14,10 @@ const fetchEpisodes = async ({
     [key: string]: string;
   };
 }) => {
+  // TODO: use cursor pagination instead of offset
+  const pageIndex = searchParams?.page ? parseInt(searchParams.page) : 1;
+  const pageSize = 30;
+
   const supabase = createClient();
 
   const { data: userData } = await supabase.auth.getUser();
@@ -25,7 +29,7 @@ const fetchEpisodes = async ({
       search_query: searchParams?.q?.replace(/ /g, '+') || '',
       current_user_id: userId,
     })
-    .limit(30);
+    .range((pageIndex - 1) * pageSize, pageIndex * pageSize - 1);
 
   if (error) {
     throw error;
