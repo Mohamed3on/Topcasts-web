@@ -1,5 +1,7 @@
 import AddEpisodeButton from '@/app/AddEpisodeButton';
 import { EpisodeCard } from '@/app/episodes/EpisodeCard';
+import AppleIcon from '@/components/AppleIcon';
+import { SpotifyIcon } from '@/components/SpotifyIcon';
 import { Button } from '@/components/ui/button';
 import { createClient } from '@/utils/supabase/server';
 import { ArrowRight } from 'lucide-react';
@@ -27,16 +29,28 @@ export default async function Home() {
           </h2>
         </div>
       </div>
-      <div className="flex flex-col items-center gap-1">
-        <AddEpisodeButton>
-          <Button className="group transform transition duration-100 active:scale-95">
-            <div className="flex items-center gap-1">
-              <span>Save your favourite episode</span>
-              <ArrowRight className="h-4 w-4 translate-x-0 transform transition-transform duration-300 group-hover:translate-x-1" />
-            </div>
-          </Button>
-        </AddEpisodeButton>
-        <p className="text-center text-sm text-foreground/50">or</p>
+      <div className="flex flex-col items-center gap-4">
+        <div className="flex flex-col gap-1">
+          <div className="flex items-center justify-center gap-1 text-sm text-foreground/50">
+            Supported:
+            <SpotifyIcon className="h-4 w-4" />
+            <img
+              src="https://castro.fm/assets/images/Bitmap.svg"
+              className="h-4 w-4"
+              alt="Castro"
+            ></img>
+            <AppleIcon className="h-4 w-4" />
+          </div>
+          <AddEpisodeButton>
+            <Button className="group transform transition duration-100 active:scale-95">
+              <div className="flex items-center gap-1">
+                <span>Save your favourite episode</span>
+                <ArrowRight className="h-4 w-4 translate-x-0 transform transition-transform duration-300 group-hover:translate-x-1" />
+              </div>
+            </Button>
+          </AddEpisodeButton>
+        </div>
+        <p className="text-center text-primary/70">or</p>
 
         <Button
           asChild
