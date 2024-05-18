@@ -1,4 +1,5 @@
 import { EpisodeCard } from '@/app/episodes/EpisodeCard';
+import { EpisodeDetailsForList } from '@/app/episodes/List';
 import { createClient } from '@/utils/supabase/server';
 import { notFound } from 'next/navigation';
 import { Fragment } from 'react';
@@ -52,7 +53,7 @@ const EpisodeGrid = async ({ username }: { username: string }) => {
   });
   return (
     <Fragment>
-      {mappedEpisodes.map((episode) => (
+      {(mappedEpisodes as unknown as EpisodeDetailsForList).map((episode) => (
         <EpisodeCard key={episode.id} episode={episode} />
       ))}
     </Fragment>
