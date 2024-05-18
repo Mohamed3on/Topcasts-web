@@ -1,96 +1,158 @@
-// import { createClient } from '@supabase/supabase-js';
+import { createClient } from '@supabase/supabase-js';
 
-// const supabase = createClient(
-//   'https://dupqaaqpafucdxrmrmkv.supabase.co',
-//   // API KEY '',
-//   '',
-//   {
-//     auth: {
-//       autoRefreshToken: false,
-//       persistSession: false,
-//     },
-//   },
-// );
+const supabase = createClient(
+  'https://dupqaaqpafucdxrmrmkv.supabase.co',
+  process.env.SUPABASE_SERVICE_KEY!,
+  {
+    auth: {
+      autoRefreshToken: false,
+      persistSession: false,
+    },
+  },
+);
 
-// import {
-//   getHtml,
-//   scrapeDataByType,
-//   slugifyDetails,
-// } from '@/app/api/episode/utils';
-// import { ScrapedEpisodeDetails } from '@/app/api/types';
-// // import { Database } from 'bun:sqlite';
+import {
+  determineType,
+  getHtml,
+  scrapeDataByType,
+  slugifyDetails,
+} from '@/app/api/episode/utils';
+import { ScrapedEpisodeData, ScrapedEpisodeDetails } from '@/app/api/types';
+// import { Database } from 'bun:sqlite';
+import {
+  upsertEpisode,
+  upsertEpisodeUrl,
+  upsertPodcastDetails,
+} from '@/app/api/episode/db';
+import tweetData from '../../scrape-tweets/url_to_tweets.json';
 
-// async function updateEpisodeDetails({
-//   type,
-//   cleanedUrl,
-//   scrapedData,
-// }: {
-//   type: 'apple' | 'spotify' | 'castro';
-//   cleanedUrl: string;
-//   scrapedData: ScrapedEpisodeDetails;
-// }): Promise<
-//   | { id: number; slug: string }
-//   | {
-//       error: string;
-//       status: number;
-//     }
-// > {
-//   try {
-//     const slug = slugifyDetails(
-//       scrapedData.episode_name,
-//       scrapedData.podcast_name,
-//     );
+async function updateEpisodeDetails({
+  type,
+  cleanedUrl,
+  scrapedData,
+}: {
+  type: 'apple' | 'spotify' | 'castro';
+  cleanedUrl: string;
+  scrapedData: ScrapedEpisodeDetails;
+}): Promise<{ id: number; slug: string } | { error: string; status: number }> {
+  try {
+    const slug = slugifyDetails(
+      scrapedData.episode_name,
+      scrapedData.podcast_name,
+    );
 
-//     const { data, error } = await supabase
-//       .from('episode_details')
-//       .upsert({ ...scrapedData, slug }, { onConflict: 'slug' })
-//       .select('id')
-//       .single();
+    const podcastData = {
+      name: scrapedData.podcast_name,
+      itunes_id: scrapedData.podcast_itunes_id,
+      spotify_id: scrapedData.spotify_show_id,
+      genres: scrapedData.podcast_genres,
+      rss_feed: scrapedData.rss_feed,
+      artist_name: scrapedData.artist_name,
+    };
 
-//     if (error) throw error;
-//     if (!data) throw new Error('Failed to upsert episode details');
-//     const episodeId = data.id;
+    const episodeData: ScrapedEpisodeData = {
+      audio_url: scrapedData.audio_url,
+      date_published: scrapedData.date_published,
+      description: scrapedData.description,
+      duration: scrapedData.duration,
+      episode_itunes_id: scrapedData.episode_itunes_id,
+      episode_name: scrapedData.episode_name,
+      formatted_duration: scrapedData.formatted_duration,
+      guid: scrapedData.guid,
+      image_url: scrapedData.image_url,
+      slug: slug,
+    };
 
-//     // save the url to the episode_urls table
-//     const urlUpsert = await supabase
-//       .from('episode_urls')
-//       .insert({ url: cleanedUrl, episode_id: episodeId, type })
-//       .select('episode_id')
-//       .single();
+    const podcastId = await upsertPodcastDetails(supabase, podcastData);
 
-//     if (urlUpsert.error) throw urlUpsert.error;
-//     if (!urlUpsert.data) throw new Error('Failed to upsert episode URL');
+    const { data: episode, error: episodeError } = await upsertEpisode(
+      supabase,
+      episodeData,
+      podcastId,
+    );
+    if (episodeError || !episode)
+      throw new Error(
+        `Failed to upsert episode: ${JSON.stringify(episodeError)}`,
+      );
 
-//     return { id: episodeId, slug };
-//   } catch (error) {
-//     console.error('Error updating episode details:', error);
-//     return {
-//       error: 'Failed to update episode details',
-//       status: 500,
-//     };
-//   }
-// }
+    const { error: urlError } = await upsertEpisodeUrl(
+      supabase,
+      cleanedUrl,
+      episode.id,
+      type,
+    );
+    if (urlError)
+      throw new Error(
+        `Failed to upsert episode URL: ${JSON.stringify(urlError)}`,
+      );
 
-// // load db from file
+    return { id: episode.id, slug };
+  } catch (error) {
+    console.error('Error updating episode details:', error);
+    return { error: 'Failed to update episode details', status: 500 };
+  }
+}
 
-// let db = new Database('./Castro.sqlite');
+async function processTweets() {
+  for (const [url, urlShares] of Object.entries(tweetData)) {
+    const html = await getHtml(url);
+    const type = determineType(url);
+    if (!type) throw new Error('Failed to determine type');
 
-// // add where starred = 1 and limit to 20
-// const query = db.query(
-//   `SELECT SUPEpisode.*, SUPPodcast.iTunesCategory, SUPPodcast.iTunesSubCategory, SupPodcast.author
+    const scrapedData = await scrapeDataByType(type, html);
+
+    const { data } = await supabase
+      .from('podcast_episode_url')
+      .select('episode_id')
+      .eq('url', url)
+      .single();
+
+    let id = data?.episode_id;
+    if (!data) {
+      const response = await updateEpisodeDetails({
+        type,
+        cleanedUrl: url,
+        scrapedData: scrapedData,
+      });
+      if ('id' in response) id = response.id;
+    }
+
+    console.log('mentioned by', urlShares.mentioned_by);
+    console.log('scraped episode', scrapedData.episode_name);
+    // url
+    console.log('url and ID', url, id);
+
+    const { data: share_data, error } = await supabase
+      .from('social_share')
+      .upsert([
+        ...urlShares.tweets.map((tweet) => ({
+          episode_id: id,
+          twitter_screen_name: tweet.screen_name,
+          shared_at: new Date(tweet.created_at).toISOString(),
+        })),
+      ]);
+    if (error) console.log('error inserting social shares', error);
+  }
+}
+
+await processTweets();
+
+// const processCastroData = async () => {
+//   console.log('🚀 ~ processCastroData ~ db:', db);
+
+//   const query = db.query(
+//     `SELECT SUPEpisode.*, SUPPodcast.iTunesCategory, SUPPodcast.iTunesSubCategory, SupPodcast.author
 //   FROM SUPEpisode
 //   JOIN SUPPodcast ON SUPEpisode.podcastId = SUPPodcast.id
 //   WHERE SUPEpisode.starred = 1;`,
-// );
+//   );
 
-// const process = async () => {
 //   for (const row of query.all()) {
 //     const url = `https://castro.fm/episode/${row?.shortId}`;
 
 //     const genres = [row?.iTunesCategory, row?.iTunesSubcategory].filter(
 //       Boolean,
 //     );
-//     console.log('🚀 ~ process ~ genres:', genres);
 
 //     const html = await getHtml(url);
 
@@ -98,8 +160,8 @@
 
 //     const fullData = {
 //       ...scrapedData,
-//       audio_url: `https://castro.fm${row?.mediaUrl}`,
 //       podcast_genres: genres,
+//       artist_name: row?.author,
 //     };
 
 //     const episodeDetails = await updateEpisodeDetails({
@@ -111,7 +173,7 @@
 //     console.log('scraped episode', scrapedData.episode_name);
 
 //     if (!('error' in episodeDetails))
-//       await supabase.from('episode_reviews').upsert(
+//       await supabase.from('podcast_episode_review').upsert(
 //         {
 //           episode_id: episodeDetails.id,
 //           user_id: 'e2173275-b181-4035-89f8-a87e768047b4',
@@ -125,6 +187,4 @@
 //   }
 // };
 
-// await process();
-
-// // // Access auth admin api
+// await processCastroData();
