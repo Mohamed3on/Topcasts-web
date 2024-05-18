@@ -1,18 +1,14 @@
 import AddEpisodeButton from '@/app/AddEpisodeButton';
-import { EpisodeCard } from '@/app/episodes/EpisodeCard';
+import { EpisodeGridLanding } from '@/app/EpisodeGridLanding';
+import { SkeletonEpisodeCard } from '@/app/episodes/SkeletonEpisodeCard';
 import AppleIcon from '@/components/AppleIcon';
 import { SpotifyIcon } from '@/components/SpotifyIcon';
 import { Button } from '@/components/ui/button';
-import { createClient } from '@/utils/supabase/server';
 import { ArrowRight } from 'lucide-react';
 import Link from 'next/link';
+import { Suspense } from 'react';
 
 export default async function Home() {
-  const supabase = createClient();
-  const { data } = await supabase
-    .rpc('search_episodes_by_relevance', {})
-    .limit(5);
-
   return (
     <div className="container flex w-screen flex-col items-center justify-center gap-4">
       <div className="flex flex-col gap-2">
@@ -68,21 +64,13 @@ export default async function Home() {
       <div className="flex w-screen flex-col items-center gap-4 rounded-lg border-y border-gray-200 p-4 shadow-md">
         <h2 className="text-2xl font-semibold">Popular Episodes</h2>
         <ul className="grid grid-cols-1 gap-4 md:grid-cols-3">
-          {data?.map((episode: any) => (
-            <EpisodeCard episode={episode} key={episode.id} />
-          ))}
-          <Button
-            className="text-md group grid transform place-self-center transition duration-100 active:scale-95"
-            asChild
-            variant={'link'}
+          <Suspense
+            fallback={[1, 2, 3, 4, 5].map((i) => (
+              <SkeletonEpisodeCard key={i}></SkeletonEpisodeCard>
+            ))}
           >
-            <Link href="/episodes">
-              <div className="flex items-center gap-1">
-                <span>View all episodes</span>
-                <ArrowRight className="h-4 w-4 translate-x-0 transform transition-transform duration-300 group-hover:translate-x-1" />
-              </div>
-            </Link>
-          </Button>
+            <EpisodeGridLanding />
+          </Suspense>
         </ul>
       </div>
     </div>
