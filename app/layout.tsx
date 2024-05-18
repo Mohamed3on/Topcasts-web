@@ -1,4 +1,3 @@
-import { cn } from '@/lib/utils';
 import type { Metadata } from 'next';
 import { Inter } from 'next/font/google';
 import './globals.css';
@@ -9,6 +8,9 @@ import { createClient } from '@/utils/supabase/server';
 import { Analytics } from '@vercel/analytics/react';
 import type { Viewport } from 'next';
 import { Toaster } from 'sonner';
+
+import { GeistMono } from 'geist/font/mono';
+import { GeistSans } from 'geist/font/sans';
 
 const inter = Inter({ subsets: ['latin'], variable: '--font-sans' });
 
@@ -33,13 +35,8 @@ export default async function RootLayout({
     data: { user },
   } = await supabase.auth.getUser();
   return (
-    <html lang="en">
-      <body
-        className={cn(
-          'min-h-screen bg-background font-sans antialiased',
-          inter.variable,
-        )}
-      >
+    <html lang="en" className={`${GeistSans.variable} ${GeistMono.variable}`}>
+      <body className={'min-h-screen bg-background font-sans antialiased'}>
         <Analytics />
         <main>
           <UserProvider user={user}>

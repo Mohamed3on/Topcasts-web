@@ -14,11 +14,11 @@ export const useReview = (episodeId: number, reviewType?: ReviewType) => {
   const toggleReview = useCallback(
     async (type: ReviewType) => {
       if (!user?.id)
-        return router.replace(`/login?next=${window.location.pathname}`);
+        return router.push(`/login?next=${window.location.pathname}`);
 
       setIsLoading(true);
 
-      const { error, data } =
+      const { error } =
         reviewType === type
           ? await supabase
               .from('podcast_episode_review')
