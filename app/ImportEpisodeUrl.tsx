@@ -90,13 +90,13 @@ export const ImportEpisodeUrl = ({
       const data = await response.json();
 
       setIsLoading(false);
-
       toast.success('Episode saved successfully!');
 
       if (!data || data.error) {
         throw data.error;
       }
       router.push(`/episode/${data.id}/${data.slug}`);
+
       onSuccessfulSubmit();
     } catch (error) {
       toast.error(

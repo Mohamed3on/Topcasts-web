@@ -7,7 +7,13 @@ import Link from 'next/link';
 import { usePathname, useSearchParams } from 'next/navigation';
 import React, { useCallback } from 'react';
 
-const AddEpisodeButton = ({ children }: { children?: React.ReactNode }) => {
+const AddEpisodeButton = ({
+  children,
+  openIfQueryParamExists,
+}: {
+  children?: React.ReactNode;
+  openIfQueryParamExists?: string;
+}) => {
   const user = useUser();
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -26,7 +32,7 @@ const AddEpisodeButton = ({ children }: { children?: React.ReactNode }) => {
     : `/login?${createQueryString('redirect', pathname)}`;
 
   return user ? (
-    <AddEpisodeDrawer>
+    <AddEpisodeDrawer openIfQueryParamExists={openIfQueryParamExists}>
       <Button asChild variant="link">
         <Link href={href} className="flex items-center justify-start gap-1">
           {children}

@@ -61,7 +61,7 @@ const Header = async () => {
           </Link>
         </Button>
 
-        <AddEpisodeButton>
+        <AddEpisodeButton openIfQueryParamExists="add-episode">
           <PlusCircle className="h-6 w-6" />
           <span className="hidden md:block">Add episode</span>
         </AddEpisodeButton>
