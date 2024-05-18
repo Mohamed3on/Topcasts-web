@@ -1,5 +1,5 @@
+import { EpisodeDetailsForList } from '@/app/episodes/List';
 import RatingButtons from '@/app/episodes/RatingButtons';
-import { EpisodeDetailsForList } from '@/app/episodes/page';
 import { Card, CardContent, CardFooter } from '@/components/ui/card';
 import { Twitter } from 'lucide-react';
 
@@ -15,6 +15,7 @@ export const EpisodeCard = ({
       <Link className="h-full" href={`/episode/${episode.id}/${episode.slug}`}>
         <div className="overflow-hidden rounded-lg">
           <img
+            loading="lazy"
             alt={episode.episode_name || ''}
             className="h-48 w-full object-cover sm:h-56"
             src={episode.image_url || ''}
