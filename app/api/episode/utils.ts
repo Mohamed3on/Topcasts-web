@@ -1,3 +1,4 @@
+import { getSpotifyEpisodeData } from '@/app/api/episode/spotify';
 import { load } from 'cheerio';
 import slugify from 'slugify';
 
@@ -20,15 +21,15 @@ const getCheerio = async (html: string) => {
 
 export async function scrapeDataByType(
   type: 'apple' | 'spotify' | 'castro',
-  html: string,
+  url: string,
 ) {
   switch (type) {
     case 'apple':
-      return await scrapeApplePodcastsEpisodeDetails(html);
-    case 'spotify':
-      return await scrapeSpotifyEpisodeDetails(html);
+      return await scrapeApplePodcastsEpisodeDetails(url);
     case 'castro':
-      return await scrapeCastroEpisodeDetails(html);
+      return await scrapeCastroEpisodeDetails(url);
+    case 'spotify':
+      return await getSpotifyEpisodeData(url.split('/').pop()!);
   }
 }
 
@@ -47,7 +48,9 @@ export async function scrapeSpotifyEpisodeDetails(html: string) {
   const podcast_name = $('[data-testid=entity-header-entity-subtitle]').text();
   const description = parsedJson?.description;
   const date_published = parsedJson?.datePublished;
-  const duration = $('[data-testid=episode-progress-not-played]').text();
+  const formatted_duration = $(
+    '[data-testid=episode-progress-not-played]',
+  ).text();
 
   const show_Id = $('meta[name="music:album"]')
     ?.attr('content')
@@ -62,7 +65,7 @@ export async function scrapeSpotifyEpisodeDetails(html: string) {
     episode_name,
     description,
     podcast_name,
-    formatted_duration: duration,
+    duration: convertToMilliseconds(formatted_duration),
     date_published,
     image_url: episodeImage || null,
     spotify_show_id: show_Id,
@@ -70,7 +73,8 @@ export async function scrapeSpotifyEpisodeDetails(html: string) {
 
   return returnObject;
 }
-export async function scrapeApplePodcastsEpisodeDetails(html: string) {
+export async function scrapeApplePodcastsEpisodeDetails(url: string) {
+  const html = await getHtml(url);
   const $ = await getCheerio(html);
 
   const jsonData = $('script#shoebox-media-api-cache-amp-podcasts').html();
@@ -142,7 +146,45 @@ export async function scrapeApplePodcastsEpisodeDetails(html: string) {
   }
 }
 
-export async function scrapeCastroEpisodeDetails(html: string) {
+function convertToMilliseconds(duration: string): number {
+  type TimeUnit = {
+    [key: string]: number;
+  };
+
+  const timeUnits: TimeUnit = {
+    hr: 60 * 60 * 1000,
+    hour: 60 * 60 * 1000,
+    hours: 60 * 60 * 1000,
+    min: 60 * 1000,
+    minute: 60 * 1000,
+    minutes: 60 * 1000,
+    sec: 1000,
+    second: 1000,
+    seconds: 1000,
+  };
+  // Regex to match value and unit pairs
+  const regex =
+    /(\d+)\s*(hr|hour|hours|min|minute|minutes|sec|second|seconds)/g;
+  let match: RegExpExecArray | null;
+  let totalMilliseconds = 0;
+
+  // Loop through all matches
+  while ((match = regex.exec(duration)) !== null) {
+    const numericValue = parseFloat(match[1]);
+    const unit = match[2];
+
+    if (timeUnits[unit]) {
+      totalMilliseconds += numericValue * timeUnits[unit];
+    } else {
+      throw new Error(`Unsupported time unit: ${unit}`);
+    }
+  }
+
+  return totalMilliseconds;
+}
+
+export async function scrapeCastroEpisodeDetails(url: string) {
+  const html = await getHtml(url);
   const $ = await getCheerio(html);
 
   const episode_name = $('h1').first().text();
@@ -165,6 +207,7 @@ export async function scrapeCastroEpisodeDetails(html: string) {
   // third h2 is the duration
   const date_published = $('h2').eq(1).text();
   const formatted_duration = $('h2').eq(2).text();
+  const duration = convertToMilliseconds(formatted_duration);
 
   // inside of #artwork-container
   const image_url = $('#artwork-container img').attr('src');
@@ -174,7 +217,7 @@ export async function scrapeCastroEpisodeDetails(html: string) {
     description,
     podcast_name,
     image_url: image_url || null,
-    formatted_duration,
+    duration,
     date_published,
     podcast_itunes_id: itunesId,
     rss_feed,

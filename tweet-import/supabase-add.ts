@@ -13,7 +13,6 @@ const supabase = createClient(
 
 import {
   determineType,
-  getHtml,
   scrapeDataByType,
   slugifyDetails,
 } from '@/app/api/episode/utils';
@@ -95,11 +94,11 @@ async function updateEpisodeDetails({
 
 async function processTweets() {
   for (const [url, urlShares] of Object.entries(tweetData)) {
-    const html = await getHtml(url);
+    console.log('🚀 ~ processTweets ~ url:', url);
+
     const type = determineType(url);
     if (!type) throw new Error('Failed to determine type');
-
-    const scrapedData = await scrapeDataByType(type, html);
+    const scrapedData = await scrapeDataByType(type, url);
 
     const { data } = await supabase
       .from('podcast_episode_url')
@@ -135,6 +134,7 @@ async function processTweets() {
   }
 }
 
+// @ts-ignore
 await processTweets();
 
 // const processCastroData = async () => {

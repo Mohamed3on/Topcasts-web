@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-import { determineType, formatUrls, getHtml, scrapeDataByType } from './utils';
+import { determineType, formatUrls, scrapeDataByType } from './utils';
 
 import { ScrapedEpisodeData, ScrapedEpisodeDetails } from '@/app/api/types';
 import { createClient } from '@/utils/supabase/server';
@@ -56,13 +56,7 @@ const cleanUrl = (urlString: string) => {
   return `${url.origin}${url.pathname}${url.search ? `${url.search}` : ''}`;
 };
 
-async function handlePodcastURL({
-  url,
-  html,
-}: {
-  url: string;
-  html?: string;
-}): Promise<
+async function handlePodcastURL({ url }: { url: string }): Promise<
   | {
       id: number;
       slug: string | null;
@@ -79,8 +73,10 @@ async function handlePodcastURL({
   const type = determineType(cleanedUrl);
 
   if (!type) {
-    // Handle non-podcast URLs by following redirects to check if it becomes a podcast URL.
-    return handleNonPodcastURL(cleanedUrl);
+    return {
+      error: 'Unsupported URL, must be Apple, Spotify, or castro',
+      status: 400,
+    };
   }
 
   // find url in supabase
@@ -96,12 +92,8 @@ async function handlePodcastURL({
     if (episodeDetails) return episodeDetails;
   }
 
-  if (!html) {
-    html = await getHtml(cleanedUrl.toString());
-  }
   return handleNewEpisodeData({
     type,
-    html,
     cleanedUrl,
   });
 }
@@ -124,25 +116,6 @@ const getEpisodeDetailsFromDb = async (episodeId: number) => {
 
   return data;
 };
-
-async function handleNonPodcastURL(cleanedUrl: string) {
-  const response = await fetch(cleanedUrl, {
-    redirect: 'follow',
-    method: 'GET',
-  });
-  const finalUrl = response.url;
-
-  const type = determineType(finalUrl);
-  if (!type) {
-    return { error: 'Invalid URL', status: 400 };
-  }
-
-  const html = await response.text();
-  return handlePodcastURL({
-    url: finalUrl,
-    html,
-  });
-}
 
 export async function POST(request: NextRequest): Promise<NextResponse> {
   const body = await request.json();
@@ -198,15 +171,13 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
 
 async function handleNewEpisodeData({
   type,
-  html,
   cleanedUrl,
 }: {
   type: 'apple' | 'spotify' | 'castro';
-  html: string;
   cleanedUrl: string;
 }) {
   try {
-    const scrapedData = await scrapeDataByType(type, html);
+    const scrapedData = await scrapeDataByType(type, cleanedUrl);
 
     if (!scrapedData.episode_name) {
       return {
