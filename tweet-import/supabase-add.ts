@@ -135,7 +135,7 @@ async function processTweets() {
 }
 
 // @ts-ignore
-await processTweets();
+// await processTweets();
 
 // const processCastroData = async () => {
 //   console.log('🚀 ~ processCastroData ~ db:', db);
