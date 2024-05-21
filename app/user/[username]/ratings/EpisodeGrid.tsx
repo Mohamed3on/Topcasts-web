@@ -8,13 +8,27 @@ const fetchUserEpisodes = async (id: string) => {
   const supabase = createClient();
 
   const { data, error } = await supabase
-    .from('episode_with_rating_data')
+    .from('podcast_episode_review')
     .select(
-      `*,
-    podcast_episode_review!inner(review_type, user_id,created_at, updated_at)
-    `,
+      `
+    review_type,
+    user_id,
+    updated_at,
+    episode_with_rating_data(
+      id,
+      slug,
+      episode_name,
+      image_url,
+      podcast_name,
+      description,
+      twitter_shares,
+      likes,
+      dislikes
     )
-    .eq('podcast_episode_review.user_id', id)
+  `,
+    )
+    .eq('user_id', id)
+    .order('updated_at', { ascending: false })
     .limit(30);
 
   if (error || !data) {
@@ -45,10 +59,9 @@ const EpisodeGrid = async ({ username }: { username: string }) => {
   }
 
   let mappedEpisodes = userEpisodes.map((episode) => {
-    const { podcast_episode_review, ...rest } = episode;
     return {
-      ...rest,
-      review_type: podcast_episode_review[0]?.review_type,
+      ...episode.episode_with_rating_data,
+      review_type: episode.review_type,
     };
   });
   return (
