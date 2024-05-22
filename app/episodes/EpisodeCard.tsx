@@ -1,15 +1,22 @@
-import { EpisodeDetailsForList } from '@/app/episodes/List';
 import RatingButtons from '@/app/episodes/RatingButtons';
 import { Card, CardContent, CardFooter } from '@/components/ui/card';
 import { Twitter } from 'lucide-react';
 
 import Link from 'next/link';
 
-export const EpisodeCard = ({
-  episode,
-}: {
-  episode: EpisodeDetailsForList[number];
-}) => {
+export type EpisodeForCard = {
+  id: number;
+  slug: string;
+  episode_name: string;
+  image_url: string;
+  podcast_name: string;
+  description: string;
+  twitter_shares: number;
+  review_type: string;
+  likes: number;
+  dislikes: number;
+};
+export const EpisodeCard = ({ episode }: { episode: EpisodeForCard }) => {
   return (
     <Card className="overflow-hidden rounded-lg shadow-sm transition duration-100 ease-in-out hover:shadow-lg ">
       <Link className="h-full" href={`/episode/${episode.id}/${episode.slug}`}>
