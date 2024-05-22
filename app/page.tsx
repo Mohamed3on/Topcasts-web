@@ -12,16 +12,15 @@ export default async function Home() {
   return (
     <div className="container flex w-screen flex-col items-center justify-center gap-4">
       <div className="flex flex-col gap-2">
-        <div className="flex max-w-xl flex-col gap-2">
-          <h1 className="text-center text-4xl  font-extrabold leading-tight text-black sm:text-6xl">
+        <div className="flex max-w-lg flex-col gap-2">
+          <h1 className="tracking-tight-tight text-center  text-4xl font-extrabold text-black sm:text-6xl">
             Discover your next favourite
             <p className="via-light-blue-500 bg-gradient-to-r from-sky-500 to-blue-500 bg-clip-text text-transparent">
               Podcast Episode
             </p>
           </h1>
           <h2 className="text-center text-lg text-foreground/50">
-            Topcasts is the #1 platform to save and share your favourite podcast
-            episodes
+            Track, share, and find your favourite podcast episodes
           </h2>
         </div>
       </div>
