@@ -1,11 +1,17 @@
 import { PodcastData, ScrapedEpisodeData } from '@/app/api/types';
 import { SupabaseClient } from '@/app/api/types/SupabaseClient';
 
-export async function fetchPodcastByName(
+export async function fetchPodcast(
   supabase: SupabaseClient,
-  name: string,
+  podcastData: PodcastData,
 ) {
-  return supabase.from('podcast').select().eq('name', name).single();
+  return supabase
+    .from('podcast')
+    .select()
+    .or(
+      `name.eq.${podcastData.name},itunes_id.eq.${podcastData.itunes_id},spotify_id.eq.${podcastData.spotify_id}`,
+    )
+    .single();
 }
 
 export async function insertPodcast(
@@ -57,10 +63,7 @@ export async function upsertPodcastDetails(
   supabase: SupabaseClient,
   podcastData: PodcastData,
 ) {
-  const { data: existingPodcast } = await fetchPodcastByName(
-    supabase,
-    podcastData.name,
-  );
+  const { data: existingPodcast } = await fetchPodcast(supabase, podcastData);
 
   if (!existingPodcast) {
     const { data: newPodcast, error: newError } = await insertPodcast(
@@ -73,7 +76,7 @@ export async function upsertPodcastDetails(
   } else {
     const { data: updatedPodcast, error: updateError } = await updatePodcast(
       supabase,
-      podcastData.name,
+      existingPodcast.name,
       podcastData,
     );
     if (updateError)

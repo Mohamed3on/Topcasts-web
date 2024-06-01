@@ -128,6 +128,8 @@ async function processTweets() {
           episode_id: id,
           twitter_screen_name: tweet.screen_name,
           shared_at: new Date(tweet.created_at).toISOString(),
+          tweet_id: tweet.tweet_id,
+          tweet_text: tweet.tweet_text,
         })),
       ]);
     if (error) console.log('error inserting social shares', error);
@@ -135,7 +137,7 @@ async function processTweets() {
 }
 
 // @ts-ignore
-// await processTweets();
+await processTweets();
 
 // const processCastroData = async () => {
 //   console.log('🚀 ~ processCastroData ~ db:', db);
