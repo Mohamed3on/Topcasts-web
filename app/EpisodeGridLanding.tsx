@@ -5,14 +5,52 @@ import { ArrowRight } from 'lucide-react';
 import Link from 'next/link';
 import { Fragment } from 'react';
 
+type Episode = {
+  id: number;
+  slug: string | null;
+  episode_name: string | null;
+  image_url: string | null;
+  podcast_name: string | null;
+  description: string | null;
+  twitter_shares: number | null;
+  likes: number | null;
+  dislikes: number | null;
+  podcast_episode_review?: {
+    review_type: string;
+    user_id: string;
+    episode_id: number;
+  }[];
+};
+
 const getEpisodes = async () => {
   const supabase = createClient();
   const { data: userData } = await supabase.auth.getUser();
   const userId = userData?.user?.id;
-  const { data } = await supabase
-    .from(`episode_with_rating_data`)
-    .select(
-      `id,
+  let episodeData: Episode[] | null = null;
+
+  if (!userId) {
+    const { data } = await supabase
+      .from(`episode_with_rating_data`)
+      .select(
+        `id,
+      slug,
+      episode_name,
+      image_url,
+      podcast_name,
+      description,
+      twitter_shares,
+      likes,
+      dislikes
+`,
+      )
+      .order('twitter_shares', { ascending: false })
+      .limit(5);
+    episodeData = data;
+  } else {
+    const { data } = await supabase
+      .from(`episode_with_rating_data`)
+      .select(
+        `id,
       slug,
       episode_name,
       image_url,
@@ -22,15 +60,17 @@ const getEpisodes = async () => {
       likes,
       dislikes,
     podcast_episode_review!inner(review_type, user_id, episode_id)`,
-    )
-    .eq('podcast_episode_review.user_id', userId || 0)
-    .order('twitter_shares', { ascending: false })
-    .limit(5);
+      )
+      .eq('podcast_episode_review.user_id', userId)
+      .order('twitter_shares', { ascending: false })
+      .limit(5);
+    episodeData = data;
+  }
 
-  const episodes = data?.map((episode) => {
+  const episodes = episodeData?.map((episode) => {
     return {
       ...episode,
-      review_type: episode.podcast_episode_review?.[0].review_type,
+      review_type: episode?.podcast_episode_review?.[0].review_type || null,
     };
   });
 
