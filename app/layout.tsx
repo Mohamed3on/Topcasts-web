@@ -11,8 +11,7 @@ import { Toaster } from 'sonner';
 
 import { GeistMono } from 'geist/font/mono';
 import { GeistSans } from 'geist/font/sans';
-
-const inter = Inter({ subsets: ['latin'], variable: '--font-sans' });
+import Link from 'next/link';
 
 export const metadata: Metadata = {
   title: 'Topcasts',
@@ -46,6 +45,17 @@ export default async function RootLayout({
             <Toaster closeButton richColors />
           </UserProvider>
         </main>
+        <div className="flex h-16 items-center justify-center border-t border-gray-200 bg-background">
+          <p className="text-center text-sm text-gray-400">
+            Made by{' '}
+            <Link
+              className="font-semibold text-gray-800 hover:underline"
+              href="https://twitter.com/mohamed3on"
+            >
+              Mohamed
+            </Link>
+          </p>
+        </div>
       </body>
     </html>
   );
