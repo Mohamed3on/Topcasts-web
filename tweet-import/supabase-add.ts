@@ -12,17 +12,16 @@ const supabase = createClient(
 );
 
 import {
+  upsertEpisode,
+  upsertEpisodeUrl,
+  upsertPodcastDetails,
+} from '@/app/api/episode/db';
+import {
   determineType,
   scrapeDataByType,
   slugifyDetails,
 } from '@/app/api/episode/utils';
 import { ScrapedEpisodeData, ScrapedEpisodeDetails } from '@/app/api/types';
-// import { Database } from 'bun:sqlite';
-import {
-  upsertEpisode,
-  upsertEpisodeUrl,
-  upsertPodcastDetails,
-} from '@/app/api/episode/db';
 import tweetData from '../../scrape-tweets/url_to_tweets.json';
 
 async function updateEpisodeDetails({
@@ -98,26 +97,26 @@ async function processTweets() {
 
     const type = determineType(url);
     if (!type) throw new Error('Failed to determine type');
-    const scrapedData = await scrapeDataByType(type, url);
 
     const { data } = await supabase
       .from('podcast_episode_url')
       .select('episode_id')
       .eq('url', url)
       .single();
-
     let id = data?.episode_id;
+
     if (!data) {
+      const scrapedData = await scrapeDataByType(type, url);
       const response = await updateEpisodeDetails({
         type,
         cleanedUrl: url,
         scrapedData: scrapedData,
       });
       if ('id' in response) id = response.id;
+      console.log('scraped episode', scrapedData.episode_name);
     }
-
     console.log('mentioned by', urlShares.mentioned_by);
-    console.log('scraped episode', scrapedData.episode_name);
+
     // url
     console.log('url and ID', url, id);
 
