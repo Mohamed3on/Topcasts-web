@@ -175,7 +175,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     );
   }
 
-  return NextResponse.json(response);
+  return NextResponse.json({ ...response, user_id: user.id });
 }
 
 async function handleNewEpisodeData({
