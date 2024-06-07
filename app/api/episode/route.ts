@@ -149,25 +149,18 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
         { status: response.status },
       );
 
-    const { data: rating_data, error } = await supabase
-      .from('podcast_episode_review')
-      .upsert(
-        {
-          episode_id: response.id,
-          user_id: user.id,
-          review_type: body.rating,
-          text: body.review_text,
-          updated_at: new Date().toISOString(),
-        },
-        { onConflict: 'user_id, episode_id' },
-      )
-      .select()
-      .single();
+    await supabase.from('podcast_episode_review').upsert(
+      {
+        episode_id: response.id,
+        user_id: user.id,
+        review_type: body.rating,
+        text: body.review_text,
+        updated_at: new Date().toISOString(),
+      },
+      { onConflict: 'user_id, episode_id' },
+    );
 
-    return NextResponse.json({
-      ...response,
-      error,
-    });
+    return NextResponse.json(response);
   } catch (error) {
     console.error('JWT is not valid:', error);
     return NextResponse.json(
