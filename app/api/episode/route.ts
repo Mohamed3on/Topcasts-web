@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 
 import { determineType, formatUrls, scrapeDataByType } from './utils';
+import jwt, { type JwtPayload } from 'jsonwebtoken';
 
 import { ScrapedEpisodeData, ScrapedEpisodeDetails } from '@/app/api/types';
 import { createClient } from '@/utils/supabase/server';
@@ -118,58 +119,59 @@ const getEpisodeDetailsFromDb = async (episodeId: number) => {
 };
 
 export async function POST(request: NextRequest): Promise<NextResponse> {
-  const body = await request.json();
   const supabase = createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const body = await request.json();
+  const authorization = request.headers.get('Authorization');
+  const token = authorization?.replace('Bearer ', '');
+  const secret = process.env.SUPABASE_JWT_SECRET;
 
-  if (!user) {
+  let user;
+  if (token && secret) {
+    try {
+      user = jwt.verify(token, secret) as JwtPayload;
+      user.id = user.sub;
+    } catch (error) {
+      console.error('JWT is not valid:', error);
+      return NextResponse.json(
+        { error: 'Invalid Authorization' },
+        { status: 401 },
+      );
+    }
+  } else {
+    const { data } = await supabase.auth.getUser();
+    user = data?.user;
+  }
+
+  if (!user)
     return NextResponse.json(
-      { error: 'User not authenticated' },
+      { error: 'Invalid Authorization' },
       { status: 401 },
     );
-  }
-
-  if (!body || !body?.url) {
+  if (!body?.url)
     return NextResponse.json({ error: 'Invalid URL' }, { status: 400 });
-  }
 
-  const rating = body.rating;
-
-  const reviewText = body.review_text;
-
-  const response = await handlePodcastURL({
-    url: body.url,
-  });
-
-  if (!response) {
+  const response = await handlePodcastURL({ url: body.url });
+  if (!response)
     return NextResponse.json(
       { error: 'Failed to fetch episode details' },
       { status: 500 },
     );
-  }
-  if ('error' in response) {
+  if ('error' in response)
     return NextResponse.json(
-      {
-        error: response.error,
-      },
+      { error: response.error },
       { status: response.status },
     );
-  }
 
-  if (rating) {
+  if (body.rating) {
     await supabase.from('podcast_episode_review').upsert(
       {
         episode_id: response.id,
         user_id: user.id,
-        review_type: rating,
-        text: reviewText,
+        review_type: body.rating,
+        text: body.review_text,
         updated_at: new Date().toISOString(),
       },
-      {
-        onConflict: 'user_id, episode_id',
-      },
+      { onConflict: 'user_id, episode_id' },
     );
   }
 
