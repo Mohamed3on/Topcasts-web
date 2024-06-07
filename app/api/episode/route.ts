@@ -147,8 +147,11 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       { error: 'Invalid Authorization' },
       { status: 401 },
     );
-  if (!body?.url)
-    return NextResponse.json({ error: 'Invalid URL' }, { status: 400 });
+  if (!body?.url || !body?.rating)
+    return NextResponse.json(
+      { error: 'Invalid URL or rating' },
+      { status: 400 },
+    );
 
   const response = await handlePodcastURL({ url: body.url });
   if (!response)
@@ -162,18 +165,16 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       { status: response.status },
     );
 
-  if (body.rating) {
-    await supabase.from('podcast_episode_review').upsert(
-      {
-        episode_id: response.id,
-        user_id: user.id,
-        review_type: body.rating,
-        text: body.review_text,
-        updated_at: new Date().toISOString(),
-      },
-      { onConflict: 'user_id, episode_id' },
-    );
-  }
+  await supabase.from('podcast_episode_review').upsert(
+    {
+      episode_id: response.id,
+      user_id: user.id,
+      review_type: body.rating,
+      text: body.review_text,
+      updated_at: new Date().toISOString(),
+    },
+    { onConflict: 'user_id, episode_id' },
+  );
 
   return NextResponse.json({ ...response, user_id: user.id });
 }
