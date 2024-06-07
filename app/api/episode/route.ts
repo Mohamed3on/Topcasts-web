@@ -124,6 +124,13 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     data: { user },
   } = await supabase.auth.getUser();
 
+  if (!user) {
+    return NextResponse.json(
+      { error: 'User not authenticated' },
+      { status: 401 },
+    );
+  }
+
   if (!body || !body?.url) {
     return NextResponse.json({ error: 'Invalid URL' }, { status: 400 });
   }
@@ -151,7 +158,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     );
   }
 
-  if (rating && user) {
+  if (rating) {
     await supabase.from('podcast_episode_review').upsert(
       {
         episode_id: response.id,
