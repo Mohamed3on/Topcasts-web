@@ -176,7 +176,11 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     { onConflict: 'user_id, episode_id' },
   );
 
-  return NextResponse.json({ ...response, user_id: user.id });
+  return NextResponse.json({
+    ...response,
+    user_id: user.id,
+    original_body: body,
+  });
 }
 
 async function handleNewEpisodeData({
