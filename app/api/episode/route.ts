@@ -165,21 +165,26 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       { status: response.status },
     );
 
-  await supabase.from('podcast_episode_review').upsert(
-    {
-      episode_id: response.id,
-      user_id: user.id,
-      review_type: body.rating,
-      text: body.review_text,
-      updated_at: new Date().toISOString(),
-    },
-    { onConflict: 'user_id, episode_id' },
-  );
+  const { data: rating_data } = await supabase
+    .from('podcast_episode_review')
+    .upsert(
+      {
+        episode_id: response.id,
+        user_id: user.id,
+        review_type: body.rating,
+        text: body.review_text,
+        updated_at: new Date().toISOString(),
+      },
+      { onConflict: 'user_id, episode_id' },
+    )
+    .select('*')
+    .single();
 
   return NextResponse.json({
     ...response,
     user_id: user.id,
     original_body: body,
+    rating_data,
   });
 }
 
