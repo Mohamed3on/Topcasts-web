@@ -14,6 +14,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Textarea } from '@/components/ui/textarea';
+import { createClient } from '@/utils/supabase/client';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { ArrowRight, ThumbsDown, ThumbsUp } from 'lucide-react';
 import { useRouter } from 'next/navigation';
@@ -51,6 +52,8 @@ export const ImportEpisodeUrl = ({
 }: {
   onSuccessfulSubmit: () => void;
 }) => {
+  const supabase = createClient();
+
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -74,12 +77,15 @@ export const ImportEpisodeUrl = ({
   };
 
   const handleSubmit = async (values: z.infer<typeof formSchema>) => {
+    const accessToken = (await supabase.auth.getSession()).data.session
+      ?.access_token;
     try {
       setIsLoading(true);
       const response = await fetch(`/api/episode`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          Authorization: `Bearer ${accessToken}`,
         },
         body: JSON.stringify({
           ...values,

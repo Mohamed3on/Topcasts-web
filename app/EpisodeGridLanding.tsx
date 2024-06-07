@@ -1,6 +1,6 @@
 import { EpisodeCard, EpisodeForCard } from '@/app/episodes/EpisodeCard';
 import { Button } from '@/components/ui/button';
-import { createClient } from '@/utils/supabase/server';
+import { createClient } from '@/utils/supabase/ssr';
 import { ArrowRight } from 'lucide-react';
 import Link from 'next/link';
 import { Fragment } from 'react';

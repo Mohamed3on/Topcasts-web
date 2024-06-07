@@ -1,4 +1,4 @@
-import { createClient } from '@/utils/supabase/server';
+import { createClient } from '@/utils/supabase/ssr';
 import { notFound } from 'next/navigation';
 
 export const Heading = async ({ username }: { username: string }) => {

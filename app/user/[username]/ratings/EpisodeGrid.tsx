@@ -1,6 +1,6 @@
 import { EpisodeCard } from '@/app/episodes/EpisodeCard';
 import { EpisodeDetailsForList } from '@/app/episodes/List';
-import { createClient } from '@/utils/supabase/server';
+import { createClient } from '@/utils/supabase/ssr';
 import { notFound } from 'next/navigation';
 import { Fragment } from 'react';
 

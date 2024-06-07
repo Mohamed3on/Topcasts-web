@@ -1,6 +1,6 @@
 import { ReviewButtons } from '@/app/ReviewButtons';
 import { ReviewType } from '@/app/api/types';
-import { createClient } from '@/utils/supabase/server';
+import { createClient } from '@/utils/supabase/ssr';
 import Image from 'next/image';
 
 export const ReviewSection = async ({ episodeId }: { episodeId: number }) => {

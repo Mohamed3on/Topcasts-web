@@ -1,6 +1,6 @@
 import { EpisodeCard } from '@/app/episodes/EpisodeCard';
 import { EpisodePagination } from '@/app/episodes/EpisodesPagination';
-import { createClient } from '@/utils/supabase/server';
+import { createClient } from '@/utils/supabase/ssr';
 
 const fetchEpisodes = async ({
   searchParams,

@@ -1,5 +1,5 @@
 import { LoginWithGoogle } from '@/app/login/LoginWithGoogle';
-import { createClient } from '@/utils/supabase/server';
+import { createClient } from '@/utils/supabase/ssr';
 import { redirect } from 'next/navigation';
 
 export default async function Login() {

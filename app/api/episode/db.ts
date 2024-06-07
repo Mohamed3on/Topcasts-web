@@ -1,8 +1,9 @@
 import { PodcastData, ScrapedEpisodeData } from '@/app/api/types';
 import { SupabaseClient } from '@/app/api/types/SupabaseClient';
+import { SupabaseAdmin } from '@/utils/supabase/server';
 
 export async function fetchPodcast(
-  supabase: SupabaseClient,
+  supabase: SupabaseAdmin,
   podcastData: PodcastData,
 ) {
   return supabase
@@ -15,14 +16,14 @@ export async function fetchPodcast(
 }
 
 export async function insertPodcast(
-  supabase: SupabaseClient,
+  supabase: SupabaseAdmin,
   podcastData: PodcastData,
 ) {
   return supabase.from('podcast').insert(podcastData).select('id').single();
 }
 
 export async function updatePodcast(
-  supabase: SupabaseClient,
+  supabase: SupabaseAdmin,
   name: string,
   podcastData: PodcastData,
 ) {
@@ -35,7 +36,7 @@ export async function updatePodcast(
 }
 
 export async function upsertEpisode(
-  supabase: SupabaseClient,
+  supabase: SupabaseAdmin,
   episodeData: ScrapedEpisodeData,
   podcastId: number,
 ) {
@@ -47,7 +48,7 @@ export async function upsertEpisode(
 }
 
 export async function upsertEpisodeUrl(
-  supabase: SupabaseClient,
+  supabase: SupabaseAdmin,
   cleanedUrl: string,
   episodeId: number,
   type: 'apple' | 'spotify' | 'castro',
@@ -60,7 +61,7 @@ export async function upsertEpisodeUrl(
 }
 
 export async function upsertPodcastDetails(
-  supabase: SupabaseClient,
+  supabase: SupabaseAdmin,
   podcastData: PodcastData,
 ) {
   const { data: existingPodcast } = await fetchPodcast(supabase, podcastData);

@@ -1,4 +1,4 @@
-import { createClient } from '@/utils/supabase/server';
+import { createClient } from '@/utils/supabase/ssr';
 import { NextRequest, NextResponse } from 'next/server';
 
 // TODO:figure out why this doesn't work. later

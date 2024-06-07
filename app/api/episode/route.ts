@@ -4,13 +4,12 @@ import { determineType, formatUrls, scrapeDataByType } from './utils';
 import jwt, { type JwtPayload } from 'jsonwebtoken';
 
 import { ScrapedEpisodeData, ScrapedEpisodeDetails } from '@/app/api/types';
-import { createClient } from '@/utils/supabase/server';
+
 import { upsertEpisode, upsertEpisodeUrl, upsertPodcastDetails } from './db';
 import { slugifyDetails } from './utils';
+import { supabaseAdmin as supabase } from '@/utils/supabase/server';
 
 export async function GET(request: NextRequest): Promise<NextResponse> {
-  const supabase = createClient();
-
   const { searchParams } = request.nextUrl;
   const episode_id = searchParams.get('episode_id') || '';
 
@@ -67,8 +66,6 @@ async function handlePodcastURL({ url }: { url: string }): Promise<
       status: number;
     }
 > {
-  const supabase = createClient();
-
   const urlInput = url.trim();
   const cleanedUrl = cleanUrl(urlInput);
   const type = determineType(cleanedUrl);
@@ -100,7 +97,6 @@ async function handlePodcastURL({ url }: { url: string }): Promise<
 }
 
 const getEpisodeDetailsFromDb = async (episodeId: number) => {
-  const supabase = createClient();
   const { data, error } = await supabase
     .from('podcast_episode')
     .select(
@@ -119,73 +115,66 @@ const getEpisodeDetailsFromDb = async (episodeId: number) => {
 };
 
 export async function POST(request: NextRequest): Promise<NextResponse> {
-  const supabase = createClient();
   const body = await request.json();
   const authorization = request.headers.get('Authorization');
   const token = authorization?.replace('Bearer ', '');
   const secret = process.env.SUPABASE_JWT_SECRET;
 
-  let user;
-  if (token && secret) {
-    try {
-      user = jwt.verify(token, secret) as JwtPayload;
-      user.id = user.sub;
-    } catch (error) {
-      console.error('JWT is not valid:', error);
-      return NextResponse.json(
-        { error: 'Invalid Authorization' },
-        { status: 401 },
-      );
-    }
-  } else {
-    const { data } = await supabase.auth.getUser();
-    user = data?.user;
-  }
-
-  if (!user)
+  if (!token || !secret) {
     return NextResponse.json(
       { error: 'Invalid Authorization' },
       { status: 401 },
     );
-  if (!body?.url || !body?.rating)
-    return NextResponse.json(
-      { error: 'Invalid URL or rating' },
-      { status: 400 },
-    );
+  }
 
-  const response = await handlePodcastURL({ url: body.url });
-  if (!response)
-    return NextResponse.json(
-      { error: 'Failed to fetch episode details' },
-      { status: 500 },
-    );
-  if ('error' in response)
-    return NextResponse.json(
-      { error: response.error },
-      { status: response.status },
-    );
+  try {
+    const user = jwt.verify(token, secret) as JwtPayload;
+    user.id = user.sub;
 
-  const { data: rating_data, error } = await supabase
-    .from('podcast_episode_review')
-    .upsert(
-      {
-        episode_id: response.id,
-        user_id: user.id,
-        review_type: body.rating,
-        text: body.review_text,
-        updated_at: new Date().toISOString(),
-      },
-      { onConflict: 'user_id, episode_id' },
-    )
-    .select('*')
-    .single();
+    if (!body?.url || !body?.rating)
+      return NextResponse.json(
+        { error: 'Invalid URL or rating' },
+        { status: 400 },
+      );
 
-  return NextResponse.json({
-    ...response,
-    user_id: user.id,
-    error,
-    rating_data,
-  });
+    const response = await handlePodcastURL({ url: body.url });
+    if (!response)
+      return NextResponse.json(
+        { error: 'Failed to fetch episode details' },
+        { status: 500 },
+      );
+    if ('error' in response)
+      return NextResponse.json(
+        { error: response.error },
+        { status: response.status },
+      );
+
+    const { data: rating_data, error } = await supabase
+      .from('podcast_episode_review')
+      .upsert(
+        {
+          episode_id: response.id,
+          user_id: user.id,
+          review_type: body.rating,
+          text: body.review_text,
+          updated_at: new Date().toISOString(),
+        },
+        { onConflict: 'user_id, episode_id' },
+      )
+      .select()
+      .single();
+
+    return NextResponse.json({
+      ...response,
+      error,
+    });
+  } catch (error) {
+    console.error('JWT is not valid:', error);
+    return NextResponse.json(
+      { error: 'Invalid Authorization' },
+      { status: 401 },
+    );
+  }
 }
 
 async function handleNewEpisodeData({
@@ -234,7 +223,6 @@ async function updateEpisodeDetails({
   cleanedUrl: string;
   scrapedData: ScrapedEpisodeDetails;
 }): Promise<{ id: number; slug: string } | { error: string; status: number }> {
-  const supabase = createClient();
   try {
     const slug = slugifyDetails(
       scrapedData.episode_name,

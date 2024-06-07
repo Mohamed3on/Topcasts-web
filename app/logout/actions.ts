@@ -1,5 +1,5 @@
 'use server';
-import { createClient } from '@/utils/supabase/server';
+import { createClient } from '@/utils/supabase/ssr';
 import { revalidatePath } from 'next/cache';
 
 export const logout = async () => {
