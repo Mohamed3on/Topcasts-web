@@ -165,7 +165,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       { status: response.status },
     );
 
-  const { data: rating_data } = await supabase
+  const { data: rating_data, error } = await supabase
     .from('podcast_episode_review')
     .upsert(
       {
@@ -183,7 +183,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
   return NextResponse.json({
     ...response,
     user_id: user.id,
-    original_body: body,
+    error,
     rating_data,
   });
 }
