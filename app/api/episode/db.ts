@@ -1,5 +1,4 @@
 import { PodcastData, ScrapedEpisodeData } from '@/app/api/types';
-import { SupabaseClient } from '@/app/api/types/SupabaseClient';
 import { SupabaseAdmin } from '@/utils/supabase/server';
 
 export async function fetchPodcast(
@@ -10,7 +9,7 @@ export async function fetchPodcast(
     .from('podcast')
     .select()
     .or(
-      `name.eq.${podcastData.name},itunes_id.eq.${podcastData.itunes_id},spotify_id.eq.${podcastData.spotify_id}`,
+      `name.eq."${podcastData.name}",itunes_id.eq.${podcastData.itunes_id},spotify_id.eq.${podcastData.spotify_id}`,
     )
     .single();
 }
