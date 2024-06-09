@@ -22,7 +22,7 @@ import {
   slugifyDetails,
 } from '@/app/api/episode/utils';
 import { ScrapedEpisodeData, ScrapedEpisodeDetails } from '@/app/api/types';
-import tweetData from '../../scrape-tweets/url_to_tweets.json';
+import tweetData from './scrape-tweets/url_to_tweets.json';
 
 async function updateEpisodeDetails({
   type,
@@ -120,72 +120,17 @@ async function processTweets() {
     // url
     console.log('url and ID', url, id);
 
-    const { data: share_data, error } = await supabase
-      .from('social_share')
-      .upsert([
-        ...urlShares.tweets.map((tweet) => ({
-          episode_id: id,
-          twitter_screen_name: tweet.screen_name,
-          shared_at: new Date(tweet.created_at).toISOString(),
-          tweet_id: tweet.tweet_id,
-          tweet_text: tweet.tweet_text,
-        })),
-      ]);
-    if (error) console.log('error inserting social shares', error);
+    await supabase.from('social_share').upsert([
+      ...urlShares.tweets.map((tweet) => ({
+        episode_id: id,
+        twitter_screen_name: tweet.screen_name,
+        shared_at: new Date(tweet.created_at).toISOString(),
+        tweet_id: tweet.tweet_id,
+        tweet_text: tweet.tweet_text,
+      })),
+    ]);
   }
 }
 
 // @ts-ignore
 await processTweets();
-
-// const processCastroData = async () => {
-//   console.log('🚀 ~ processCastroData ~ db:', db);
-
-//   const query = db.query(
-//     `SELECT SUPEpisode.*, SUPPodcast.iTunesCategory, SUPPodcast.iTunesSubCategory, SupPodcast.author
-//   FROM SUPEpisode
-//   JOIN SUPPodcast ON SUPEpisode.podcastId = SUPPodcast.id
-//   WHERE SUPEpisode.starred = 1;`,
-//   );
-
-//   for (const row of query.all()) {
-//     const url = `https://castro.fm/episode/${row?.shortId}`;
-
-//     const genres = [row?.iTunesCategory, row?.iTunesSubcategory].filter(
-//       Boolean,
-//     );
-
-//     const html = await getHtml(url);
-
-//     const scrapedData = await scrapeDataByType('castro', html);
-
-//     const fullData = {
-//       ...scrapedData,
-//       podcast_genres: genres,
-//       artist_name: row?.author,
-//     };
-
-//     const episodeDetails = await updateEpisodeDetails({
-//       type: 'castro',
-//       cleanedUrl: url,
-//       scrapedData: fullData,
-//     });
-
-//     console.log('scraped episode', scrapedData.episode_name);
-
-//     if (!('error' in episodeDetails))
-//       await supabase.from('podcast_episode_review').upsert(
-//         {
-//           episode_id: episodeDetails.id,
-//           user_id: 'e2173275-b181-4035-89f8-a87e768047b4',
-//           review_type: 'like',
-//           updated_at: new Date().toISOString(),
-//         },
-//         {
-//           onConflict: 'user_id, episode_id',
-//         },
-//       );
-//   }
-// };
-
-// await processCastroData();

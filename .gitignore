@@ -36,3 +36,6 @@ yarn-error.log*
 next-env.d.ts
 
 tweet-import/scrape-tweets/data
+data/search_results/
+twitter.log
+**/url_to_tweets.json
