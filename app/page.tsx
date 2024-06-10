@@ -7,6 +7,8 @@ import { Button } from '@/components/ui/button';
 import { ArrowRight } from 'lucide-react';
 import Link from 'next/link';
 import { Suspense } from 'react';
+import castro from '/castro.jpg';
+import Image from 'next/image';
 
 export default async function Home() {
   return (
@@ -28,13 +30,14 @@ export default async function Home() {
         <div className="flex flex-col gap-1">
           <div className="flex items-center justify-center gap-1 text-sm text-foreground/50">
             Supported:
-            <SpotifyIcon className="h-4 w-4" />
-            <img
-              src="https://castro.fm/assets/images/Bitmap.svg"
-              className="h-4 w-4"
-              alt="Castro"
-            ></img>
             <AppleIcon className="h-4 w-4" />
+            <SpotifyIcon className="h-4 w-4" />
+            <Image
+              src="/castro.jpg"
+              width={16}
+              height={16}
+              alt="Castro"
+            ></Image>
           </div>
           <AddEpisodeButton>
             <Button className="group transform transition duration-100 active:scale-95">
