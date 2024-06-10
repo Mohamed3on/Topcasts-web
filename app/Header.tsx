@@ -106,7 +106,6 @@ const Header = async () => {
                 src={userInfo.avatar_url || ''}
                 alt={userInfo.name || ''}
                 className="h-8 w-8 rounded-full"
-                unoptimized
                 referrerPolicy="no-referrer"
               />
               <span className="hidden text-sm font-semibold text-primary/80 lg:block">

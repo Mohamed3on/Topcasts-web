@@ -1,6 +1,7 @@
 import RatingButtons from '@/app/episodes/RatingButtons';
 import { Card, CardContent, CardFooter } from '@/components/ui/card';
 import { Twitter } from 'lucide-react';
+import Image from 'next/image';
 
 import Link from 'next/link';
 
@@ -21,7 +22,9 @@ export const EpisodeCard = ({ episode }: { episode: EpisodeForCard }) => {
     <Card className="overflow-hidden rounded-lg shadow-sm transition duration-100 ease-in-out hover:shadow-lg ">
       <Link className="h-full" href={`/episode/${episode.id}/${episode.slug}`}>
         <div className="overflow-hidden rounded-lg">
-          <img
+          <Image
+            width={224}
+            height={224}
             loading="lazy"
             alt={episode.episode_name || ''}
             className="h-48 w-full object-cover sm:h-56"

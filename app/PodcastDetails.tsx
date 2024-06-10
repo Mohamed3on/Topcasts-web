@@ -51,7 +51,6 @@ export const PodcastDetails = ({
           <Image
             width={300}
             height={300}
-            unoptimized
             className="h-64 w-64 rounded-lg object-cover"
             src={episodeDetails.image_url}
             alt={episodeDetails.episode_name!}
