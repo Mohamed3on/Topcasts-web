@@ -111,10 +111,13 @@ export const PodcastDetails = ({
             )}
             {episodeDetails.urls?.castro && (
               <PlayerIcon url={episodeDetails.urls.castro}>
-                <img
-                  src="https://castro.fm/assets/images/Bitmap.svg"
+                <Image
+                  src="/castro.jpg"
+                  width={32}
+                  height={32}
+                  className="rounded"
                   alt="Castro"
-                ></img>
+                ></Image>
               </PlayerIcon>
             )}
           </div>

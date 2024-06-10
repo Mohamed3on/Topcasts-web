@@ -36,6 +36,7 @@ export default async function Home() {
               src="/castro.jpg"
               width={16}
               height={16}
+              className="rounded"
               alt="Castro"
             ></Image>
           </div>
