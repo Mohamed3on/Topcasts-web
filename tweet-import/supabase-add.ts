@@ -104,8 +104,6 @@ async function processTweets() {
         .single();
 
       if (error) {
-        // tweet id not found, process this URL
-        console.log(chalk.red('Tweet not found in database'), tweet.tweet_id);
         shouldProcess = true;
         break;
       }
@@ -130,7 +128,6 @@ async function processTweets() {
       .single();
 
     if (error) {
-      console.error('Error querying podcast_episode_url:', error);
       continue;
     }
 
@@ -180,7 +177,6 @@ async function processTweets() {
       tweet_id: tweet.tweet_id,
       tweet_text: tweet.tweet_text,
     }));
-    console.log('🚀 ~ dataToUpsert ~ dataToUpsert:', dataToUpsert);
 
     const { data: social_add_data, error: socialAddError } = await supabase
       .from('social_share')
@@ -191,8 +187,6 @@ async function processTweets() {
         chalk.red('❌ Error inserting social data:'),
         socialAddError,
       );
-    } else {
-      console.log(chalk.green('✅ Inserted social data:'), social_add_data);
     }
   }
 }
