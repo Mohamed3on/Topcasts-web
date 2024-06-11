@@ -93,7 +93,27 @@ async function updateEpisodeDetails({
 
 async function processTweets() {
   for (const [url, urlShares] of Object.entries(tweetData)) {
-    console.log('🚀 ~ processTweets ~ url:', url);
+    let shouldProcess = false;
+
+    for (const tweet of urlShares.tweets) {
+      // find the tweet id in the database
+
+      const { data } = await supabase
+        .from('social_share')
+        .select('episode_id')
+        .eq('tweet_id', tweet.tweet_id)
+        .single();
+
+      if (!data) {
+        shouldProcess = true;
+        break;
+      }
+    }
+
+    if (!shouldProcess) {
+      console.log('skipping', url);
+      continue;
+    }
 
     const type = determineType(url);
     if (!type) throw new Error('Failed to determine type');
