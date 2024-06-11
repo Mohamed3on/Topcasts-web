@@ -1,4 +1,5 @@
 import { createClient } from '@supabase/supabase-js';
+import chalk from 'chalk';
 
 const supabase = createClient(
   'https://dupqaaqpafucdxrmrmkv.supabase.co',
@@ -68,10 +69,10 @@ async function updateEpisodeDetails({
       episodeData,
       podcastId,
     );
-    if (episodeError || !episode)
-      throw new Error(
-        `Failed to upsert episode: ${JSON.stringify(episodeError)}`,
-      );
+    if (episodeError || !episode) {
+      console.error('Failed to upsert episode:', episodeError);
+      return { error: 'Failed to upsert episode', status: 500 };
+    }
 
     const { error: urlError } = await upsertEpisodeUrl(
       supabase,
@@ -79,10 +80,10 @@ async function updateEpisodeDetails({
       episode.id,
       type,
     );
-    if (urlError)
-      throw new Error(
-        `Failed to upsert episode URL: ${JSON.stringify(urlError)}`,
-      );
+    if (urlError) {
+      console.error('Failed to upsert episode URL:', urlError);
+      return { error: 'Failed to upsert episode URL', status: 500 };
+    }
 
     return { id: episode.id, slug };
   } catch (error) {
@@ -96,59 +97,103 @@ async function processTweets() {
     let shouldProcess = false;
 
     for (const tweet of urlShares.tweets) {
-      // find the tweet id in the database
-
-      const { data } = await supabase
+      const { error } = await supabase
         .from('social_share')
         .select('episode_id')
         .eq('tweet_id', tweet.tweet_id)
         .single();
 
-      if (!data) {
+      if (error) {
+        // tweet id not found, process this URL
+        console.log(chalk.red('Tweet not found in database'), tweet.tweet_id);
         shouldProcess = true;
         break;
       }
     }
 
     if (!shouldProcess) {
-      console.log('skipping', url);
       continue;
     }
 
-    const type = determineType(url);
-    if (!type) throw new Error('Failed to determine type');
+    console.log(chalk.yellow('🚀 Processing URL:'), chalk.blue(url));
 
-    const { data } = await supabase
+    const type = determineType(url);
+    if (!type) {
+      console.error('❌ Failed to determine type for URL:', url);
+      continue;
+    }
+
+    const { data, error } = await supabase
       .from('podcast_episode_url')
       .select('episode_id')
       .eq('url', url)
       .single();
+
+    if (error) {
+      console.error('Error querying podcast_episode_url:', error);
+      continue;
+    }
+
     let id = data?.episode_id;
 
     if (!data) {
-      const scrapedData = await scrapeDataByType(type, url);
+      let scrapedData: ScrapedEpisodeDetails;
+      try {
+        scrapedData = await scrapeDataByType(type, url);
+      } catch (error) {
+        console.error(chalk.red('❌ Error scraping data:'), error);
+        continue;
+      }
+
       const response = await updateEpisodeDetails({
         type,
         cleanedUrl: url,
         scrapedData: scrapedData,
       });
-      if ('id' in response) id = response.id;
-      console.log('scraped episode', scrapedData.episode_name);
+
+      if ('error' in response) {
+        console.error('❌ Error updating episode details:', response.error);
+        continue;
+      }
+
+      id = response.id;
+      console.log(
+        chalk.green('🆕 Scraped episode:'),
+        chalk.magenta(scrapedData.episode_name),
+        url,
+      );
+    } else {
+      console.log(chalk.green('🔍 Found episode ID:'), chalk.magenta(id));
     }
-    console.log('mentioned by', urlShares.mentioned_by);
 
-    // url
-    console.log('url and ID', url, id);
+    console.log(
+      chalk.cyan('📢 Mentioned by:'),
+      chalk.blue(urlShares.mentioned_by.join(', ')),
+    );
 
-    await supabase.from('social_share').upsert([
-      ...urlShares.tweets.map((tweet) => ({
-        episode_id: id,
-        twitter_screen_name: tweet.screen_name,
-        shared_at: new Date(tweet.created_at).toISOString(),
-        tweet_id: tweet.tweet_id,
-        tweet_text: tweet.tweet_text,
-      })),
-    ]);
+    console.log(chalk.cyan('🔗 ID:'), chalk.magenta(id));
+
+    const dataToUpsert = urlShares.tweets.map((tweet) => ({
+      episode_id: id,
+      twitter_screen_name: tweet.screen_name,
+      shared_at: new Date(tweet.created_at).toISOString(),
+      tweet_id: tweet.tweet_id,
+      tweet_text: tweet.tweet_text,
+    }));
+    console.log('🚀 ~ dataToUpsert ~ dataToUpsert:', dataToUpsert);
+
+    const { data: social_add_data, error: socialAddError } = await supabase
+      .from('social_share')
+      .upsert(dataToUpsert);
+
+    if (socialAddError) {
+      console.error(
+        chalk.red('❌ Error inserting social data:'),
+        socialAddError,
+      );
+    } else {
+      console.log(chalk.green('✅ Inserted social data:'), social_add_data);
+    }
   }
 }
 
