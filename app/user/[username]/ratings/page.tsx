@@ -1,4 +1,4 @@
-import { SkeletonEpisodeCard } from '@/app/episodes/SkeletonEpisodeCard';
+import { SkeletonRatingCard } from '@/app/episodes/SkeletonRatingCard';
 import EpisodeGrid from '@/app/user/[username]/ratings/EpisodeGrid';
 import { Suspense } from 'react';
 
@@ -11,7 +11,7 @@ const Page = async ({ params }: { params: { username: string } }) => {
       <div className="flex flex-col gap-6">
         <Suspense
           fallback={[1, 2, 3, 4, 5, 6].map((i) => (
-            <SkeletonEpisodeCard key={i}></SkeletonEpisodeCard>
+            <SkeletonRatingCard key={i}></SkeletonRatingCard>
           ))}
         >
           <EpisodeGrid username={params.username} />
