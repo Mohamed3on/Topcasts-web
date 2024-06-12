@@ -1,5 +1,5 @@
 import { Database } from '@/app/api/types/supabase';
-import { EpisodeCard } from '@/app/episodes/EpisodeCard';
+import { cn } from '@/lib/utils';
 import { createClient } from '@/utils/supabase/ssr';
 import Image from 'next/image';
 import { notFound } from 'next/navigation';
@@ -79,28 +79,71 @@ const EpisodeGrid = async ({ username }: { username: string }) => {
 
   return (
     <Fragment>
-      {mappedEpisodes.map((episode) => (
-        <EpisodeCard key={episode.id} episode={episode as EpisodeForCard}>
-          {episode.review_text && (
-            <div className="mt-3 flex items-end gap-2">
-              {userData?.avatar_url && (
-                <Image
-                  width={24}
-                  height={24}
-                  className="rounded-full"
-                  src={userData?.avatar_url}
-                  alt="User Image"
-                />
-              )}
+      <div className="flex flex-col gap-6">
+        {mappedEpisodes.map((episode) => (
+          <EpisodeCard
+            user={userData}
+            key={episode.id}
+            episode={episode as EpisodeForCard}
+          />
+        ))}
+      </div>
+    </Fragment>
+  );
+};
 
-              <span className="prose mt-3 line-clamp-1 text-sm text-primary sm:line-clamp-2">
+const EpisodeCard = ({
+  episode,
+  user,
+}: {
+  episode: EpisodeForCard;
+  user?: { id: string; name: string | null; avatar_url: string | null };
+}) => {
+  const isLiked = episode.review_type === 'like';
+  return (
+    <div
+      className={cn(
+        'flex w-full flex-col items-start gap-4 rounded-lg border p-4 md:flex-row md:items-center',
+        isLiked ? 'border-green-500' : 'border-red-500',
+      )}
+    >
+      <Image
+        width={100}
+        height={100}
+        loading="lazy"
+        alt={episode.episode_name || ''}
+        className="h-auto w-full rounded-lg md:w-36"
+        src={episode.image_url || ''}
+      />
+      <div className="flex w-full flex-col gap-4 md:flex-row md:items-center md:justify-between">
+        <div className="flex-1">
+          <div className="mt-3 flex items-center gap-2 text-sm">
+            <Image
+              width={24}
+              height={24}
+              src={user?.avatar_url || ''}
+              alt="User Image"
+              className="rounded-full"
+            />
+            {episode.review_type === 'like' ? (
+              <span className=" text-green-500">{`${user?.name} liked`}</span>
+            ) : (
+              <span className=" text-red-500">{`${user?.name} disliked`}</span>
+            )}
+          </div>
+          <h2 className="text-xl font-semibold">{episode.episode_name}</h2>
+          <p className="text-gray-500">{episode.podcast_name}</p>
+
+          {episode.review_text && (
+            <div className="flex items-end gap-2">
+              <span className="prose mt-3 text-sm italic text-primary">
                 {episode.review_text}
               </span>
             </div>
           )}
-        </EpisodeCard>
-      ))}
-    </Fragment>
+        </div>
+      </div>
+    </div>
   );
 };
 
