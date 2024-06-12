@@ -83,7 +83,10 @@ export const EpisodeGridLanding = async () => {
   return (
     <Fragment>
       {episodes?.map((episode) => (
-        <EpisodeCard episode={episode as EpisodeForCard} key={episode.id} />
+        <EpisodeCard
+          episode={episode as EpisodeForCard}
+          key={episode.id}
+        ></EpisodeCard>
       ))}
       <Button
         className="text-md group grid transform place-self-center transition duration-100 active:scale-95"

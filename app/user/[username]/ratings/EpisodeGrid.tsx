@@ -1,9 +1,19 @@
+import { Database } from '@/app/api/types/supabase';
 import { EpisodeCard } from '@/app/episodes/EpisodeCard';
-import { EpisodeDetailsForList } from '@/app/episodes/List';
 import { createClient } from '@/utils/supabase/ssr';
+import Image from 'next/image';
 import { notFound } from 'next/navigation';
 import { Fragment } from 'react';
 
+export type EpisodeForCard =
+  Database['public']['Tables']['podcast_episode']['Row'] & {
+    review_type?: string;
+    review_text?: string;
+    podcast_name: string;
+    twitter_shares: number;
+    likes: number;
+    dislikes: number;
+  };
 const fetchUserEpisodes = async (id: string) => {
   const supabase = createClient();
 
@@ -12,6 +22,7 @@ const fetchUserEpisodes = async (id: string) => {
     .select(
       `
     review_type,
+    text,
     user_id,
     updated_at,
     episode_with_rating_data(
@@ -44,7 +55,7 @@ const EpisodeGrid = async ({ username }: { username: string }) => {
 
   const { data: userData } = await supabase
     .from('profiles')
-    .select('id, name')
+    .select('id, name,avatar_url')
     .eq('username', username)
     .single();
 
@@ -62,12 +73,32 @@ const EpisodeGrid = async ({ username }: { username: string }) => {
     return {
       ...episode.episode_with_rating_data,
       review_type: episode.review_type,
+      review_text: episode.text,
     };
   });
+
   return (
     <Fragment>
-      {(mappedEpisodes as unknown as EpisodeDetailsForList).map((episode) => (
-        <EpisodeCard key={episode.id} episode={episode} />
+      {mappedEpisodes.map((episode) => (
+        <EpisodeCard key={episode.id} episode={episode as EpisodeForCard}>
+          {episode.review_text && (
+            <div className="mt-3 flex items-end gap-2">
+              {userData?.avatar_url && (
+                <Image
+                  width={24}
+                  height={24}
+                  className="rounded-full"
+                  src={userData?.avatar_url}
+                  alt="User Image"
+                />
+              )}
+
+              <span className="prose mt-3 line-clamp-1 text-sm text-primary sm:line-clamp-2">
+                {episode.review_text}
+              </span>
+            </div>
+          )}
+        </EpisodeCard>
       ))}
     </Fragment>
   );

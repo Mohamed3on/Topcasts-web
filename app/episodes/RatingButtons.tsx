@@ -7,7 +7,7 @@ import React from 'react';
 
 interface RatingButtonsProps {
   episode: {
-    review_type: string;
+    review_type?: string;
     likes: number;
     dislikes: number;
     id: number;

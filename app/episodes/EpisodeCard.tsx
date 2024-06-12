@@ -7,17 +7,36 @@ import Link from 'next/link';
 
 export type EpisodeForCard = {
   id: number;
-  slug: string;
-  episode_name: string;
-  image_url: string;
+  slug: string | null;
+  episode_name: string | null;
+  image_url: string | null;
+  description: string | null;
+  review_type?: string;
+  review_text?: string;
   podcast_name: string;
-  description: string;
   twitter_shares: number;
-  review_type: string;
   likes: number;
   dislikes: number;
 };
-export const EpisodeCard = ({ episode }: { episode: EpisodeForCard }) => {
+
+export const EpisodeCardDescription = ({
+  episode,
+}: {
+  episode: EpisodeForCard;
+}) => {
+  return (
+    <div className="prose mt-3 line-clamp-1 text-sm text-gray-500 sm:line-clamp-2">
+      <span>{episode.description}</span>
+    </div>
+  );
+};
+export const EpisodeCard = ({
+  episode,
+  children,
+}: {
+  episode: EpisodeForCard;
+  children?: React.ReactNode;
+}) => {
   return (
     <Card className="overflow-hidden rounded-lg shadow-sm transition duration-100 ease-in-out hover:shadow-lg ">
       <Link className="h-full" href={`/episode/${episode.id}/${episode.slug}`}>
@@ -43,12 +62,7 @@ export const EpisodeCard = ({ episode }: { episode: EpisodeForCard }) => {
             </div>
             <RatingButtons episode={episode} />
           </div>
-          <div
-            suppressHydrationWarning
-            className="prose mt-3 line-clamp-1 text-sm text-gray-500 sm:line-clamp-2"
-          >
-            <span>{episode.description}</span>
-          </div>
+          {children || <EpisodeCardDescription episode={episode} />}
         </CardContent>
         <CardFooter className="justify-between">
           {episode.twitter_shares > 0 && (
