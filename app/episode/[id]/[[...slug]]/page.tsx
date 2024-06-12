@@ -1,4 +1,4 @@
-import { PodcastDetails } from '@/app/PodcastDetails';
+import { Episode } from '@/app/Episode';
 import { EpisodeDetails } from '@/app/api/types';
 import { getHost } from '@/app/utils';
 import { Metadata } from 'next';
@@ -41,5 +41,5 @@ export default async function Page({
     notFound();
   }
 
-  return <PodcastDetails episodeDetails={response} />;
+  return <Episode episodeDetails={response} />;
 }

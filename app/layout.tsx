@@ -1,5 +1,4 @@
 import type { Metadata } from 'next';
-import { Inter } from 'next/font/google';
 import './globals.css';
 
 import Header from '@/app/Header';
@@ -33,12 +32,23 @@ export default async function RootLayout({
   const {
     data: { user },
   } = await supabase.auth.getUser();
+
+  let userInfo = null;
+  if (user) {
+    const { data } = await supabase
+      .from('profiles')
+      .select()
+      .eq('id', user?.id)
+      .single();
+
+    userInfo = data;
+  }
   return (
     <html lang="en" className={`${GeistSans.variable} ${GeistMono.variable}`}>
       <body className={'min-h-screen bg-background font-sans antialiased'}>
         <Analytics />
         <main>
-          <UserProvider user={user}>
+          <UserProvider user={userInfo}>
             <Header />
             {children}
 

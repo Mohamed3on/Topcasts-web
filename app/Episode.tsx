@@ -36,7 +36,7 @@ const Duration = ({ episodeDetails }: { episodeDetails: EpisodeDetails }) => {
   );
 };
 
-export const PodcastDetails = ({
+export const Episode = ({
   episodeDetails,
 }: {
   episodeDetails: EpisodeDetails;

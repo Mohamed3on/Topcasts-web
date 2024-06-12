@@ -1,4 +1,5 @@
 'use client';
+import { useUser } from '@/app/auth/UserContext';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { Flame, Menu } from 'lucide-react';
@@ -7,6 +8,7 @@ import { useState } from 'react';
 
 const MobileNav = () => {
   const [open, setOpen] = useState(false);
+  const user = useUser();
 
   return (
     <Sheet open={open} onOpenChange={setOpen}>
@@ -36,6 +38,23 @@ const MobileNav = () => {
               <span>Browse Top Episodes</span>
             </Link>
           </Button>
+          {user && (
+            <Button
+              onClick={() => setOpen(false)}
+              className=""
+              asChild
+              variant={'link'}
+            >
+              <Link
+                href={`/user/${user.username}/ratings`}
+                className="group flex items-center gap-1"
+              >
+                <Flame className="h-6 w-6 group-hover:text-orange-600" />
+
+                <span>My ratings</span>
+              </Link>
+            </Button>
+          )}
         </div>
       </SheetContent>
     </Sheet>

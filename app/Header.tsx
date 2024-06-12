@@ -81,7 +81,7 @@ const Header = async () => {
             name="search"
             type="search"
             className="w-44 xl:w-96"
-            placeholder="Search"
+            placeholder="Search episodes"
           />
 
           <button

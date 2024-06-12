@@ -1,9 +1,16 @@
 'use client';
 
-import type { AuthUser as User } from '@supabase/supabase-js';
-
 import { createContext, useContext } from 'react';
 
+export type User = {
+  avatar_url: string | null;
+  email: string;
+  id: string;
+  name: string | null;
+  updated_at: string | null;
+  username: string;
+  website: string | null;
+};
 const UserContext = createContext<User | null>(null);
 
 export const UserProvider = ({
