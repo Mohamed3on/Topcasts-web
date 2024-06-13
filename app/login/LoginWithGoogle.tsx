@@ -14,7 +14,8 @@ export const LoginWithGoogle = () => {
   return (
     <Button
       onClick={signIn}
-      className="flex gap-1 text-center active:bg-primary/80"
+      variant={'secondary'}
+      className="flex justify-center gap-1 hover:bg-secondary/50 active:bg-secondary/80"
     >
       <span>
         <svg

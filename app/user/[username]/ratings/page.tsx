@@ -1,5 +1,5 @@
 import { SkeletonRatingCard } from '@/app/episodes/SkeletonRatingCard';
-import EpisodeGrid from '@/app/user/[username]/ratings/EpisodeGrid';
+import RatingsList from '@/app/user/[username]/ratings/RatingsList';
 import { Suspense } from 'react';
 
 const Page = async ({ params }: { params: { username: string } }) => {
@@ -14,7 +14,7 @@ const Page = async ({ params }: { params: { username: string } }) => {
             <SkeletonRatingCard key={i}></SkeletonRatingCard>
           ))}
         >
-          <EpisodeGrid username={params.username} />
+          <RatingsList username={params.username} />
         </Suspense>
       </div>
     </div>
