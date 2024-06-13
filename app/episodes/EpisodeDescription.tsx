@@ -22,7 +22,7 @@ export const EpisodeDescription = ({
 
   return (
     <Collapsible open={isOpen} onOpenChange={setIsOpen} className=" space-y-2">
-      <div className="flex justify-center">
+      <div className="flex justify-center md:justify-start">
         <CollapsibleTrigger className="flex items-baseline">
           <h4 className="font-semibold">Episode description</h4>
           <div

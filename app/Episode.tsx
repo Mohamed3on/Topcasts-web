@@ -42,40 +42,18 @@ export const Episode = ({
   episodeDetails: EpisodeDetails;
 }) => {
   return (
-    <main className="flex flex-col items-center justify-between p-4 md:p-12">
-      <div className="flex w-full flex-col items-center justify-center gap-8">
-        <h1 className="text-center text-2xl font-semibold">
-          {episodeDetails.episode_name}
-        </h1>
-        {episodeDetails.image_url && (
-          <Image
-            width={300}
-            height={300}
-            className="h-64 w-64 rounded-lg object-cover"
-            src={episodeDetails.image_url}
-            alt={episodeDetails.episode_name!}
-          />
-        )}
-        <Link
-          href={`/episodes?podcast_name=${episodeDetails.podcast_name}`}
-          className="text-2xl font-bold text-primary/80 underline transition-all hover:text-primary/60 hover:no-underline active:text-primary/40"
-        >
-          {episodeDetails.podcast_name}
-        </Link>
-        <div className="flex flex-col items-center gap-4">
-          {episodeDetails.date_published && (
-            <p className="text-muted-foreground">
-              {new Date(episodeDetails.date_published).toLocaleDateString(
-                'en-gb',
-                {
-                  year: 'numeric',
-                  month: 'long',
-                  day: 'numeric',
-                },
-              )}
-            </p>
+    <main className="flex flex-col items-center p-4 md:p-12">
+      <div className="grid w-full gap-4 md:grid-cols-2">
+        <div className="flex flex-col items-center gap-8">
+          {episodeDetails.image_url && (
+            <Image
+              width={300}
+              height={300}
+              className="h-64 w-64 rounded-lg object-cover"
+              src={episodeDetails.image_url}
+              alt={episodeDetails.episode_name!}
+            />
           )}
-          <Duration episodeDetails={episodeDetails} />
           <ReviewSection
             episodeId={episodeDetails.id!}
             likes={episodeDetails.likes || 0}
@@ -89,9 +67,33 @@ export const Episode = ({
               </span>
             </div>
           )}
-          <div className="flex items-center justify-center gap-4">
-            <span className="text-lg font-semibold">Listen on:</span>
+        </div>
+        <div className="flex flex-col items-center gap-4 md:items-start ">
+          <h1 className="text-center text-2xl font-semibold md:text-left">
+            {episodeDetails.episode_name}
+          </h1>
+          <Link
+            href={`/episodes?podcast_name=${episodeDetails.podcast_name}`}
+            className="text-xl  text-primary/80 underline transition-all hover:text-primary/60 hover:no-underline active:text-primary/40"
+          >
+            {episodeDetails.podcast_name}
+          </Link>
+          {episodeDetails.date_published && (
+            <p className="text-muted-foreground">
+              {new Date(episodeDetails.date_published).toLocaleDateString(
+                'en-gb',
+                {
+                  year: 'numeric',
+                  month: 'long',
+                  day: 'numeric',
+                },
+              )}
+            </p>
+          )}
+          <Duration episodeDetails={episodeDetails} />
 
+          <div className="flex gap-4">
+            <span className="text-lg font-semibold">Listen on:</span>
             {episodeDetails.podcast_itunes_id && (
               <PlayerIcon
                 url={
@@ -124,13 +126,13 @@ export const Episode = ({
               </PlayerIcon>
             )}
           </div>
-        </div>
 
-        {episodeDetails.description && (
-          <div className="prose w-full">
-            <EpisodeDescription description={episodeDetails.description} />
-          </div>
-        )}
+          {episodeDetails.description && (
+            <div className="prose w-full">
+              <EpisodeDescription description={episodeDetails.description} />
+            </div>
+          )}
+        </div>
       </div>
     </main>
   );
