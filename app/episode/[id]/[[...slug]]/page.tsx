@@ -1,6 +1,7 @@
 import { Episode } from '@/app/Episode';
+import { formatUrls } from '@/app/api/episode/utils';
 import { EpisodeDetails } from '@/app/api/types';
-import { getHost } from '@/app/utils';
+import { createClient } from '@/utils/supabase/ssr';
 import { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 
@@ -8,24 +9,47 @@ type Props = {
   params: { id: string };
 };
 
-type EpisodeDetailsResponse = EpisodeDetails & { error: string };
+async function getEpisodeDetails(episode_id: string): Promise<EpisodeDetails> {
+  const supabase = createClient();
+  if (!episode_id) {
+    return notFound();
+  }
 
-async function getEpisodeDetails(
-  episode_id: string,
-): Promise<EpisodeDetailsResponse> {
-  const response = await fetch(
-    `${getHost()}/api/episode?episode_id=${episode_id}`,
-  );
-  return response.json();
+  const { data, error } = await supabase
+    .from('episode_with_rating_data')
+    .select(
+      `
+      *,
+      podcast_episode_url (url, type)
+    `,
+    )
+    .eq('id', episode_id)
+    .single();
+
+  if (error || !data) {
+    console.error('Error fetching episode details:', error);
+    return notFound();
+  }
+
+  return {
+    ...data,
+    urls: formatUrls(data.podcast_episode_url),
+  };
 }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
-  const episode = await getEpisodeDetails(params.id);
+  const supabase = createClient();
+
+  const { data } = await supabase
+    .from('podcast_episode')
+    .select('episode_name, image_url')
+    .eq('id', params.id)
+    .single();
 
   return {
-    title: episode.episode_name,
+    title: data?.episode_name,
     openGraph: {
-      images: [episode.image_url || ''],
+      images: [data?.image_url || ''],
     },
   };
 }
@@ -36,10 +60,6 @@ export default async function Page({
   params: { id: string; slug: string };
 }) {
   const response = await getEpisodeDetails(params.id);
-
-  if (response?.error) {
-    notFound();
-  }
 
   return <Episode episodeDetails={response} />;
 }
