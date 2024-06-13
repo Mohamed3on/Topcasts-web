@@ -43,7 +43,7 @@ export const Episode = ({
 }) => {
   return (
     <main className="flex flex-col items-center p-4 md:p-12">
-      <div className="grid w-full gap-4 md:grid-cols-2">
+      <div className="grid w-full gap-8 md:grid-cols-[1fr,2fr]">
         <div className="flex flex-col items-center gap-8">
           {episodeDetails.image_url && (
             <Image

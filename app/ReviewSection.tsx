@@ -40,7 +40,7 @@ export const ReviewSection = async ({
       />
 
       {reviewText && (
-        <div className="flex max-w-[400px] flex-col items-center gap-2 rounded border p-4">
+        <div className="flex max-w-[90%] flex-col items-center gap-2 rounded border p-4">
           <Image
             width={32}
             height={32}
