@@ -5,17 +5,16 @@ import AppleIcon from '@/components/AppleIcon';
 import { SpotifyIcon } from '@/components/SpotifyIcon';
 import { Button } from '@/components/ui/button';
 import { ArrowRight } from 'lucide-react';
+import Image from 'next/image';
 import Link from 'next/link';
 import { Suspense } from 'react';
-import castro from '/castro.jpg';
-import Image from 'next/image';
 
 export default async function Home() {
   return (
     <div className="container flex w-screen flex-col items-center justify-center gap-4">
       <div className="flex flex-col gap-2">
         <div className="flex max-w-lg flex-col gap-2">
-          <h1 className="tracking-tight-tight text-center  text-4xl font-extrabold text-black sm:text-6xl">
+          <h1 className="tracking-tight-tight text-center  text-4xl font-extrabold sm:text-6xl">
             Discover your next favourite
             <p className="via-light-blue-500 bg-gradient-to-r from-sky-500 to-blue-500 bg-clip-text text-transparent">
               Podcast Episode

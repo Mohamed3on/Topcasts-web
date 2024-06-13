@@ -30,13 +30,7 @@ export const EpisodeCardDescription = ({
     </div>
   );
 };
-export const EpisodeCard = ({
-  episode,
-  children,
-}: {
-  episode: EpisodeForCard;
-  children?: React.ReactNode;
-}) => {
+export const EpisodeCard = ({ episode }: { episode: EpisodeForCard }) => {
   return (
     <Card className="overflow-hidden rounded-lg shadow-sm transition duration-100 ease-in-out hover:shadow-lg ">
       <Link className="h-full" href={`/episode/${episode.id}/${episode.slug}`}>
@@ -53,7 +47,7 @@ export const EpisodeCard = ({
         <CardContent className="pt-4">
           <div className="flex items-center justify-between gap-1">
             <div>
-              <h3 className="line-clamp-2 text-lg font-medium text-gray-900 hover:h-auto sm:line-clamp-4">
+              <h3 className="line-clamp-2 text-lg font-medium text-secondary-foreground/90 hover:h-auto sm:line-clamp-4">
                 {episode.episode_name}
               </h3>
               <p className="mt-1 text-sm font-semibold text-gray-500">
@@ -62,7 +56,7 @@ export const EpisodeCard = ({
             </div>
             <RatingButtons episode={episode} />
           </div>
-          {children || <EpisodeCardDescription episode={episode} />}
+          {<EpisodeCardDescription episode={episode} />}
         </CardContent>
         <CardFooter className="justify-between">
           {episode.twitter_shares > 0 && (

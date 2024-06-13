@@ -64,7 +64,7 @@ export const Episode = ({
         </Link>
         <div className="flex flex-col items-center gap-4">
           {episodeDetails.date_published && (
-            <p className="text-gray-500">
+            <p className="text-muted-foreground">
               {new Date(episodeDetails.date_published).toLocaleDateString(
                 'en-gb',
                 {

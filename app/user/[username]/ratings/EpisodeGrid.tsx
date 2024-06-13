@@ -132,7 +132,7 @@ const EpisodeCard = ({
             )}
           </div>
           <h2 className="text-xl font-semibold">{episode.episode_name}</h2>
-          <p className="text-gray-500">{episode.podcast_name}</p>
+          <p className="text-muted-foreground">{episode.podcast_name}</p>
 
           {episode.review_text && (
             <div className="flex items-end gap-2">
