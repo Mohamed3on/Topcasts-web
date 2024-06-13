@@ -12,9 +12,13 @@ const reviewOptions = [
 export const ReviewButtons = ({
   episodeId,
   reviewType,
+  likes,
+  dislikes,
 }: {
   episodeId: number;
   reviewType?: ReviewType;
+  likes: number;
+  dislikes: number;
 }) => {
   const { toggleReview, isLoading } = useReview(episodeId, reviewType);
 
@@ -24,6 +28,7 @@ export const ReviewButtons = ({
         <Button
           disabled={isLoading}
           key={type}
+          aria-label={type}
           variant="secondary"
           className={`flex items-center gap-2 transition-colors hover:bg-slate-300 active:bg-slate-200 ${
             reviewType === type ? color : ''
@@ -35,7 +40,7 @@ export const ReviewButtons = ({
           ) : (
             <Loader2Icon size={24} className="animate-spin" />
           )}
-          <span>{type.charAt(0).toUpperCase() + type.slice(1)}</span>
+          <span className=" text-sm">{type === 'like' ? likes : dislikes}</span>
         </Button>
       ))}
     </div>

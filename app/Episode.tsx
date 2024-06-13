@@ -76,7 +76,11 @@ export const Episode = ({
             </p>
           )}
           <Duration episodeDetails={episodeDetails} />
-          <ReviewSection episodeId={episodeDetails.id!} />
+          <ReviewSection
+            episodeId={episodeDetails.id!}
+            likes={episodeDetails.likes || 0}
+            dislikes={episodeDetails.dislikes || 0}
+          />
           {episodeDetails.twitter_shares! > 0 && (
             <div className="flex items-center gap-1 text-blue-500">
               <Twitter className="h-6 w-6" />

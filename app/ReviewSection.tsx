@@ -3,7 +3,15 @@ import { ReviewType } from '@/app/api/types';
 import { createClient } from '@/utils/supabase/ssr';
 import Image from 'next/image';
 
-export const ReviewSection = async ({ episodeId }: { episodeId: number }) => {
+export const ReviewSection = async ({
+  episodeId,
+  likes,
+  dislikes,
+}: {
+  episodeId: number;
+  likes: number;
+  dislikes: number;
+}) => {
   let reviewType: ReviewType | undefined = undefined;
   let reviewText: string | undefined = undefined;
   const supabase = createClient();
@@ -24,7 +32,12 @@ export const ReviewSection = async ({ episodeId }: { episodeId: number }) => {
 
   return (
     <div className="flex flex-col items-center gap-4">
-      <ReviewButtons reviewType={reviewType} episodeId={episodeId} />
+      <ReviewButtons
+        reviewType={reviewType}
+        episodeId={episodeId}
+        likes={likes}
+        dislikes={dislikes}
+      />
 
       {reviewText && (
         <div className="flex flex-col items-center gap-2 rounded border p-4">
