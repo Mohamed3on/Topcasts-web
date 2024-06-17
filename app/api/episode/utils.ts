@@ -11,7 +11,7 @@ export function formatUrls(
   );
 }
 
-const getCheerio = async (html: string) => {
+export const getCheerio = async (html: string) => {
   try {
     return load(html);
   } catch (error) {
