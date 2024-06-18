@@ -8,7 +8,7 @@ import Link from 'next/link';
 export type EpisodeForCard = {
   id: number;
   slug: string | null;
-  episode_name: string | null;
+  episode_name: string;
   image_url: string | null;
   description: string | null;
   review_type?: string;
@@ -32,7 +32,7 @@ export const EpisodeCardDescription = ({
 };
 export const EpisodeCard = ({ episode }: { episode: EpisodeForCard }) => {
   return (
-    <Card className="overflow-hidden rounded-lg shadow-sm transition duration-100 ease-in-out hover:shadow-lg ">
+    <Card className="overflow-hidden rounded-lg shadow-sm transition duration-100 ease-in-out hover:shadow-lg">
       <Link className="h-full" href={`/episode/${episode.id}/${episode.slug}`}>
         <div className="overflow-hidden rounded-lg">
           <Image
@@ -40,12 +40,12 @@ export const EpisodeCard = ({ episode }: { episode: EpisodeForCard }) => {
             height={224}
             loading="lazy"
             alt={episode.episode_name || ''}
-            className="h-48 w-full object-cover sm:h-56"
+            className="h-56 w-full object-cover"
             src={episode.image_url || ''}
           />
         </div>
         <CardContent className="pt-4">
-          <div className="flex items-center justify-between gap-1">
+          <div className="flex items-center justify-between gap-2">
             <div>
               <h3 className="line-clamp-2 text-lg font-medium text-secondary-foreground/90 hover:h-auto sm:line-clamp-4">
                 {episode.episode_name}

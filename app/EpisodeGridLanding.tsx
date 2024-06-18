@@ -43,7 +43,7 @@ const getEpisodes = async () => {
       dislikes
 `,
       )
-      .order('twitter_shares', { ascending: false })
+      .order('popularity_score', { ascending: false })
       .limit(5);
     episodeData = data;
   } else {
@@ -59,10 +59,10 @@ const getEpisodes = async () => {
       twitter_shares,
       likes,
       dislikes,
-    podcast_episode_review!inner(review_type, user_id, episode_id)`,
+    podcast_episode_review(review_type, user_id, episode_id)`,
       )
       .eq('podcast_episode_review.user_id', userId)
-      .order('twitter_shares', { ascending: false })
+      .order('popularity_score', { ascending: false })
       .limit(5);
     episodeData = data;
   }
@@ -70,7 +70,7 @@ const getEpisodes = async () => {
   const episodes = episodeData?.map((episode) => {
     return {
       ...episode,
-      review_type: episode?.podcast_episode_review?.[0].review_type || null,
+      review_type: episode?.podcast_episode_review?.[0]?.review_type || null,
     };
   });
 

@@ -241,16 +241,22 @@ export type Database = {
         Row: {
           episode_id: number;
           shared_at: string | null;
+          tweet_id: string | null;
+          tweet_text: string | null;
           twitter_screen_name: string;
         };
         Insert: {
           episode_id: number;
           shared_at?: string | null;
+          tweet_id?: string | null;
+          tweet_text?: string | null;
           twitter_screen_name: string;
         };
         Update: {
           episode_id?: number;
           shared_at?: string | null;
+          tweet_id?: string | null;
+          tweet_text?: string | null;
           twitter_screen_name?: string;
         };
         Relationships: [
@@ -291,6 +297,7 @@ export type Database = {
           podcast_itunes_id: string | null;
           podcast_name: string | null;
           podcast_spotify_id: string | null;
+          popularity_score: number;
           rss_feed: string | null;
           slug: string | null;
           twitter_shares: number | null;

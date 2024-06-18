@@ -1,4 +1,4 @@
-import { Card, CardContent } from '@/components/ui/card';
+import { Card, CardContent, CardFooter } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 
 export const SkeletonEpisodeCard = () => {
@@ -6,7 +6,7 @@ export const SkeletonEpisodeCard = () => {
     <Card className="w-[450px] max-w-full overflow-hidden rounded-lg shadow-sm">
       <div className="h-full">
         <div className="overflow-hidden rounded-lg">
-          <Skeleton className="h-48 w-full sm:h-56" />
+          <Skeleton className="h-56 w-full object-cover" />
         </div>
         <CardContent className="pt-4">
           <div className="flex items-center justify-between gap-1">
@@ -24,6 +24,9 @@ export const SkeletonEpisodeCard = () => {
             <Skeleton className="h-4 w-3/4" />
           </div>
         </CardContent>
+        <CardFooter className="justify-between">
+          <Skeleton className="h-6 w-full" />
+        </CardFooter>
       </div>
     </Card>
   );

@@ -72,7 +72,7 @@ const Header = async () => {
           'use server';
           const search = formData.get('search');
 
-          const href = `${getHost()}/episodes${search ? `?q=${search}` : ''}`;
+          const href = `${getHost()}/search${search ? `?q=${search}` : ''}`;
           redirect(href);
         }}
       >
