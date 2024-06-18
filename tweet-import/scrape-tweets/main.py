@@ -1,15 +1,11 @@
 import datetime
+import json
+import os
+import urllib.parse
 
 from twitter.search import Search
 
-import json
-
-import os
-
-import urllib.parse
-
-
-DAYS_TO_SEARCH = 30
+DAYS_TO_SEARCH = 14
 
 
 # Function to convert date string to datetime object
@@ -36,6 +32,7 @@ def simplify_tweet(tweet):
                 "podcasts.apple.com" in url["expanded_url"]
                 and "i=" in url["expanded_url"]
             )
+            or "tim.blog" in url["expanded_url"]
         )
     ]
 
@@ -72,10 +69,7 @@ def simplify_tweet(tweet):
 # Main function
 def main():
     search = Search(
-        cookies={
-            "ct0": "INSERT YOUR COOKIE HERE",
-            "auth_token": "INSERT YOUR COOKIE HERE",
-        },
+        cookies={},
         save=True,
         debug=1,
     )
@@ -84,9 +78,13 @@ def main():
         datetime.datetime.now() - datetime.timedelta(days=DAYS_TO_SEARCH)
     ).strftime("%Y-%m-%d")
     res = search.run(
-        limit=1000,
+        limit=500,
         retries=5,
         queries=[
+            {
+                "category": "Latest",
+                "query": f"tim.blog min_faves:2 since:{since_date}",
+            },
             {
                 "category": "Latest",
                 "query": f"open.spotify.com/episode list:815723390048866304 min_faves:1 since:{since_date}",
