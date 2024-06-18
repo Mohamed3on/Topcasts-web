@@ -30,7 +30,15 @@ const fetchEpisodes = async ({
       .from('episode_with_rating_data')
       .select(
         `
-      *,
+        id,
+        slug,
+        episode_name,
+        image_url,
+        podcast_name,
+        description,
+        twitter_shares,
+        likes,
+        dislikes,
       podcast_episode_review(review_type, user_id, episode_id)`,
       )
       .eq('podcast_episode_review.user_id', userId)
@@ -53,7 +61,17 @@ const fetchEpisodes = async ({
   } else {
     const { data, error } = await supabase
       .from('episode_with_rating_data')
-      .select()
+      .select(
+        `id,
+      slug,
+      episode_name,
+      image_url,
+      podcast_name,
+      description,
+      twitter_shares,
+      likes,
+      dislikes`,
+      )
       .order('popularity_score', { ascending: false })
       .range((pageIndex - 1) * pageSize, pageIndex * pageSize - 1);
 
