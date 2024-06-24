@@ -80,24 +80,6 @@ export const GroupedRatings = async ({
                   <span>{podcast.dislikes_count}</span>
                 </div>
               </div>
-              {/* <p
-                className={
-                  Math.round(
-                    (podcast.review_difference /
-                      (podcast.likes_count + podcast.dislikes_count)) *
-                      100,
-                  ) > 50
-                    ? 'text-green-500'
-                    : 'text-red-500'
-                }
-              >
-                {Math.round(
-                  (podcast.review_difference /
-                    (podcast.likes_count + podcast.dislikes_count)) *
-                    100,
-                )}
-                %
-              </p> */}
             </CardFooter>
           </Card>
         ))}

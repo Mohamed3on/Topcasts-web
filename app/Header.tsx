@@ -2,6 +2,7 @@ import { getHost } from '@/app/utils';
 import { Button } from '@/components/ui/button';
 import { createClient } from '@/utils/supabase/ssr';
 import {
+  BarChart,
   Flame,
   HeartIcon,
   LogInIcon,
@@ -122,6 +123,17 @@ const Header = async () => {
                 >
                   <HeartIcon className="h-5 w-5 group-hover:text-red-500" />
                   <span>My Ratings</span>
+                </Link>
+              </Button>
+            </DropdownMenuItem>
+            <DropdownMenuItem>
+              <Button asChild variant={'link'}>
+                <Link
+                  href={`/user/${userInfo.username}/podcast/statistics`}
+                  className="group flex gap-2"
+                >
+                  <BarChart className="h-5 w-5 group-hover:text-orange-500" />
+                  <span>My Podcast statistics</span>
                 </Link>
               </Button>
             </DropdownMenuItem>

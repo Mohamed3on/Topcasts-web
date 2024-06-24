@@ -2,7 +2,7 @@
 import { useUser } from '@/app/auth/UserContext';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
-import { Flame, Menu } from 'lucide-react';
+import { BarChart, Flame, Menu } from 'lucide-react';
 import Link from 'next/link';
 import { useState } from 'react';
 
@@ -39,21 +39,39 @@ const MobileNav = () => {
             </Link>
           </Button>
           {user && (
-            <Button
-              onClick={() => setOpen(false)}
-              className=""
-              asChild
-              variant={'link'}
-            >
-              <Link
-                href={`/user/${user.username}/ratings`}
-                className="group flex items-center gap-1"
+            <>
+              <Button
+                onClick={() => setOpen(false)}
+                className=""
+                asChild
+                variant={'link'}
               >
-                <Flame className="h-6 w-6 group-hover:text-orange-600" />
+                <Link
+                  href={`/user/${user.username}/ratings`}
+                  className="group flex items-center gap-1"
+                >
+                  <Flame className="h-6 w-6 group-hover:text-orange-600" />
 
-                <span>My ratings</span>
-              </Link>
-            </Button>
+                  <span>My ratings</span>
+                </Link>
+              </Button>
+
+              <Button
+                onClick={() => setOpen(false)}
+                className=""
+                asChild
+                variant={'link'}
+              >
+                <Link
+                  href={`/user/${user.username}/podcast/statistics`}
+                  className="group flex items-center gap-1"
+                >
+                  <BarChart className="h-6 w-6 group-hover:text-orange-600" />
+
+                  <span>My Podcast statistics</span>
+                </Link>
+              </Button>
+            </>
           )}
         </div>
       </SheetContent>
