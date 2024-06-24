@@ -73,8 +73,8 @@ export const Episode = ({
             {episodeDetails.episode_name}
           </h1>
           <Link
-            href={`/search?podcast_name=${episodeDetails.podcast_name}`}
-            className="text-xl  text-primary/80 underline transition-all hover:text-primary/60 hover:no-underline active:text-primary/40"
+            href={`/podcast/${episodeDetails.podcast_id}`}
+            className="text-xl text-primary/80 underline transition-all hover:text-primary/60 hover:no-underline active:text-primary/40"
           >
             {episodeDetails.podcast_name}
           </Link>

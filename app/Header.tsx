@@ -117,10 +117,10 @@ const Header = async () => {
             <DropdownMenuItem>
               <Button asChild variant="link" className="">
                 <Link
-                  className="flex gap-2"
+                  className="group flex gap-2"
                   href={`/user/${userInfo.username}/ratings`}
                 >
-                  <HeartIcon className="h-5 w-5" />
+                  <HeartIcon className="h-5 w-5 group-hover:text-red-500" />
                   <span>My Ratings</span>
                 </Link>
               </Button>

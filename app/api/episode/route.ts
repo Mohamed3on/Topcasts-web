@@ -1,13 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-import { determineType, formatUrls, scrapeDataByType } from './utils';
 import jwt, { type JwtPayload } from 'jsonwebtoken';
+import { determineType, formatUrls, scrapeDataByType } from './utils';
 
 import { ScrapedEpisodeData, ScrapedEpisodeDetails } from '@/app/api/types';
 
+import { supabaseAdmin as supabase } from '@/utils/supabase/server';
 import { upsertEpisode, upsertEpisodeUrl, upsertPodcastDetails } from './db';
 import { slugifyDetails } from './utils';
-import { supabaseAdmin as supabase } from '@/utils/supabase/server';
 
 export async function GET(request: NextRequest): Promise<NextResponse> {
   const { searchParams } = request.nextUrl;
@@ -229,6 +229,7 @@ async function updateEpisodeDetails({
       genres: scrapedData.podcast_genres,
       rss_feed: scrapedData.rss_feed,
       artist_name: scrapedData.artist_name,
+      image_url: scrapedData.image_url,
     };
 
     const episodeData: ScrapedEpisodeData = {

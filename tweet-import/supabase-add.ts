@@ -86,6 +86,7 @@ async function updateEpisodeDetails({
       genres: scrapedData.podcast_genres,
       rss_feed: scrapedData.rss_feed,
       artist_name: scrapedData.artist_name,
+      image_url: scrapedData.image_url,
     };
 
     const episodeData: ScrapedEpisodeData = {

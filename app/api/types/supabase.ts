@@ -14,6 +14,7 @@ export type Database = {
           artist_name: string | null;
           genres: string[] | null;
           id: number;
+          image_url: string | null;
           itunes_id: string | null;
           name: string;
           rss_feed: string | null;
@@ -23,6 +24,7 @@ export type Database = {
           artist_name?: string | null;
           genres?: string[] | null;
           id?: number;
+          image_url?: string | null;
           itunes_id?: string | null;
           name: string;
           rss_feed?: string | null;
@@ -32,6 +34,7 @@ export type Database = {
           artist_name?: string | null;
           genres?: string[] | null;
           id?: number;
+          image_url?: string | null;
           itunes_id?: string | null;
           name?: string;
           rss_feed?: string | null;
@@ -83,6 +86,13 @@ export type Database = {
           slug?: string | null;
         };
         Relationships: [
+          {
+            foreignKeyName: 'podcast_episode_podcast_id_fkey';
+            columns: ['podcast_id'];
+            isOneToOne: false;
+            referencedRelation: 'episode_with_rating_data';
+            referencedColumns: ['podcast_id'];
+          },
           {
             foreignKeyName: 'podcast_episode_podcast_id_fkey';
             columns: ['podcast_id'];
@@ -294,10 +304,11 @@ export type Database = {
           image_url: string | null;
           likes: number | null;
           podcast_genres: string[] | null;
+          podcast_id: number | null;
           podcast_itunes_id: string | null;
           podcast_name: string | null;
           podcast_spotify_id: string | null;
-          popularity_score: number;
+          popularity_score: number | null;
           rss_feed: string | null;
           slug: string | null;
           twitter_shares: number | null;
@@ -306,6 +317,20 @@ export type Database = {
       };
     };
     Functions: {
+      get_podcast_reviews: {
+        Args: {
+          username_param: string;
+        };
+        Returns: {
+          id: number;
+          podcast_name: string;
+          artist_name: string;
+          image_url: string;
+          likes_count: number;
+          dislikes_count: number;
+          review_difference: number;
+        }[];
+      };
       search_episodes: {
         Args: {
           search_query?: string;
