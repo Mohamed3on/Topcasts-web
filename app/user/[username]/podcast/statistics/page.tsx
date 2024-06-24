@@ -20,11 +20,7 @@ const fetchUserTopPodcasts = async (username: string) => {
   return data;
 };
 
-export const GroupedRatings = async ({
-  params,
-}: {
-  params: { username: string };
-}) => {
+const GroupedRatings = async ({ params }: { params: { username: string } }) => {
   const groupedByPodcast = await fetchUserTopPodcasts(params.username);
 
   const sorted = groupedByPodcast.sort((a, b) => {
