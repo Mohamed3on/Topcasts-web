@@ -45,7 +45,7 @@ export const GroupedRatings = async ({
             key={podcast.podcast_name}
             className="flex flex-col justify-between hover:shadow-md"
           >
-            <div className="p-3">
+            <div className="pl-3 pt-3">
               <div className="text-lg text-primary">{index + 1}.</div>
             </div>
             <CardHeader className="flex flex-col items-center gap-2">
