@@ -133,41 +133,45 @@ async function updateEpisodeDetails({
 }
 
 async function processTweets() {
-  for (const [url, urlShares] of Object.entries(tweetData)) {
-    let shouldProcess = false;
+  const tweetEntries = Object.entries(tweetData);
 
-    for (const tweet of urlShares.tweets) {
-      const { error } = await supabase
-        .from('social_share')
-        .select('episode_id')
-        .eq('tweet_id', tweet.tweet_id)
-        .single();
+  await Promise.all(
+    tweetEntries.map(async ([url, urlShares]) => {
+      let shouldProcess = false;
 
-      if (error) {
-        shouldProcess = true;
-        break;
+      for (const tweet of urlShares.tweets) {
+        const { error } = await supabase
+          .from('social_share')
+          .select('episode_id')
+          .eq('tweet_id', tweet.tweet_id)
+          .single();
+
+        if (error) {
+          shouldProcess = true;
+          break;
+        }
       }
-    }
 
-    if (!shouldProcess) {
-      continue;
-    }
-
-    // if tim ferris link, get the apple/spotify urls
-    if (url.includes('tim.blog')) {
-      console.log(chalk.yellow('🔍 Scraping Tim Ferriss episode links...'));
-      console.log(chalk.yellow('🔗 URL:'), chalk.blue(url));
-
-      const links = await getTimFerrissEpisodeLinks(url);
-      if (links?.appleLink) {
-        const id = await handleEpisodeURL(links.appleLink, urlShares.tweets);
-        if (links?.spotifyLink)
-          await upsertEpisodeUrl(supabase, links.spotifyLink, id, 'spotify');
-      } else {
-        continue;
+      if (!shouldProcess) {
+        return;
       }
-    } else await handleEpisodeURL(url, urlShares.tweets);
-  }
+
+      // if tim ferris link, get the apple/spotify urls
+      if (url.includes('tim.blog')) {
+        console.log(chalk.yellow('🔍 Scraping Tim Ferriss episode links...'));
+        console.log(chalk.yellow('🔗 URL:'), chalk.blue(url));
+
+        const links = await getTimFerrissEpisodeLinks(url);
+        if (links?.appleLink) {
+          const id = await handleEpisodeURL(links.appleLink, urlShares.tweets);
+          if (links?.spotifyLink)
+            await upsertEpisodeUrl(supabase, links.spotifyLink, id, 'spotify');
+        } else {
+          return;
+        }
+      } else await handleEpisodeURL(url, urlShares.tweets);
+    }),
+  );
 }
 
 const handleEpisodeURL = async (
