@@ -69,7 +69,10 @@ def simplify_tweet(tweet):
 # Main function
 def main():
     search = Search(
-        cookies={},
+        cookies={
+            "ct0": os.environ["ct0"],
+            "auth_token": os.environ["auth_token"],
+        },
         save=True,
         debug=1,
     )
