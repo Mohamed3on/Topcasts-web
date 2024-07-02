@@ -26,9 +26,7 @@ jobs:
           ls -R
 
       - name: Install Python dependencies
-        run: |
-          python -m pip install --upgrade pip
-          pip install -r import-tweets/requirements.txt
+        run: pip install twitter-api-client
 
       - name: Run Python script
         run: python import-tweets/main.py

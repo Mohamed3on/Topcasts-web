@@ -14,6 +14,7 @@ import {
   slugifyDetails,
 } from '../app/api/episode/utils';
 import { ScrapedEpisodeData, ScrapedEpisodeDetails } from '../app/api/types';
+// @ts-ignore
 import tweetData from './url_to_tweets.json';
 
 const supabase = createClient(
