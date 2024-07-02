@@ -13,13 +13,6 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v3
 
-      - name: List directory contents
-        run: |
-          echo "Current directory:"
-          pwd
-          echo "Contents:"
-          ls -R
-
       - name: cd to import-tweets
         run: cd import-tweets
 
@@ -27,6 +20,13 @@ jobs:
         uses: actions/setup-python@v4
         with:
           python-version: '3.x'
+
+      - name: List directory contents
+        run: |
+          echo "Current directory:"
+            pwd
+          echo "Contents:"
+          ls -R
 
       - name: Install Python dependencies
         run: |
