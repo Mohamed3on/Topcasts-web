@@ -23,12 +23,28 @@ const fetchUserTopPodcasts = async (username: string) => {
 const GroupedRatings = async ({ params }: { params: { username: string } }) => {
   const groupedByPodcast = await fetchUserTopPodcasts(params.username);
 
-  const sorted = groupedByPodcast.sort((a, b) => {
-    return (
-      b.review_difference / (b.likes_count + b.dislikes_count) -
-      a.review_difference / (a.likes_count + a.dislikes_count)
-    );
-  });
+  const sortFunction = (
+    a: {
+      review_difference: number;
+      likes_count: number;
+      dislikes_count: number;
+    },
+    b: {
+      review_difference: number;
+      likes_count: number;
+      dislikes_count: number;
+    },
+  ) => {
+    const bRatio =
+      b.review_difference *
+      Math.abs(b.review_difference / (b.likes_count + b.dislikes_count));
+    const aRatio =
+      a.review_difference *
+      Math.abs(a.review_difference / (a.likes_count + a.dislikes_count));
+    return bRatio - aRatio;
+  };
+
+  const sorted = groupedByPodcast.sort(sortFunction);
 
   return (
     <div className="container flex flex-col items-center gap-4 pb-4">
