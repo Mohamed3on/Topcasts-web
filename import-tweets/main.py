@@ -82,7 +82,7 @@ def main():
     ).strftime("%Y-%m-%d")
     res = search.run(
         limit=500,
-        retries=5,
+        retries=15,
         queries=[
             {
                 "category": "Latest",
