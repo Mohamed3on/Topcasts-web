@@ -6,7 +6,7 @@ on:
   workflow_dispatch: # Allows manual triggering
   push:
     branches:
-      - main
+      - master
 jobs:
   run_scripts:
     runs-on: ubuntu-latest
