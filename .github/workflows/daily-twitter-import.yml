@@ -20,6 +20,9 @@ jobs:
           echo "Contents:"
           ls -R
 
+      - name: cd to import-tweets
+        run: cd import-tweets
+
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
@@ -31,7 +34,7 @@ jobs:
           pip install -r requirements.txt
 
       - name: Run Python script
-        run: python scrape-tweets/main.py
+        run: python main.py
 
       - name: Set up bun
         uses: oven-sh/setup-bun@v1
