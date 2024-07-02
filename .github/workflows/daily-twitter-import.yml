@@ -29,6 +29,9 @@ jobs:
         run: pip install twitter-api-client
 
       - name: Run Python script
+        env:
+          ct0: ${{ secrets.CT0 }}
+          auth_token: ${{ secrets.AUTH_TOKEN }}
         run: python import-tweets/main.py
 
       - name: Set up bun
