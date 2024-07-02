@@ -22,7 +22,6 @@ const getSpotifyAccessToken = async () => {
     token: data.access_token,
     expires_at: Date.now() + data.expires_in * 1000,
   };
-  console.log('🚀 spotifyAccessToken:', spotifyAccessToken);
 
   return spotifyAccessToken.token;
 };
