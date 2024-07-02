@@ -13,9 +13,6 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v3
 
-      - name: cd to import-tweets
-        run: cd import-tweets
-
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
@@ -31,10 +28,10 @@ jobs:
       - name: Install Python dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install -r requirements.txt
+          pip install -r import-tweets/requirements.txt
 
       - name: Run Python script
-        run: python main.py
+        run: python import-tweets/main.py
 
       - name: Set up bun
         uses: oven-sh/setup-bun@v1
@@ -43,4 +40,4 @@ jobs:
         run: bun install
 
       - name: Run script
-        run: bun supabase-add.ts
+        run: bun import-tweets/supabase-add.ts
