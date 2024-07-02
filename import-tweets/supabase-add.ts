@@ -18,7 +18,7 @@ import { ScrapedEpisodeData, ScrapedEpisodeDetails } from '../app/api/types';
 import tweetData from './url_to_tweets.json';
 
 const supabase = createClient(
-  'https://dupqaaqpafucdxrmrmkv.supabase.co',
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
   process.env.SUPABASE_SERVICE_KEY!,
   {
     auth: {
