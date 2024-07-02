@@ -200,7 +200,7 @@ const handleEpisodeURL = async (
   let id = data?.episode_id;
 
   if (!data) {
-    console.log(chalk.yellow('🔍 Scraping episode details...'));
+    console.log(chalk.yellow('🔍 Scraping episode details for ', url));
     let scrapedData: ScrapedEpisodeDetails;
     try {
       scrapedData = await scrapeDataByType(type, url);
