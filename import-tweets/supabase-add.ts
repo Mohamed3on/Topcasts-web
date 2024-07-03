@@ -173,7 +173,6 @@ async function processTweets() {
         console.log(chalk.yellow('🔍 Scraping Huberman Lab episode links...'));
         console.log(chalk.yellow('🔗 URL:'), chalk.blue(url));
         const links = await getHubermanLabEpisodeLinks(url);
-        console.log('🚀 ~ tweetEntries.map ~ links:', links);
 
         let id;
         if (links?.spotifyLink) {
