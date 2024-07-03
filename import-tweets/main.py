@@ -90,6 +90,10 @@ def main():
             },
             {
                 "category": "Latest",
+                "query": f"hubermanlab.com min_faves:2 since:{since_date}",
+            },
+            {
+                "category": "Latest",
                 "query": f"open.spotify.com/episode list:815723390048866304 min_faves:1 since:{since_date}",
             },
             {

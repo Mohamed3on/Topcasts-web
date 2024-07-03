@@ -32,11 +32,7 @@ async function getTimFerrissEpisodeLinks(url: string) {
   const html = await getHtml(url);
   const $ = await getCheerio(html);
 
-  // get apple podcasts and spotify links
-
   let allLinks = $('article .listen-anywhere-sources a');
-
-  // alternative: a.podcast-block__link
 
   if (!allLinks.length) {
     allLinks = $('a.podcast-block__link');
@@ -52,9 +48,28 @@ async function getTimFerrissEpisodeLinks(url: string) {
     .attr('href');
 
   if (!appleLink && !spotifyLink) {
-    console.log('No links found');
     return null;
   }
+
+  console.log('Apple:', appleLink);
+  console.log('Spotify:', spotifyLink);
+
+  return {
+    appleLink,
+    spotifyLink,
+  };
+}
+
+async function getHubermanLabEpisodeLinks(url: string) {
+  const html = await getHtml(url);
+  const $ = await getCheerio(html);
+
+  const appleLink = $('a.chip-platform[href*="podcasts.apple.com"]').attr(
+    'href',
+  );
+  const spotifyLink = $(
+    'a.chip-platform[href*="open.spotify.com/episode"]',
+  ).attr('href');
 
   console.log('Apple:', appleLink);
   console.log('Spotify:', spotifyLink);
@@ -156,7 +171,25 @@ async function processTweets() {
       if (!shouldProcess) {
         return;
       }
-
+      if (url.includes('hubermanlab.com')) {
+        console.log(chalk.yellow('🔍 Scraping Huberman Lab episode links...'));
+        console.log(chalk.yellow('🔗 URL:'), chalk.blue(url));
+        const links = await getHubermanLabEpisodeLinks(url);
+        if (links?.spotifyLink) {
+          const id = await handleEpisodeURL(
+            links.spotifyLink,
+            urlShares.tweets,
+          );
+          if (links?.appleLink)
+            await upsertEpisodeUrl(supabase, links.appleLink, id, 'apple');
+        } else {
+          console.log(
+            chalk.red('❌ No links found for Huberman Lab episode:'),
+            chalk.blue(url),
+          );
+        }
+        return;
+      }
       // if tim ferris link, get the apple/spotify urls
       if (url.includes('tim.blog')) {
         console.log(chalk.yellow('🔍 Scraping Tim Ferriss episode links...'));
@@ -168,6 +201,10 @@ async function processTweets() {
           if (links?.spotifyLink)
             await upsertEpisodeUrl(supabase, links.spotifyLink, id, 'spotify');
         } else {
+          console.log(
+            chalk.red('❌ No links found for Tim Ferriss episode:'),
+            chalk.blue(url),
+          );
           return;
         }
       } else await handleEpisodeURL(url, urlShares.tweets);
@@ -229,8 +266,6 @@ const handleEpisodeURL = async (
   } else {
     console.log(chalk.green('🔍 Found episode ID:'), chalk.magenta(id));
   }
-
-  console.log(chalk.cyan('🔗 ID:'), chalk.magenta(id));
 
   const dataToUpsert = tweets.map((tweet) => ({
     episode_id: id,

@@ -1,5 +1,21 @@
 let spotifyAccessToken: { token: string; expires_at: number };
 
+type SpotifyEpisodeData = {
+  description: string;
+  duration_ms: number;
+  name: string;
+  preview_url: string;
+  html_description: string;
+  images: { url: string; height: number; width: number }[];
+  release_date: string;
+  show: {
+    description: string;
+    id: string;
+    name: string;
+    publisher: string;
+    images: { url: string; height: number; width: number }[];
+  };
+};
 const getSpotifyAccessToken = async () => {
   if (spotifyAccessToken && spotifyAccessToken.expires_at > Date.now()) {
     return spotifyAccessToken.token;
@@ -36,7 +52,7 @@ export const getSpotifyEpisodeData = async (episodeId: string) => {
       },
     },
   );
-  const json = await response.json();
+  const json: SpotifyEpisodeData = await response.json();
 
   return {
     episode_name: json.name,
