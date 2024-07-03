@@ -7,6 +7,7 @@ import {
   upsertPodcastDetails,
 } from '../app/api/episode/db';
 import {
+  cleanUrl,
   determineType,
   getCheerio,
   getHtml,
@@ -70,9 +71,6 @@ async function getHubermanLabEpisodeLinks(url: string) {
   const spotifyLink = $(
     'a.chip-platform[href*="open.spotify.com/episode"]',
   ).attr('href');
-
-  console.log('Apple:', appleLink);
-  console.log('Spotify:', spotifyLink);
 
   return {
     appleLink,
@@ -175,16 +173,23 @@ async function processTweets() {
         console.log(chalk.yellow('🔍 Scraping Huberman Lab episode links...'));
         console.log(chalk.yellow('🔗 URL:'), chalk.blue(url));
         const links = await getHubermanLabEpisodeLinks(url);
+        console.log('🚀 ~ tweetEntries.map ~ links:', links);
+
+        let id;
         if (links?.spotifyLink) {
-          const id = await handleEpisodeURL(
-            links.spotifyLink,
-            urlShares.tweets,
-          );
-          if (links?.appleLink)
+          id = await handleEpisodeURL(links.spotifyLink, urlShares.tweets);
+        } else if (links?.appleLink) {
+          id = await handleEpisodeURL(links.appleLink, urlShares.tweets);
+        }
+
+        if (id) {
+          if (links?.appleLink && links?.spotifyLink) {
             await upsertEpisodeUrl(supabase, links.appleLink, id, 'apple');
+            await upsertEpisodeUrl(supabase, links.spotifyLink, id, 'spotify');
+          }
         } else {
           console.log(
-            chalk.red('❌ No links found for Huberman Lab episode:'),
+            chalk.red('❌ No valid links found for Huberman Lab episode:'),
             chalk.blue(url),
           );
         }
@@ -221,26 +226,27 @@ const handleEpisodeURL = async (
     tweet_text: string;
   }[],
 ) => {
-  console.log(chalk.yellow('🚀 Processing URL:'), chalk.blue(url));
-  const type = determineType(url);
+  const cleanedUrl = cleanUrl(url);
+  console.log(chalk.yellow('🚀 Processing URL:'), chalk.blue(cleanedUrl));
+  const type = determineType(cleanedUrl);
   if (!type) {
-    console.error('❌ Failed to determine type for URL:', url);
+    console.error('❌ Failed to determine type for URL:', cleanedUrl);
     return;
   }
 
   const { data } = await supabase
     .from('podcast_episode_url')
     .select('episode_id')
-    .eq('url', url)
+    .eq('url', cleanedUrl)
     .single();
 
   let id = data?.episode_id;
 
   if (!data) {
-    console.log(chalk.yellow('🔍 Scraping episode details for ', url));
+    console.log(chalk.yellow('🔍 Scraping episode details for ', cleanedUrl));
     let scrapedData: ScrapedEpisodeDetails;
     try {
-      scrapedData = await scrapeDataByType(type, url);
+      scrapedData = await scrapeDataByType(type, cleanedUrl);
     } catch (error) {
       console.error(chalk.red('❌ Error scraping data:'), error);
       return;
@@ -248,8 +254,8 @@ const handleEpisodeURL = async (
 
     const response = await updateEpisodeDetails({
       type,
-      cleanedUrl: url,
-      scrapedData: scrapedData,
+      cleanedUrl,
+      scrapedData,
     });
 
     if ('error' in response) {
@@ -261,7 +267,7 @@ const handleEpisodeURL = async (
     console.log(
       chalk.green('🆕 Scraped episode:'),
       chalk.magenta(scrapedData.episode_name),
-      url,
+      cleanedUrl,
     );
   } else {
     console.log(chalk.green('🔍 Found episode ID:'), chalk.magenta(id));

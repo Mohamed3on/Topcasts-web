@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 
 import jwt, { type JwtPayload } from 'jsonwebtoken';
-import { determineType, formatUrls, scrapeDataByType } from './utils';
+import { cleanUrl, determineType, formatUrls, scrapeDataByType } from './utils';
 
 import { ScrapedEpisodeData, ScrapedEpisodeDetails } from '@/app/api/types';
 
@@ -41,20 +41,6 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     urls: formatUrls(data.podcast_episode_url),
   });
 }
-
-const cleanUrl = (urlString: string) => {
-  const url = new URL(urlString);
-  url.hostname = url.hostname.toLowerCase().replace(/^www\./, '');
-  url.pathname = url.pathname.replace(/\/+$/, '');
-
-  const params = new URLSearchParams();
-  if (url.searchParams.has('i')) {
-    params.set('i', url.searchParams.get('i')!);
-  }
-  url.search = params.toString();
-
-  return `${url.origin}${url.pathname}${url.search ? `${url.search}` : ''}`;
-};
 
 async function handlePodcastURL({ url }: { url: string }): Promise<
   | {

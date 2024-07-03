@@ -10,6 +10,19 @@ export function formatUrls(
     {},
   );
 }
+export const cleanUrl = (urlString: string) => {
+  const url = new URL(urlString);
+  url.hostname = url.hostname.toLowerCase().replace(/^www\./, '');
+  url.pathname = url.pathname.replace(/\/+$/, '');
+
+  const params = new URLSearchParams();
+  if (url.searchParams.has('i')) {
+    params.set('i', url.searchParams.get('i')!);
+  }
+  url.search = params.toString();
+
+  return `${url.origin}${url.pathname}${url.search ? `${url.search}` : ''}`;
+};
 
 export const getCheerio = async (html: string) => {
   try {

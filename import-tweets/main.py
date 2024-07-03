@@ -33,6 +33,7 @@ def simplify_tweet(tweet):
                 and "i=" in url["expanded_url"]
             )
             or "tim.blog" in url["expanded_url"]
+            or "hubermanlab.com" in url["expanded_url"]
         )
     ]
 
@@ -90,7 +91,7 @@ def main():
             },
             {
                 "category": "Latest",
-                "query": f"hubermanlab.com min_faves:2 since:{since_date}",
+                "query": f"hubermanlab.com/episode min_faves:2 since:{since_date}",
             },
             {
                 "category": "Latest",
