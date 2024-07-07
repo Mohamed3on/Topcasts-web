@@ -58,13 +58,13 @@ const GroupedRatings = async ({ params }: { params: { username: string } }) => {
             className="flex flex-col justify-between hover:shadow-md"
           >
             <div className="pl-3 pt-3">
-              <div className="text-lg text-primary">{index + 1}.</div>
+              <div className="text-primary">{index + 1}.</div>
             </div>
             <CardHeader className="flex flex-col items-center gap-2">
               <Image
-                width={100}
+                width={50}
                 className="rounded-full"
-                height={100}
+                height={50}
                 src={podcast.image_url || ''}
                 alt={podcast.podcast_name}
               />

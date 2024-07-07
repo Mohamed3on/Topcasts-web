@@ -1,13 +1,19 @@
 import { PlayerIcon } from '@/app/PlayerIcon';
+import PodcastEpisodes from '@/app/podcast/[id]/PodcastEpisodes';
 import AppleIcon from '@/components/AppleIcon';
 import { SpotifyIcon } from '@/components/SpotifyIcon';
+import { Separator } from '@/components/ui/separator';
+import { Skeleton } from '@/components/ui/skeleton';
 import { createClient } from '@/utils/supabase/ssr';
 import Image from 'next/image';
+import { Suspense } from 'react';
 
 export default async function PodcastPage({
   params,
+  searchParams,
 }: {
   params: { id: string };
+  searchParams: { [key: string]: string | string[] | undefined };
 }) {
   const supabase = createClient();
   const { data, error } = await supabase
@@ -39,7 +45,7 @@ export default async function PodcastPage({
           className="rounded-lg shadow-lg"
         />
 
-        <div className="flex flex-col items-center gap-4 text-center md:items-start md:text-left">
+        <div className="flex w-full flex-col items-center gap-4 text-center md:items-start md:text-left">
           <div className="flex flex-col items-center gap-2 md:items-start">
             <h1 className="text-3xl font-bold">{podcast.name}</h1>
             <p className="text-gray-600">{podcast.artist_name}</p>
@@ -55,9 +61,9 @@ export default async function PodcastPage({
                 </span>
               ))}
           </div>
-          <div className="flex flex-col items-center gap-2 md:items-start">
+          <div className="flex w-full flex-col items-center gap-2 md:items-start">
             <h2 className="text-xl font-semibold">Listen on:</h2>
-            <div className="flex flex-wrap gap-2">
+            <div className="flex w-full flex-wrap justify-center gap-2 md:justify-start">
               {podcast.itunes_id && (
                 <PlayerIcon
                   url={`https://podcasts.apple.com/podcast/id${podcast.itunes_id}`}
@@ -73,6 +79,15 @@ export default async function PodcastPage({
                 </PlayerIcon>
               )}
             </div>
+            <Separator className="my-4 w-full" />
+            <Suspense
+              fallback={<Skeleton className="h-48 w-full animate-pulse" />}
+            >
+              <PodcastEpisodes
+                podcastId={podcast.id}
+                page={Number(searchParams.page) || 1}
+              />
+            </Suspense>
           </div>
         </div>
       </div>
