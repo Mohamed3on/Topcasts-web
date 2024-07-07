@@ -51,13 +51,18 @@ export default async function PodcastEpisodes({
             </Link>
           </CardHeader>
           <CardContent>
-            <p className="mb-2 text-sm text-gray-600">
-              {new Date(episode.date_published!).toLocaleDateString(undefined, {
-                year: 'numeric',
-                month: 'long',
-                day: 'numeric',
-              })}
-            </p>
+            {episode.date_published && (
+              <p className="mb-2 text-sm text-gray-600">
+                {new Date(episode.date_published).toLocaleDateString(
+                  undefined,
+                  {
+                    year: 'numeric',
+                    month: 'long',
+                    day: 'numeric',
+                  },
+                )}
+              </p>
+            )}
 
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-4">
