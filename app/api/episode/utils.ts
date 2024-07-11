@@ -11,17 +11,20 @@ export function formatUrls(
   );
 }
 export const cleanUrl = (urlString: string) => {
+  // apple podcasts
+  if (urlString.includes('i=')) {
+    //podcasts.apple.com/us/podcast/how-to-convince-biden-to-quit/id1743213122?i=1000661794526
+    const podcastId = urlString.match(/id(\d+)/)?.[1];
+    const episodeId = urlString.match(/i=(\d+)/)?.[1];
+    return `https://podcasts.apple.com/us/podcast/${podcastId}?i=${episodeId}`;
+  }
+
   const url = new URL(urlString);
+
   url.hostname = url.hostname.toLowerCase().replace(/^www\./, '');
   url.pathname = url.pathname.replace(/\/+$/, '');
 
-  const params = new URLSearchParams();
-  if (url.searchParams.has('i')) {
-    params.set('i', url.searchParams.get('i')!);
-  }
-  url.search = params.toString();
-
-  return `${url.origin}${url.pathname}${url.search ? `${url.search}` : ''}`;
+  return `${url.origin}${url.pathname}`;
 };
 
 export const getCheerio = async (html: string) => {
