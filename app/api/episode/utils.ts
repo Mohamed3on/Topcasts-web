@@ -49,46 +49,6 @@ export async function scrapeDataByType(
   }
 }
 
-export async function scrapeSpotifyEpisodeDetails(html: string) {
-  const $ = await getCheerio(html);
-
-  // parse out application/ld+json
-  const jsonScript = $('script[type="application/ld+json"]').html();
-
-  if (!jsonScript) {
-    throw new Error('No JSON data found');
-  }
-  const parsedJson = JSON.parse(jsonScript);
-
-  const episode_name = parsedJson.name;
-  const podcast_name = $('[data-testid=entity-header-entity-subtitle]').text();
-  const description = parsedJson?.description;
-  const date_published = parsedJson?.datePublished;
-  const formatted_duration = $(
-    '[data-testid=episode-progress-not-played]',
-  ).text();
-
-  const show_Id = $('meta[name="music:album"]')
-    ?.attr('content')
-    ?.split('/')
-    .pop();
-
-  const episodeImage = $('[data-testid=entity-header-entity-image]').attr(
-    'src',
-  );
-
-  const returnObject = {
-    episode_name,
-    description,
-    podcast_name,
-    duration: convertToMilliseconds(formatted_duration),
-    date_published,
-    image_url: episodeImage || null,
-    spotify_show_id: show_Id,
-  };
-
-  return returnObject;
-}
 export async function scrapeApplePodcastsEpisodeDetails(url: string) {
   const html = await getHtml(url);
   const $ = await getCheerio(html);
