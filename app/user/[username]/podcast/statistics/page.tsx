@@ -37,10 +37,10 @@ const GroupedRatings = async ({ params }: { params: { username: string } }) => {
   ) => {
     const bRatio =
       b.review_difference *
-      Math.abs(b.likes_count / (b.likes_count + b.dislikes_count));
+      (b.likes_count / (b.likes_count + b.dislikes_count));
     const aRatio =
       a.review_difference *
-      Math.abs(a.likes_count / (a.likes_count + a.dislikes_count));
+      (a.likes_count / (a.likes_count + a.dislikes_count));
     return bRatio - aRatio;
   };
 

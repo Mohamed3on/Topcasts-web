@@ -9,6 +9,21 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      merged_podcasts: {
+        Row: {
+          id: number;
+          name: string | null;
+        };
+        Insert: {
+          id?: never;
+          name?: string | null;
+        };
+        Update: {
+          id?: never;
+          name?: string | null;
+        };
+        Relationships: [];
+      };
       podcast: {
         Row: {
           artist_name: string | null;
@@ -323,6 +338,21 @@ export type Database = {
         };
         Returns: {
           id: number;
+          podcast_name: string;
+          artist_name: string;
+          image_url: string;
+          likes_count: number;
+          dislikes_count: number;
+          review_difference: number;
+        }[];
+      };
+      get_user_podcast_reviews: {
+        Args: {
+          user_id_param: string;
+          podcast_id_param: number;
+        };
+        Returns: {
+          podcast_id: number;
           podcast_name: string;
           artist_name: string;
           image_url: string;
