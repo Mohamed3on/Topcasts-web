@@ -8,6 +8,7 @@ import { createClient } from '@/utils/supabase/ssr';
 import Image from 'next/image';
 import { Suspense } from 'react';
 import YouAndPodcast from '@/app/components/YouAndPodcast';
+import Link from 'next/link';
 
 export default async function PodcastPage({
   params,
@@ -58,12 +59,13 @@ export default async function PodcastPage({
           <div className="flex flex-wrap justify-center gap-2 md:justify-start">
             {podcast.genres &&
               podcast.genres.map((genre, index) => (
-                <span
+                <Link
                   key={index}
+                  href={`/genre/${genre}`}
                   className="rounded-full bg-gray-200 px-3 py-1 text-sm font-semibold text-gray-700"
                 >
                   {genre}
-                </span>
+                </Link>
               ))}
           </div>
           <div className="flex w-full flex-col md:flex-row md:justify-between">

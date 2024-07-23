@@ -346,6 +346,26 @@ export type Database = {
           review_difference: number;
         }[];
       };
+      get_top_episodes_by_genre: {
+        Args: {
+          genre_param: string;
+          page_size?: number;
+          page_number?: number;
+        };
+        Returns: {
+          episode_id: number;
+          episode_name: string;
+          podcast_name: string;
+          artist_name: string;
+          date_published: string;
+          popularity_score: number;
+          likes: number;
+          dislikes: number;
+          twitter_shares: number;
+          image_url: string;
+          total_count: number;
+        }[];
+      };
       get_user_podcast_reviews: {
         Args: {
           user_id_param: string;
