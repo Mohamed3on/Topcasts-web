@@ -53,110 +53,72 @@ export async function scrapeApplePodcastsEpisodeDetails(url: string) {
   const html = await getHtml(url);
   const $ = await getCheerio(html);
 
-  const jsonData = $('script#shoebox-media-api-cache-amp-podcasts').html();
-  if (!jsonData) {
-    throw new Error('No JSON data found');
-  }
-  try {
-    const parsedJson = JSON.parse(jsonData);
+  const podcastId = url.match(/id(\d+)/)?.[1];
+  const episodeId = url.match(/i=(\d+)/)?.[1];
 
-    let episodeData;
+  const contentContainer = $('.content-container');
 
-    const key = Object.keys(parsedJson).find((key) => key.includes('episodes'));
+  const episode_name = contentContainer.find('.headings__title').text().trim();
+  const podcast_name = contentContainer
+    .find('.subtitle-action a')
+    .text()
+    .trim();
 
-    if (key) {
-      episodeData = JSON.parse(parsedJson[key]);
-    }
+  const description = contentContainer.find('.paragraph-wrapper').html();
 
-    const episodeInfo = episodeData.d[0];
+  const informationList = $('[data-testid="information"]');
 
-    const episode_name = episodeInfo.attributes.name;
+  const date_published_string = informationList
+    .find('li:contains("Published")')
+    .find('.content')
+    .text()
+    .trim();
 
-    const podcast_name =
-      episodeInfo.relationships.podcast.data[0].attributes.name;
+  const duration_string = informationList
+    .find('li:contains("Length")')
+    .find('.content')
+    .text()
+    .trim();
 
-    const description = episodeInfo.attributes.description.standard;
+  const durationInMilliseconds = convertAppleDurationToMs(duration_string);
 
-    const genres =
-      episodeInfo.relationships.podcast.data[0].attributes.genreNames;
+  const image_url = contentContainer
+    .find('source[type="image/jpeg"]')
+    ?.attr('srcset')
+    ?.split(',')
+    ?.pop()
+    ?.trim()
+    ?.split(' ')[0];
 
-    const image_url = episodeInfo.attributes.artwork.url
-      .replace('{w}', '400')
-      .replace('{h}', '400')
-      .replace('{f}', 'png');
+  const returnObject = {
+    episode_name,
+    podcast_name,
+    podcast_itunes_id: podcastId,
+    episode_itunes_id: episodeId,
+    description,
+    date_published: processDateString(date_published_string),
+    duration: durationInMilliseconds,
+    image_url,
+  };
 
-    const podcast_itunes_id = episodeInfo.relationships.podcast.data[0].id;
-
-    const episode_itunes_id = episodeInfo.id;
-    const date_published = episodeInfo.attributes.releaseDateTime;
-
-    const duration = episodeInfo.attributes.durationInMilliseconds;
-
-    const artist_name = episodeInfo.attributes.artist_name;
-
-    const guid = episodeInfo.attributes.guid;
-
-    const rss_feed = episodeInfo.attributes.rssFeedUrl;
-    const audio_url = episodeInfo.attributes.assetUrl;
-
-    const returnObject = {
-      episode_name,
-      description,
-      duration,
-      podcast_name,
-      image_url,
-      artist_name,
-      guid,
-      audio_url,
-      podcast_itunes_id,
-      episode_itunes_id,
-      date_published,
-      podcast_genres: genres,
-      rss_feed,
-    };
-
-    return returnObject;
-  } catch (e) {
-    console.log(e);
-    throw new Error('Failed to parse JSON');
-  }
+  return returnObject;
 }
 
-function convertToMilliseconds(duration: string): number {
-  type TimeUnit = {
-    [key: string]: number;
-  };
+export function convertAppleDurationToMs(duration: string): number {
+  const hours = duration.match(/(\d+)\s*h/i);
+  const minutes = duration.match(/(\d+)\s*m/i);
 
-  const timeUnits: TimeUnit = {
-    hr: 60 * 60 * 1000,
-    hour: 60 * 60 * 1000,
-    hours: 60 * 60 * 1000,
-    min: 60 * 1000,
-    minute: 60 * 1000,
-    minutes: 60 * 1000,
-    sec: 1000,
-    second: 1000,
-    seconds: 1000,
-  };
-  // Regex to match value and unit pairs
-  const regex =
-    /(\d+)\s*(hr|hour|hours|min|minute|minutes|sec|second|seconds)/g;
-  let match: RegExpExecArray | null;
-  let totalMilliseconds = 0;
+  let totalMs = 0;
 
-  // Loop through all matches
-  while ((match = regex.exec(duration)) !== null) {
-    const numericValue = parseFloat(match[1]);
-    const unit = match[2];
-
-    if (timeUnits[unit]) {
-      totalMilliseconds += numericValue * timeUnits[unit];
-    } else {
-      throw new Error(`Unsupported time unit: ${unit}`);
-    }
+  if (hours) {
+    totalMs += parseInt(hours[1]) * 60 * 60 * 1000;
   }
 
-  return totalMilliseconds;
+  if (minutes) {
+    totalMs += parseInt(minutes[1]) * 60 * 1000;
+  }
+
+  return totalMs;
 }
 
 export async function scrapeCastroEpisodeDetails(url: string) {
@@ -203,6 +165,50 @@ export async function scrapeCastroEpisodeDetails(url: string) {
   return returnObject;
 }
 
+function convertToMilliseconds(duration: string): number {
+  // First, try to parse as HH:MM:SS format
+  const timeparts = duration.split(':').map(Number);
+  if (timeparts.length === 3) {
+    return (timeparts[0] * 3600 + timeparts[1] * 60 + timeparts[2]) * 1000;
+  }
+  if (timeparts.length === 2) {
+    return (timeparts[0] * 60 + timeparts[1]) * 1000;
+  }
+
+  // If not in HH:MM:SS format, use the existing logic
+  const timeUnits: { [key: string]: number } = {
+    h: 3600000,
+    m: 60000,
+    s: 1000,
+  };
+
+  const regex = /(\d+)\s*([hms])/gi;
+  let match: RegExpExecArray | null;
+  let totalMilliseconds = 0;
+
+  while ((match = regex.exec(duration)) !== null) {
+    const [, value, unit] = match;
+    totalMilliseconds += parseInt(value) * (timeUnits[unit.toLowerCase()] || 0);
+  }
+
+  return totalMilliseconds;
+}
+
+export async function getHtml(url: string): Promise<string> {
+  const response = await fetch(url, { method: 'GET' });
+  return await response.text();
+}
+
+export function slugifyDetails(
+  episode_name: string,
+  podcast_name: string,
+): string {
+  return slugify(`${podcast_name} ${episode_name}`, {
+    lower: true,
+    strict: true,
+  });
+}
+
 export function determineType(
   urlString: string,
 ): 'apple' | 'spotify' | 'castro' | null {
@@ -227,17 +233,13 @@ export function determineType(
   return null;
 }
 
-export async function getHtml(url: string): Promise<string> {
-  const response = await fetch(url, { method: 'GET' });
-  return await response.text();
-}
+export function processDateString(dateString: string): string {
+  const regex = /^(.*?)\s+at\s+/;
+  const match = dateString.match(regex);
 
-export function slugifyDetails(
-  episode_name: string,
-  podcast_name: string,
-): string {
-  return slugify(`${podcast_name} ${episode_name}`, {
-    lower: true,
-    strict: true,
-  });
+  if (!match) {
+    return dateString; // Return original string if no match found
+  }
+
+  return match[1].trim();
 }
