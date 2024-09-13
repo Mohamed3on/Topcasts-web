@@ -9,6 +9,28 @@ import Image from 'next/image';
 import { Suspense } from 'react';
 import YouAndPodcast from '@/app/components/YouAndPodcast';
 import Link from 'next/link';
+import { Metadata } from 'next';
+
+export async function generateMetadata({
+  params,
+}: {
+  params: { id: string };
+}): Promise<Metadata> {
+  const supabase = createClient();
+
+  const { data } = await supabase
+    .from('podcast')
+    .select('name, image_url, artist_name')
+    .eq('id', params.id)
+    .single();
+
+  return {
+    title: `${data?.name} by ${data?.artist_name}`,
+    openGraph: {
+      images: [data?.image_url || ''],
+    },
+  };
+}
 
 export default async function PodcastPage({
   params,

@@ -13,8 +13,9 @@ export function formatUrls(
 export const cleanUrl = (urlString: string) => {
   // apple podcasts
   if (urlString.includes('i=')) {
-    //podcasts.apple.com/us/podcast/how-to-convince-biden-to-quit/id1743213122?i=1000661794526
-    const podcastId = urlString.match(/id(\d+)/)?.[1];
+    const podcastId =
+      urlString.match(/id(\d+)/)?.[1] ||
+      urlString.split('/').pop()?.split('?')[0];
     const episodeId = urlString.match(/i=(\d+)/)?.[1];
     return `https://podcasts.apple.com/us/podcast/${podcastId}?i=${episodeId}`;
   }
