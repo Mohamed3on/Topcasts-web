@@ -32,7 +32,6 @@
     "lucide-react": "^0.378.0",
     "next": "latest",
     "next-themes": "^0.3.0",
-    "podcast-partytime": "^4.8.0",
     "react": "^18",
     "react-dom": "^18",
     "react-hook-form": "^7.51.4",
@@ -42,7 +41,7 @@
     "tailwind-merge": "^2.3.0",
     "tailwindcss-animate": "^1.0.7",
     "usehooks-ts": "^3.1.0",
-    "vaul": "latest",
+    "vaul": "^0.9.0",
     "zod": "^3.23.6"
   },
   "devDependencies": {
