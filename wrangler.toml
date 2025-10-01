@@ -24,3 +24,19 @@ NEXT_PUBLIC_SUPABASE_URL = "https://dupqaaqpafucdxrmrmkv.supabase.co"
 # SPOTIFY_CLIENT_SECRET - Spotify API client secret
 # ct0 - Twitter/X ct0 token
 # auth_token - Twitter/X auth token
+
+# Self-reference for revalidation
+[[services]]
+binding = "WORKER_SELF_REFERENCE"
+service = "topcasts"
+
+# R2 bucket for incremental cache
+[[r2_buckets]]
+binding = "NEXT_INC_CACHE_R2_BUCKET"
+bucket_name = "topcasts-cache"
+
+# D1 database for tag cache
+[[d1_databases]]
+binding = "NEXT_TAG_CACHE_D1"
+database_name = "topcasts-tag-cache"
+database_id = "0aab0330-fcd7-4749-8f97-0b8a2cb92f81"
