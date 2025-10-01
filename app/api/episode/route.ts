@@ -103,6 +103,12 @@ const getEpisodeDetailsFromDb = async (episodeId: number) => {
 };
 
 export async function POST(request: NextRequest): Promise<NextResponse> {
+  console.log('[API] Env check:', {
+    hasSupabaseUrl: !!process.env.NEXT_PUBLIC_SUPABASE_URL,
+    hasSupabaseKey: !!process.env.SUPABASE_SERVICE_KEY,
+    hasJwtSecret: !!process.env.SUPABASE_JWT_SECRET,
+  });
+
   const body = await request.json();
   const authorization = request.headers.get('Authorization');
   const token = authorization?.replace('Bearer ', '');

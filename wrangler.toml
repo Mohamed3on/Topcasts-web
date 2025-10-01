@@ -10,5 +10,17 @@ enabled = true
 directory = ".open-next/assets"
 binding = "ASSETS"
 
-# Environment variables (set these in Cloudflare Workers dashboard)
-# NEXT_PUBLIC_SUPABASE_URL, NEXT_PUBLIC_SUPABASE_ANON_KEY, SUPABASE_SERVICE_KEY, SUPABASE_JWT_SECRET, SPOTIFY_CLIENT_SECRET, SPOTIFY_CLIENT_ID, ct0, auth_token
+# Public environment variables (non-sensitive)
+[vars]
+NEXT_PUBLIC_SUPABASE_URL = "https://dupqaaqpafucdxrmrmkv.supabase.co"
+
+# Required secrets (set these in Cloudflare Workers dashboard > Settings > Variables)
+# For local development, use .dev.vars file
+#
+# NEXT_PUBLIC_SUPABASE_ANON_KEY - Supabase anonymous/public key
+# SUPABASE_SERVICE_KEY - Supabase service role key (admin)
+# SUPABASE_JWT_SECRET - Supabase JWT secret for token verification
+# SPOTIFY_CLIENT_ID - Spotify API client ID
+# SPOTIFY_CLIENT_SECRET - Spotify API client secret
+# ct0 - Twitter/X ct0 token
+# auth_token - Twitter/X auth token
