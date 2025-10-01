@@ -9,6 +9,8 @@ import { supabaseAdmin as supabase } from '@/utils/supabase/server';
 import { upsertEpisode, upsertEpisodeUrl, upsertPodcastDetails } from './db';
 import { slugifyDetails } from './utils';
 
+export const dynamic = 'force-dynamic';
+
 export async function GET(request: NextRequest): Promise<NextResponse> {
   const { searchParams } = request.nextUrl;
   const episode_id = searchParams.get('episode_id') || '';
