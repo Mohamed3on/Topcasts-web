@@ -27,9 +27,13 @@ yarn-error.log*
 
 # local env files
 .env*.local
+.dev.vars
 
 # vercel
 .vercel
+
+# opennext
+.open-next
 
 # typescript
 *.tsbuildinfo
@@ -39,3 +43,6 @@ tweet-import/scrape-tweets/data
 data/search_results/
 twitter.log
 **/url_to_tweets.json
+
+# import-tweets/
+.wrangler/

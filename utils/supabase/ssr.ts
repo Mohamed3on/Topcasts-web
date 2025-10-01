@@ -27,3 +27,5 @@ export function createClient() {
     },
   );
 }
+
+export type SupabaseClientSSR = ReturnType<typeof createClient>;

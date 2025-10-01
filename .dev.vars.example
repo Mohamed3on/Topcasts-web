@@ -1,0 +1,11 @@
+# Cloudflare Workers local development environment variables
+# Copy this file to .dev.vars and fill in your values
+
+NEXT_PUBLIC_SUPABASE_URL=
+NEXT_PUBLIC_SUPABASE_ANON_KEY=
+SUPABASE_SERVICE_KEY=
+SUPABASE_JWT_SECRET=
+SPOTIFY_CLIENT_SECRET=
+SPOTIFY_CLIENT_ID=
+ct0=
+auth_token=

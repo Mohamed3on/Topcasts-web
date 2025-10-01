@@ -1,0 +1,14 @@
+name = "topcasts"
+main = ".open-next/worker.js"
+compatibility_date = "2025-01-01"
+compatibility_flags = ["nodejs_compat"]
+
+[observability]
+enabled = true
+
+[assets]
+directory = ".open-next/assets"
+binding = "ASSETS"
+
+# Environment variables (set these in Cloudflare dashboard)
+# NEXT_PUBLIC_SUPABASE_URL, NEXT_PUBLIC_SUPABASE_ANON_KEY, SUPABASE_SERVICE_KEY, SUPABASE_JWT_SECRET, SPOTIFY_CLIENT_SECRET, SPOTIFY_CLIENT_ID, ct0, auth_token

@@ -5,6 +5,8 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
+    "preview": "opennextjs-cloudflare build && opennextjs-cloudflare preview",
+    "deploy": "opennextjs-cloudflare build && opennextjs-cloudflare deploy",
     "start": "next start",
     "lint": "next lint"
   },
@@ -21,7 +23,6 @@
     "@supabase/supabase-js": "^2.43.4",
     "@types/dompurify": "^3.0.5",
     "@types/jsonwebtoken": "^9.0.6",
-    "@vercel/analytics": "^1.2.2",
     "cheerio": "^1.0.0-rc.12",
     "class-variance-authority": "^0.7.0",
     "clsx": "^2.1.0",
@@ -45,6 +46,7 @@
     "zod": "^3.23.6"
   },
   "devDependencies": {
+    "@opennextjs/cloudflare": "latest",
     "@tailwindcss/typography": "^0.5.13",
     "@types/node": "^20",
     "@types/react": "^18",
@@ -57,6 +59,7 @@
     "prettier": "^3.2.5",
     "prettier-plugin-tailwindcss": "^0.5.14",
     "tailwindcss": "^3.3.0",
-    "typescript": "^5"
+    "typescript": "^5",
+    "wrangler": "latest"
   }
 }
