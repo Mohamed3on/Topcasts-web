@@ -2,7 +2,7 @@ import { createClient } from '@/utils/supabase/ssr';
 import { notFound } from 'next/navigation';
 
 export const Heading = async ({ username }: { username: string }) => {
-  const supabase = createClient();
+  const supabase = await createClient();
 
   const { data: userData } = await supabase
     .from('profiles')

@@ -23,7 +23,7 @@ type Episode = {
 };
 
 const getEpisodes = async () => {
-  const supabase = createClient();
+  const supabase = await createClient();
   const { data: userData } = await supabase.auth.getUser();
   const userId = userData?.user?.id;
   let episodeData: Episode[] | null = null;

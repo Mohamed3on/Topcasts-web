@@ -8,4 +8,4 @@ export function createClient() {
   );
 }
 
-export const supabase = createClient();
+export const supabase = await createClient();

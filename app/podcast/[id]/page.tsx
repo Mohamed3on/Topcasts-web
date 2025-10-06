@@ -14,14 +14,15 @@ import { Metadata } from 'next';
 export async function generateMetadata({
   params,
 }: {
-  params: { id: string };
+  params: Promise<{ id: string }>;
 }): Promise<Metadata> {
-  const supabase = createClient();
+  const { id } = await params;
+  const supabase = await createClient();
 
   const { data } = await supabase
     .from('podcast')
     .select('name, image_url, artist_name')
-    .eq('id', params.id)
+    .eq('id', id)
     .single();
 
   return {
@@ -36,14 +37,16 @@ export default async function PodcastPage({
   params,
   searchParams,
 }: {
-  params: { id: string };
-  searchParams: { [key: string]: string | string[] | undefined };
+  params: Promise<{ id: string }>;
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
 }) {
-  const supabase = createClient();
+  const { id } = await params;
+  const { page } = (await searchParams) || {};
+  const supabase = await createClient();
   const { data: podcast, error } = await supabase
     .from('podcast')
     .select('*')
-    .eq('id', params.id)
+    .eq('id', id)
     .single();
 
   if (error) {
@@ -129,10 +132,7 @@ export default async function PodcastPage({
 
       <Separator className="my-4 w-full" />
       <Suspense fallback={<Skeleton className="h-48 w-full animate-pulse" />}>
-        <PodcastEpisodes
-          podcastId={podcast.id}
-          page={Number(searchParams.page) || 1}
-        />
+        <PodcastEpisodes podcastId={podcast.id} page={Number(page) || 1} />
       </Suspense>
     </div>
   );

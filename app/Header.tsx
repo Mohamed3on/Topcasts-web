@@ -25,7 +25,7 @@ import {
 import { Input } from '@/components/ui/input';
 
 const Header = async () => {
-  const supabase = createClient();
+  const supabase = await createClient();
   const { data: authData } = await supabase.auth.getUser();
 
   let userInfo = null;

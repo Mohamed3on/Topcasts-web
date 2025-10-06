@@ -5,7 +5,7 @@ import { createClient } from '@/utils/supabase/ssr';
 import Link from 'next/link';
 
 async function getEpisodes(podcastId: number, page: number, pageSize: number) {
-  const supabase = createClient();
+  const supabase = await createClient();
   const { data, error } = await supabase
     .from('episode_with_rating_data')
     .select(

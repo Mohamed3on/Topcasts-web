@@ -18,7 +18,7 @@ import { ScrapedEpisodeData, ScrapedEpisodeDetails } from '../app/api/types';
 // @ts-ignore
 import tweetData from './url_to_tweets.json';
 
-const supabase = createClient(
+const supabase = await createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
   process.env.SUPABASE_SERVICE_KEY!,
   {

@@ -3,7 +3,7 @@ import { createClient } from '@/utils/supabase/ssr';
 import { redirect } from 'next/navigation';
 
 export default async function Login() {
-  const supabase = createClient();
+  const supabase = await createClient();
   const { data: userData } = await supabase.auth.getUser();
 
   if (userData.user) {

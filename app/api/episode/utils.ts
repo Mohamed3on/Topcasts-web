@@ -55,7 +55,7 @@ export async function scrapeApplePodcastsEpisodeDetails(url: string) {
   const html = await getHtml(url);
   const $ = await getCheerio(html);
 
-  const podcastId = url.match(/id(\d+)/)?.[1];
+  const podcastId = url.match(/id(\d+)/)?.[1] || url.match(/\/podcast\/(\d+)/)?.[1];
   const episodeId = url.match(/i=(\d+)/)?.[1];
 
   const contentContainer = $('.content-container');
@@ -92,6 +92,18 @@ export async function scrapeApplePodcastsEpisodeDetails(url: string) {
     ?.trim()
     ?.split(' ')[0];
 
+  // Try to get artist name from JSON-LD schema
+  let artist_name: string | undefined;
+  const schemaScript = $('script[id="schema:episode"]');
+  if (schemaScript.length > 0) {
+    try {
+      const schemaData = JSON.parse(schemaScript.html() || '{}');
+      artist_name = schemaData.productionCompany;
+    } catch (e) {
+      // If JSON parsing fails, artist_name remains undefined
+    }
+  }
+
   const returnObject = {
     episode_name,
     podcast_name,
@@ -101,6 +113,7 @@ export async function scrapeApplePodcastsEpisodeDetails(url: string) {
     date_published: processDateString(date_published_string),
     duration: durationInMilliseconds,
     image_url,
+    artist_name,
   };
 
   return returnObject;

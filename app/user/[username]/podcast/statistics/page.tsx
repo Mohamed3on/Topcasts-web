@@ -6,7 +6,7 @@ import Link from 'next/link';
 import { notFound } from 'next/navigation';
 
 const fetchUserTopPodcasts = async (username: string) => {
-  const supabase = createClient();
+  const supabase = await createClient();
 
   const { data, error } = await supabase.rpc('get_podcast_reviews', {
     username_param: username,

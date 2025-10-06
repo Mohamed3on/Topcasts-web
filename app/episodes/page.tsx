@@ -11,15 +11,16 @@ export const metadata: Metadata = {
 const fetchEpisodes = async ({
   searchParams,
 }: {
-  searchParams?: {
+  searchParams?: Promise<{
     [key: string]: string;
-  };
+  }>;
 }) => {
+  const { page } = (await searchParams) || {};
   // TODO: use cursor pagination instead of offset
-  const pageIndex = searchParams?.page ? parseInt(searchParams.page) : 1;
+  const pageIndex = page ? parseInt(page) : 1;
   const pageSize = 30;
 
-  const supabase = createClient();
+  const supabase = await createClient();
 
   const { data: userData } = await supabase.auth.getUser();
 
@@ -86,11 +87,13 @@ const fetchEpisodes = async ({
 export default async function Episodes({
   searchParams,
 }: {
-  searchParams?: {
+  searchParams?: Promise<{
     [key: string]: string;
-  };
+  }>;
 }) {
-  const { data: episodes, hasNextPage } = await fetchEpisodes({ searchParams });
+  const { data: episodes, hasNextPage } = await fetchEpisodes({
+    searchParams: searchParams || undefined,
+  });
   return (
     <div className="container flex flex-col gap-8 pb-24">
       <div className="flex flex-col items-center gap-8">

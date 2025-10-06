@@ -13,7 +13,7 @@ export default async function YouAndPodcast({
   podcastId,
   podcastName,
 }: YouAndPodcastProps) {
-  const supabase = createClient();
+  const supabase = await createClient();
   const { data, error } = await supabase.rpc('get_user_podcast_reviews', {
     user_id_param: userId,
     podcast_id_param: podcastId,

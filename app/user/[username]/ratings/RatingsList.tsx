@@ -16,7 +16,7 @@ export type EpisodeForCard =
     dislikes: number;
   };
 const fetchUserEpisodes = async (id: string) => {
-  const supabase = createClient();
+  const supabase = await createClient();
 
   const { data, error } = await supabase
     .from('podcast_episode_review')
@@ -52,7 +52,7 @@ const fetchUserEpisodes = async (id: string) => {
 };
 
 const RatingsList = async ({ username }: { username: string }) => {
-  const supabase = createClient();
+  const supabase = await createClient();
 
   const { data: userData } = await supabase
     .from('profiles')

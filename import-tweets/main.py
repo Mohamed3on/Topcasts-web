@@ -101,6 +101,14 @@ def main():
                 "category": "Latest",
                 "query": f"podcasts.apple.com list:815723390048866304 min_faves:1 since:{since_date}",
             },
+            {
+                "category": "Latest",
+                "query": f" open.spotify.com/episode tferriss since:{since_date}",
+            },
+            {
+                "category": "Latest",
+                "query": f" podcasts.apple.com tferriss since:{since_date}",
+            },
         ],
     )
 

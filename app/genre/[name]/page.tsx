@@ -12,7 +12,7 @@ export default async function GenrePage({
 }: {
   params: { name: string };
 }) {
-  const supabase = createClient();
+  const supabase = await createClient();
 
   const capitalizedName = decodeURIComponent(params.name)
     .split('-')
@@ -51,6 +51,8 @@ export default async function GenrePage({
               <div className="flex grow flex-col p-4">
                 <div className="relative mb-4 aspect-square">
                   <Image
+                    width={224}
+                    height={224}
                     src={episode.image_url}
                     alt={episode.episode_name}
                     fill

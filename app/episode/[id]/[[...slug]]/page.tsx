@@ -6,11 +6,11 @@ import { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 
 type Props = {
-  params: { id: string };
+  params: Promise<{ id: string }>;
 };
 
 async function getEpisodeDetails(episode_id: string): Promise<EpisodeDetails> {
-  const supabase = createClient();
+  const supabase = await createClient();
   if (!episode_id) {
     return notFound();
   }
@@ -38,12 +38,13 @@ async function getEpisodeDetails(episode_id: string): Promise<EpisodeDetails> {
 }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
-  const supabase = createClient();
+  const supabase = await createClient();
+  const { id } = await params;
 
   const { data } = await supabase
     .from('podcast_episode')
     .select('episode_name, image_url')
-    .eq('id', params.id)
+    .eq('id', id)
     .single();
 
   return {
@@ -57,9 +58,10 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 export default async function Page({
   params,
 }: {
-  params: { id: string; slug: string };
+  params: Promise<{ id: string; slug: string }>;
 }) {
-  const response = await getEpisodeDetails(params.id);
+  const { id } = await params;
+  const response = await getEpisodeDetails(id);
 
   return <Episode episodeDetails={response} />;
 }

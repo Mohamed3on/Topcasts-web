@@ -14,7 +14,7 @@ export const ReviewSection = async ({
 }) => {
   let reviewType: ReviewType | undefined = undefined;
   let reviewText: string | undefined = undefined;
-  const supabase = createClient();
+  const supabase = await createClient();
 
   const { data: userData } = await supabase.auth.getUser();
 
