@@ -20,8 +20,13 @@ const fetchUserTopPodcasts = async (username: string) => {
   return data;
 };
 
-const GroupedRatings = async ({ params }: { params: { username: string } }) => {
-  const groupedByPodcast = await fetchUserTopPodcasts(params.username);
+const GroupedRatings = async ({
+  params,
+}: {
+  params: Promise<{ username: string }>;
+}) => {
+  const { username } = await params;
+  const groupedByPodcast = await fetchUserTopPodcasts(username);
 
   const sortFunction = (
     a: {
@@ -49,7 +54,7 @@ const GroupedRatings = async ({ params }: { params: { username: string } }) => {
   return (
     <div className="container flex flex-col items-center gap-4 pb-4">
       <h1 className="text-center text-2xl font-semibold">
-        {params.username}&apos;s Top Podcasts
+        {username}&apos;s Top Podcasts
       </h1>
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
         {sorted.map((podcast, index) => (

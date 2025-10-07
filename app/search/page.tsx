@@ -1,6 +1,7 @@
 import { EpisodeForCard } from '@/app/episodes/EpisodeCard';
 import EpisodesList from '@/app/episodes/List';
 import { createClient } from '@/utils/supabase/ssr';
+import { getCachedSearchResults } from '@/utils/supabase/server-cache';
 
 const fetchEpisodes = async ({
   searchParams,
@@ -15,26 +16,19 @@ const fetchEpisodes = async ({
   const pageIndex = page ? parseInt(page) : 1;
   const pageSize = 30;
 
+  // Still need SSR client for auth
   const supabase = await createClient();
-
   const { data: userData } = await supabase.auth.getUser();
-
   const userId = userData?.user?.id;
 
-  const { data, error } = await supabase
-    .rpc('search_episodes_by_relevance', {
-      search_query: q?.replace(/ /g, '+') || '',
-      current_user_id: userId,
-      search_episode_name: episode_name || '',
-      search_podcast_name: podcast_name || '',
-    })
-    .range((pageIndex - 1) * pageSize, pageIndex * pageSize - 1);
-
-  if (error) {
-    throw error;
-  }
-
-  return { data, hasNextPage: data.length === pageSize };
+  return await getCachedSearchResults(
+    q?.replace(/ /g, '+') || '',
+    userId,
+    episode_name || '',
+    podcast_name || '',
+    pageIndex,
+    pageSize
+  );
 };
 
 export default async function Search({

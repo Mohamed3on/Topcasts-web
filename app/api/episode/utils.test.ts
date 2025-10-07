@@ -1,6 +1,5 @@
 import { expect, test, describe } from 'bun:test';
 import { cleanUrl, scrapeApplePodcastsEpisodeDetails } from './utils';
-import { load } from 'cheerio';
 
 describe('cleanUrl', () => {
   test('cleans URL with podcast and episode IDs', () => {

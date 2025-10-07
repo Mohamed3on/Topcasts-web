@@ -10,6 +10,10 @@ import { Suspense } from 'react';
 import YouAndPodcast from '@/app/components/YouAndPodcast';
 import Link from 'next/link';
 import { Metadata } from 'next';
+import {
+  getCachedPodcastDetails,
+  getCachedPodcastMetadata,
+} from '@/utils/supabase/server-cache';
 
 export async function generateMetadata({
   params,
@@ -17,13 +21,7 @@ export async function generateMetadata({
   params: Promise<{ id: string }>;
 }): Promise<Metadata> {
   const { id } = await params;
-  const supabase = await createClient();
-
-  const { data } = await supabase
-    .from('podcast')
-    .select('name, image_url, artist_name')
-    .eq('id', id)
-    .single();
+  const data = await getCachedPodcastMetadata(id);
 
   return {
     title: `${data?.name} by ${data?.artist_name}`,
@@ -42,22 +40,15 @@ export default async function PodcastPage({
 }) {
   const { id } = await params;
   const { page } = (await searchParams) || {};
-  const supabase = await createClient();
-  const { data: podcast, error } = await supabase
-    .from('podcast')
-    .select('*')
-    .eq('id', id)
-    .single();
 
-  if (error) {
-    console.log('🚀 ~ error:', error);
-    return <div>Error loading podcast details</div>;
-  }
+  const podcast = await getCachedPodcastDetails(id);
 
   if (!podcast) {
     return <div>Podcast not found</div>;
   }
 
+  // Still need SSR client for auth
+  const supabase = await createClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();

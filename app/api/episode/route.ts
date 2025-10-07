@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 
 import jwt, { type JwtPayload } from 'jsonwebtoken';
-import { cleanUrl, determineType, formatUrls, scrapeDataByType } from './utils';
+import { cleanUrl, determineType, formatUrls } from './utils';
+import { getCachedEpisodeData } from './utils-cached';
 
 import { ScrapedEpisodeData, ScrapedEpisodeDetails } from '@/app/api/types';
 
@@ -166,7 +167,7 @@ async function handleNewEpisodeData({
   cleanedUrl: string;
 }) {
   try {
-    const scrapedData = await scrapeDataByType(type, cleanedUrl);
+    const scrapedData = await getCachedEpisodeData(type, cleanedUrl);
 
     if (!scrapedData.episode_name) {
       return {
