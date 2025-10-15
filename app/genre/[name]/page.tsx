@@ -10,20 +10,19 @@ type TopEpisode =
 export default async function GenrePage({
   params,
 }: {
-  params: { name: string };
+  params: Promise<{ name: string }>;
 }) {
+  const { name } = await params;
   const supabase = await createClient();
 
-  const capitalizedName = decodeURIComponent(params.name)
+  const capitalizedName = decodeURIComponent(name)
     .split('-')
     .map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
     .join(' ');
 
   const { data: episodes, error } = await supabase.rpc(
     'get_top_episodes_by_genre',
-    {
-      genre_param: decodeURIComponent(params.name),
-    },
+    { genre_param: decodeURIComponent(name) },
   );
 
   if (error) {
