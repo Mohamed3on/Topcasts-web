@@ -37,7 +37,7 @@ export default async function GenrePage({
         Episodes
       </h1>
       <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-5">
-        {episodes.map((episode, index) => (
+        {episodes.map((episode: TopEpisode, index: number) => (
           <Link
             href={`/episode/${episode.episode_id}`}
             key={episode.episode_id}

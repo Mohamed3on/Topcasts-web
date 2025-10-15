@@ -34,7 +34,7 @@ export default async function RootLayout({
 
   let userInfo = null;
   if (user) {
-    const { data } = await supabase
+    const { data } = await (supabase as any)
       .from('profiles')
       .select()
       .eq('id', user?.id)

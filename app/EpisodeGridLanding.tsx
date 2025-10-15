@@ -40,12 +40,11 @@ const getEpisodes = async () => {
       description,
       twitter_shares,
       likes,
-      dislikes
-`,
+      dislikes`,
       )
       .order('popularity_score', { ascending: false })
       .limit(5);
-    episodeData = data;
+    episodeData = data as Episode[] | null;
   } else {
     const { data } = await supabase
       .from(`episode_with_rating_data`)
@@ -64,7 +63,7 @@ const getEpisodes = async () => {
       .eq('podcast_episode_review.user_id', userId)
       .order('popularity_score', { ascending: false })
       .limit(5);
-    episodeData = data;
+    episodeData = data as Episode[] | null;
   }
 
   const episodes = episodeData?.map((episode) => {

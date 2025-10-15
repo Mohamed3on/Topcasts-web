@@ -14,7 +14,7 @@ export const dynamic = 'force-dynamic';
 
 export async function GET(request: NextRequest): Promise<NextResponse> {
   const { searchParams } = request.nextUrl;
-  const episode_id = searchParams.get('episode_id') || '';
+  const episode_id = searchParams.get('episode_id');
 
   if (!episode_id) {
     return NextResponse.json({ error: 'Invalid episode ID' }, { status: 400 });
@@ -28,7 +28,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
       podcast_episode_url (url, type)
     `,
     )
-    .eq('id', episode_id)
+    .eq('id', parseInt(episode_id))
     .single();
 
   if (error || !data) {
@@ -45,15 +45,12 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
   });
 }
 
-async function handlePodcastURL({ url }: { url: string }): Promise<
-  | {
-      id: number;
-      slug: string | null;
-    }
-  | {
-      error: string;
-      status: number;
-    }
+async function handlePodcastURL({
+  url,
+}: {
+  url: string;
+}): Promise<
+  { id: number; slug: string | null } | { error: string; status: number }
 > {
   const urlInput = url.trim();
   const cleanedUrl = cleanUrl(urlInput);
@@ -79,10 +76,7 @@ async function handlePodcastURL({ url }: { url: string }): Promise<
     if (episodeDetails) return episodeDetails;
   }
 
-  return handleNewEpisodeData({
-    type,
-    cleanedUrl,
-  });
+  return handleNewEpisodeData({ type, cleanedUrl });
 }
 
 const getEpisodeDetailsFromDb = async (episodeId: number) => {
@@ -138,16 +132,18 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
         { status: response.status },
       );
 
-    await supabase.from('podcast_episode_review').upsert(
-      {
-        episode_id: response.id,
-        user_id: user.id,
-        review_type: body.rating,
-        text: body.review_text,
-        updated_at: new Date().toISOString(),
-      },
-      { onConflict: 'user_id, episode_id' },
-    );
+    await supabase
+      .from('podcast_episode_review')
+      .upsert(
+        {
+          episode_id: response.id,
+          user_id: user.id,
+          review_type: body.rating,
+          text: body.review_text,
+          updated_at: new Date().toISOString(),
+        },
+        { onConflict: 'user_id, episode_id' },
+      );
 
     return NextResponse.json(response);
   } catch (error) {
@@ -190,10 +186,7 @@ async function handleNewEpisodeData({
     );
   } catch (error) {
     console.error('Error scraping data:', error);
-    return {
-      error: 'Error scraping episode details',
-      status: 500,
-    };
+    return { error: 'Error scraping episode details', status: 500 };
   }
 }
 async function updateEpisodeDetails({

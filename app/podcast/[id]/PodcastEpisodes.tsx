@@ -20,10 +20,7 @@ async function getEpisodes(podcastId: number, page: number, pageSize: number) {
     return { episodes: [], hasNextPage: false };
   }
 
-  return {
-    episodes: data,
-    hasNextPage: data.length === pageSize,
-  };
+  return { episodes: data, hasNextPage: data.length === pageSize };
 }
 
 export default async function PodcastEpisodes({
@@ -55,11 +52,7 @@ export default async function PodcastEpisodes({
               <p className="mb-2 text-sm text-gray-600">
                 {new Date(episode.date_published).toLocaleDateString(
                   undefined,
-                  {
-                    year: 'numeric',
-                    month: 'long',
-                    day: 'numeric',
-                  },
+                  { year: 'numeric', month: 'long', day: 'numeric' },
                 )}
               </p>
             )}

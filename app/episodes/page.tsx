@@ -8,12 +8,27 @@ export const metadata: Metadata = {
   description: 'Discover the best podcast episodes on the internet.',
 };
 
+type EpisodeWithReview = {
+  id: number;
+  slug: string | null;
+  episode_name: string | null;
+  image_url: string | null;
+  podcast_name: string | null;
+  description: string | null;
+  twitter_shares: number | null;
+  likes: number | null;
+  dislikes: number | null;
+  podcast_episode_review?: Array<{
+    review_type: string;
+    user_id: string;
+    episode_id: number;
+  }>;
+};
+
 const fetchEpisodes = async ({
   searchParams,
 }: {
-  searchParams?: Promise<{
-    [key: string]: string;
-  }>;
+  searchParams?: Promise<{ [key: string]: string }>;
 }) => {
   const { page } = (await searchParams) || {};
   // TODO: use cursor pagination instead of offset
@@ -51,12 +66,15 @@ const fetchEpisodes = async ({
       throw error;
     }
 
-    const episodes = data?.map((episode) => {
-      return {
-        ...episode,
-        review_type: episode?.podcast_episode_review?.[0]?.review_type || null,
-      };
-    });
+    const episodes = (data as unknown as EpisodeWithReview[])?.map(
+      (episode) => {
+        return {
+          ...episode,
+          review_type:
+            episode?.podcast_episode_review?.[0]?.review_type || null,
+        };
+      },
+    );
 
     return { data: episodes, hasNextPage: data.length === pageSize };
   } else {
@@ -87,9 +105,7 @@ const fetchEpisodes = async ({
 export default async function Episodes({
   searchParams,
 }: {
-  searchParams?: Promise<{
-    [key: string]: string;
-  }>;
+  searchParams?: Promise<{ [key: string]: string }>;
 }) {
   const { data: episodes, hasNextPage } = await fetchEpisodes({
     searchParams: searchParams || undefined,

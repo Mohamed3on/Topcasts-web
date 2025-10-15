@@ -24,7 +24,7 @@ export const getCachedEpisodeDetails = unstable_cache(
         podcast_episode_url (url, type)
       `,
       )
-      .eq('id', episodeId)
+      .eq('id', parseInt(episodeId))
       .single();
 
     if (error) {
@@ -49,7 +49,7 @@ export const getCachedPodcastDetails = unstable_cache(
     const { data, error } = await supabase
       .from('podcast')
       .select('*')
-      .eq('id', podcastId)
+      .eq('id', parseInt(podcastId))
       .single();
 
     if (error) {
@@ -74,7 +74,7 @@ export const getCachedPodcastMetadata = unstable_cache(
     const { data } = await supabase
       .from('podcast')
       .select('name, image_url, artist_name')
-      .eq('id', podcastId)
+      .eq('id', parseInt(podcastId))
       .single();
 
     return data;
@@ -94,7 +94,7 @@ export const getCachedEpisodeMetadata = unstable_cache(
     const { data } = await supabase
       .from('podcast_episode')
       .select('episode_name, image_url')
-      .eq('id', episodeId)
+      .eq('id', parseInt(episodeId))
       .single();
 
     return data;

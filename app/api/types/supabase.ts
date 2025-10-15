@@ -7,23 +7,11 @@ export type Json =
   | Json[];
 
 export type Database = {
+  // Allows to automatically instantiate createClient with right options
+  // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
+  __InternalSupabase: { PostgrestVersion: '12.0.2 (a4e00ff)' };
   public: {
     Tables: {
-      merged_podcasts: {
-        Row: {
-          id: number;
-          name: string | null;
-        };
-        Insert: {
-          id?: never;
-          name?: string | null;
-        };
-        Update: {
-          id?: never;
-          name?: string | null;
-        };
-        Relationships: [];
-      };
       podcast: {
         Row: {
           artist_name: string | null;
@@ -177,18 +165,8 @@ export type Database = {
         ];
       };
       podcast_episode_url: {
-        Row: {
-          episode_id: number;
-          id: number;
-          type: string;
-          url: string;
-        };
-        Insert: {
-          episode_id: number;
-          id?: number;
-          type: string;
-          url: string;
-        };
+        Row: { episode_id: number; id: number; type: string; url: string };
+        Insert: { episode_id: number; id?: number; type: string; url: string };
         Update: {
           episode_id?: number;
           id?: number;
@@ -240,26 +218,12 @@ export type Database = {
           username?: string;
           website?: string | null;
         };
-        Relationships: [
-          {
-            foreignKeyName: 'profiles_id_fkey';
-            columns: ['id'];
-            isOneToOne: true;
-            referencedRelation: 'users';
-            referencedColumns: ['id'];
-          },
-        ];
+        Relationships: [];
       };
       review_type: {
-        Row: {
-          type: string;
-        };
-        Insert: {
-          type: string;
-        };
-        Update: {
-          type?: string;
-        };
+        Row: { type: string };
+        Insert: { type: string };
+        Update: { type?: string };
         Relationships: [];
       };
       social_share: {
@@ -315,7 +279,7 @@ export type Database = {
           episode_name: string | null;
           formatted_duration: string | null;
           guid: string | null;
-          id: number;
+          id: number | null;
           image_url: string | null;
           likes: number | null;
           podcast_genres: string[] | null;
@@ -332,183 +296,222 @@ export type Database = {
       };
     };
     Functions: {
-      get_podcast_reviews: {
-        Args: {
-          username_param: string;
-        };
+      calculate_episode_metrics: {
+        Args:
+          | { end_date: string; episode_id: number; start_date: string }
+          | { end_date: string; p_episode_id: number; start_date: string };
         Returns: {
-          id: number;
-          podcast_name: string;
+          dislikes: number;
+          likes: number;
+          popularity_score: number;
+          shares: number;
+        }[];
+      };
+      filter_and_rank_episodes: {
+        Args: { base_query: string; days_limit: number };
+        Returns: {
           artist_name: string;
+          date_published: string;
+          description: string;
+          dislikes: number;
+          episode_name: string;
+          formatted_duration: string;
+          id: number;
+          image_url: string;
+          likes: number;
+          podcast_name: string;
+          popularity_score: number;
+          shares: number;
+          slug: string;
+        }[];
+      };
+      get_episodes_in_range: {
+        Args: { days_limit: number };
+        Returns: {
+          artist_name: string;
+          audio_url: string;
+          date_published: string;
+          description: string;
+          dislikes: number;
+          duration: number;
+          episode_itunes_id: number;
+          episode_name: string;
+          formatted_duration: string;
+          guid: string;
+          id: number;
+          image_url: string;
+          likes: number;
+          podcast_genres: string[];
+          podcast_id: number;
+          podcast_itunes_id: number;
+          podcast_name: string;
+          podcast_spotify_id: string;
+          rss_feed: string;
+          slug: string;
+          twitter_shares: number;
+        }[];
+      };
+      get_episodes_within_day_range: {
+        Args: { days_limit: number };
+        Returns: {
+          artist_name: string;
+          date_published: string;
+          description: string;
+          dislikes: number;
+          duration: number;
+          episode_name: string;
+          formatted_duration: string;
+          id: number;
+          image_url: string;
+          likes: number;
+          podcast_name: string;
+          popularity_score: number;
+          slug: string;
+          twitter_shares: number;
+        }[];
+      };
+      get_podcast_reviews: {
+        Args: { username_param: string };
+        Returns: {
+          artist_name: string;
+          dislikes_count: number;
+          id: number;
           image_url: string;
           likes_count: number;
-          dislikes_count: number;
+          podcast_name: string;
           review_difference: number;
         }[];
       };
       get_top_episodes_by_genre: {
-        Args: {
-          genre_param: string;
-          page_size?: number;
-          page_number?: number;
-        };
+        Args: { genre_param: string; page_number?: number; page_size?: number };
         Returns: {
-          episode_id: number;
-          episode_name: string;
-          podcast_name: string;
           artist_name: string;
           date_published: string;
-          popularity_score: number;
-          likes: number;
           dislikes: number;
-          twitter_shares: number;
+          episode_id: number;
+          episode_name: string;
           image_url: string;
+          likes: number;
+          podcast_name: string;
+          popularity_score: number;
           total_count: number;
+          twitter_shares: number;
         }[];
       };
       get_user_podcast_reviews: {
-        Args: {
-          user_id_param: string;
-          podcast_id_param: number;
-        };
+        Args: { podcast_id_param: number; user_id_param: string };
         Returns: {
-          podcast_id: number;
-          podcast_name: string;
           artist_name: string;
+          dislikes_count: number;
           image_url: string;
           likes_count: number;
-          dislikes_count: number;
+          podcast_id: number;
+          podcast_name: string;
           review_difference: number;
         }[];
       };
       search_episodes: {
-        Args: {
-          search_query?: string;
-          current_user_id?: string;
-        };
+        Args: { current_user_id?: string; search_query?: string };
         Returns: {
-          duration: number;
-          podcast_itunes_id: string;
+          artist_name: string;
           audio_url: string;
+          date_published: string;
+          description: string;
+          dislikes: number;
+          duration: number;
           episode_itunes_id: string;
           episode_name: string;
-          image_url: string;
-          podcast_name: string;
-          description: string;
-          guid: string;
-          artist_name: string;
-          date_published: string;
           formatted_duration: string;
+          guid: string;
           id: number;
-          slug: string;
+          image_url: string;
           likes: number;
-          dislikes: number;
-          twitter_shares: number;
+          podcast_itunes_id: string;
+          podcast_name: string;
           review_type: string;
+          slug: string;
+          twitter_shares: number;
         }[];
       };
-      search_episodes_by_relevance:
-        | {
-            Args: {
-              search_query?: string;
+      search_episodes_by_relevance: {
+        Args:
+          | {
               current_user_id?: string;
-            };
-            Returns: {
-              duration: number;
-              podcast_itunes_id: string;
-              audio_url: string;
-              episode_itunes_id: string;
-              episode_name: string;
-              image_url: string;
-              podcast_name: string;
-              description: string;
-              guid: string;
-              artist_name: string;
-              date_published: string;
-              formatted_duration: string;
-              id: number;
-              slug: string;
-              likes: number;
-              dislikes: number;
-              twitter_shares: number;
-              review_type: string;
-              rank: number;
-            }[];
-          }
-        | {
-            Args: {
-              search_query?: string;
-              current_user_id?: string;
-              search_podcast_name?: string;
-              search_episode_name?: string;
               search_description?: string;
-            };
-            Returns: {
-              duration: number;
-              podcast_itunes_id: string;
-              audio_url: string;
-              episode_itunes_id: string;
-              episode_name: string;
-              image_url: string;
-              podcast_name: string;
-              description: string;
-              guid: string;
-              artist_name: string;
-              date_published: string;
-              formatted_duration: string;
-              id: number;
-              slug: string;
-              likes: number;
-              dislikes: number;
-              twitter_shares: number;
-              review_type: string;
-              rank: number;
-            }[];
-          };
+              search_episode_name?: string;
+              search_podcast_name?: string;
+              search_query?: string;
+            }
+          | { current_user_id?: string; search_query?: string };
+        Returns: {
+          artist_name: string;
+          audio_url: string;
+          date_published: string;
+          description: string;
+          dislikes: number;
+          duration: number;
+          episode_itunes_id: string;
+          episode_name: string;
+          formatted_duration: string;
+          guid: string;
+          id: number;
+          image_url: string;
+          likes: number;
+          podcast_itunes_id: string;
+          podcast_name: string;
+          rank: number;
+          review_type: string;
+          slug: string;
+          twitter_shares: number;
+        }[];
+      };
       upsert_podcast: {
         Args: {
-          p_name: string;
-          p_itunes_id?: string;
-          p_spotify_id?: string;
-          p_genres?: string[];
-          p_rss_feed?: string;
           p_artist_name?: string;
+          p_genres?: string[];
+          p_itunes_id?: string;
+          p_name: string;
+          p_rss_feed?: string;
+          p_spotify_id?: string;
         };
-        Returns: {
-          id: number;
-        }[];
+        Returns: { id: number }[];
       };
     };
-    Enums: {
-      [_ in never]: never;
-    };
-    CompositeTypes: {
-      [_ in never]: never;
-    };
+    Enums: Record<string, never>;
+    CompositeTypes: Record<string, never>;
   };
 };
 
-type PublicSchema = Database[Extract<keyof Database, 'public'>];
+type DatabaseWithoutInternals = Omit<Database, '__InternalSupabase'>;
+
+type DefaultSchema = DatabaseWithoutInternals[Extract<
+  keyof Database,
+  'public'
+>];
 
 export type Tables<
-  PublicTableNameOrOptions extends
-    | keyof (PublicSchema['Tables'] & PublicSchema['Views'])
-    | { schema: keyof Database },
-  TableName extends PublicTableNameOrOptions extends { schema: keyof Database }
-    ? keyof (Database[PublicTableNameOrOptions['schema']]['Tables'] &
-        Database[PublicTableNameOrOptions['schema']]['Views'])
+  DefaultSchemaTableNameOrOptions extends
+    | keyof (DefaultSchema['Tables'] & DefaultSchema['Views'])
+    | { schema: keyof DatabaseWithoutInternals },
+  TableName extends DefaultSchemaTableNameOrOptions extends {
+    schema: keyof DatabaseWithoutInternals;
+  }
+    ? keyof (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions['schema']]['Tables'] &
+        DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions['schema']]['Views'])
     : never = never,
-> = PublicTableNameOrOptions extends { schema: keyof Database }
-  ? (Database[PublicTableNameOrOptions['schema']]['Tables'] &
-      Database[PublicTableNameOrOptions['schema']]['Views'])[TableName] extends {
+> = DefaultSchemaTableNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals;
+}
+  ? (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions['schema']]['Tables'] &
+      DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions['schema']]['Views'])[TableName] extends {
       Row: infer R;
     }
     ? R
     : never
-  : PublicTableNameOrOptions extends keyof (PublicSchema['Tables'] &
-        PublicSchema['Views'])
-    ? (PublicSchema['Tables'] &
-        PublicSchema['Views'])[PublicTableNameOrOptions] extends {
+  : DefaultSchemaTableNameOrOptions extends keyof (DefaultSchema['Tables'] &
+        DefaultSchema['Views'])
+    ? (DefaultSchema['Tables'] &
+        DefaultSchema['Views'])[DefaultSchemaTableNameOrOptions] extends {
         Row: infer R;
       }
       ? R
@@ -516,20 +519,24 @@ export type Tables<
     : never;
 
 export type TablesInsert<
-  PublicTableNameOrOptions extends
-    | keyof PublicSchema['Tables']
-    | { schema: keyof Database },
-  TableName extends PublicTableNameOrOptions extends { schema: keyof Database }
-    ? keyof Database[PublicTableNameOrOptions['schema']]['Tables']
+  DefaultSchemaTableNameOrOptions extends
+    | keyof DefaultSchema['Tables']
+    | { schema: keyof DatabaseWithoutInternals },
+  TableName extends DefaultSchemaTableNameOrOptions extends {
+    schema: keyof DatabaseWithoutInternals;
+  }
+    ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions['schema']]['Tables']
     : never = never,
-> = PublicTableNameOrOptions extends { schema: keyof Database }
-  ? Database[PublicTableNameOrOptions['schema']]['Tables'][TableName] extends {
+> = DefaultSchemaTableNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals;
+}
+  ? DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions['schema']]['Tables'][TableName] extends {
       Insert: infer I;
     }
     ? I
     : never
-  : PublicTableNameOrOptions extends keyof PublicSchema['Tables']
-    ? PublicSchema['Tables'][PublicTableNameOrOptions] extends {
+  : DefaultSchemaTableNameOrOptions extends keyof DefaultSchema['Tables']
+    ? DefaultSchema['Tables'][DefaultSchemaTableNameOrOptions] extends {
         Insert: infer I;
       }
       ? I
@@ -537,20 +544,24 @@ export type TablesInsert<
     : never;
 
 export type TablesUpdate<
-  PublicTableNameOrOptions extends
-    | keyof PublicSchema['Tables']
-    | { schema: keyof Database },
-  TableName extends PublicTableNameOrOptions extends { schema: keyof Database }
-    ? keyof Database[PublicTableNameOrOptions['schema']]['Tables']
+  DefaultSchemaTableNameOrOptions extends
+    | keyof DefaultSchema['Tables']
+    | { schema: keyof DatabaseWithoutInternals },
+  TableName extends DefaultSchemaTableNameOrOptions extends {
+    schema: keyof DatabaseWithoutInternals;
+  }
+    ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions['schema']]['Tables']
     : never = never,
-> = PublicTableNameOrOptions extends { schema: keyof Database }
-  ? Database[PublicTableNameOrOptions['schema']]['Tables'][TableName] extends {
+> = DefaultSchemaTableNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals;
+}
+  ? DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions['schema']]['Tables'][TableName] extends {
       Update: infer U;
     }
     ? U
     : never
-  : PublicTableNameOrOptions extends keyof PublicSchema['Tables']
-    ? PublicSchema['Tables'][PublicTableNameOrOptions] extends {
+  : DefaultSchemaTableNameOrOptions extends keyof DefaultSchema['Tables']
+    ? DefaultSchema['Tables'][DefaultSchemaTableNameOrOptions] extends {
         Update: infer U;
       }
       ? U
@@ -558,14 +569,37 @@ export type TablesUpdate<
     : never;
 
 export type Enums<
-  PublicEnumNameOrOptions extends
-    | keyof PublicSchema['Enums']
-    | { schema: keyof Database },
-  EnumName extends PublicEnumNameOrOptions extends { schema: keyof Database }
-    ? keyof Database[PublicEnumNameOrOptions['schema']]['Enums']
+  DefaultSchemaEnumNameOrOptions extends
+    | keyof DefaultSchema['Enums']
+    | { schema: keyof DatabaseWithoutInternals },
+  EnumName extends DefaultSchemaEnumNameOrOptions extends {
+    schema: keyof DatabaseWithoutInternals;
+  }
+    ? keyof DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions['schema']]['Enums']
     : never = never,
-> = PublicEnumNameOrOptions extends { schema: keyof Database }
-  ? Database[PublicEnumNameOrOptions['schema']]['Enums'][EnumName]
-  : PublicEnumNameOrOptions extends keyof PublicSchema['Enums']
-    ? PublicSchema['Enums'][PublicEnumNameOrOptions]
+> = DefaultSchemaEnumNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals;
+}
+  ? DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions['schema']]['Enums'][EnumName]
+  : DefaultSchemaEnumNameOrOptions extends keyof DefaultSchema['Enums']
+    ? DefaultSchema['Enums'][DefaultSchemaEnumNameOrOptions]
     : never;
+
+export type CompositeTypes<
+  PublicCompositeTypeNameOrOptions extends
+    | keyof DefaultSchema['CompositeTypes']
+    | { schema: keyof DatabaseWithoutInternals },
+  CompositeTypeName extends PublicCompositeTypeNameOrOptions extends {
+    schema: keyof DatabaseWithoutInternals;
+  }
+    ? keyof DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions['schema']]['CompositeTypes']
+    : never = never,
+> = PublicCompositeTypeNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals;
+}
+  ? DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions['schema']]['CompositeTypes'][CompositeTypeName]
+  : PublicCompositeTypeNameOrOptions extends keyof DefaultSchema['CompositeTypes']
+    ? DefaultSchema['CompositeTypes'][PublicCompositeTypeNameOrOptions]
+    : never;
+
+export const Constants = { public: { Enums: {} } } as const;

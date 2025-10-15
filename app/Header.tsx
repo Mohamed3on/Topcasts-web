@@ -28,13 +28,15 @@ const Header = async () => {
   const supabase = await createClient();
   const { data: authData } = await supabase.auth.getUser();
 
-  let userInfo = null;
+  type UserInfo = { username: string; avatar_url: string; name: string };
+
+  let userInfo: UserInfo | null = null;
   if (authData?.user) {
-    const { data } = await supabase
+    const { data } = (await (supabase as any)
       .from('profiles')
       .select('username, avatar_url, name')
       .eq('id', authData?.user?.id)
-      .single();
+      .single()) as { data: UserInfo | null };
 
     userInfo = data;
   }
