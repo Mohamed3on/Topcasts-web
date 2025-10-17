@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-import jwt, { type JwtPayload } from 'jsonwebtoken';
+import { jwtVerify } from 'jose';
 import { cleanUrl, determineType, formatUrls } from './utils';
 import { getCachedEpisodeData } from './utils-cached';
 
@@ -111,8 +111,19 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
   }
 
   try {
-    const user = jwt.verify(token, secret) as JwtPayload;
-    user.id = user.sub;
+    const { payload } = await jwtVerify(
+      token,
+      new TextEncoder().encode(secret),
+    );
+
+    if (!payload.sub) {
+      return NextResponse.json(
+        { error: 'Invalid token: missing subject' },
+        { status: 401 },
+      );
+    }
+
+    const user = { id: payload.sub, ...payload };
 
     if (!body?.url || !body?.rating)
       return NextResponse.json(
@@ -132,18 +143,16 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
         { status: response.status },
       );
 
-    await supabase
-      .from('podcast_episode_review')
-      .upsert(
-        {
-          episode_id: response.id,
-          user_id: user.id,
-          review_type: body.rating,
-          text: body.review_text,
-          updated_at: new Date().toISOString(),
-        },
-        { onConflict: 'user_id, episode_id' },
-      );
+    await supabase.from('podcast_episode_review').upsert(
+      {
+        episode_id: response.id,
+        user_id: user.id,
+        review_type: body.rating,
+        text: body.review_text,
+        updated_at: new Date().toISOString(),
+      },
+      { onConflict: 'user_id, episode_id' },
+    );
 
     return NextResponse.json(response);
   } catch (error) {
