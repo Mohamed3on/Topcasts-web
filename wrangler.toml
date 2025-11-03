@@ -1,6 +1,6 @@
 name = "topcasts"
 main = ".open-next/worker.js"
-compatibility_date = "2025-01-01"
+compatibility_date = "2025-09-25"
 compatibility_flags = ["nodejs_compat"]
 
 [observability]
