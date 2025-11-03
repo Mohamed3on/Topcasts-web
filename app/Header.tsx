@@ -1,4 +1,3 @@
-import { getHost } from '@/app/utils';
 import { Button } from '@/components/ui/button';
 import { createClient } from '@/utils/supabase/ssr';
 import {
@@ -75,7 +74,7 @@ const Header = async () => {
           'use server';
           const search = formData.get('search');
 
-          const href = `${getHost()}/search${search ? `?q=${search}` : ''}`;
+          const href = `/search${search ? `?q=${search}` : ''}`;
           redirect(href);
         }}
       >
