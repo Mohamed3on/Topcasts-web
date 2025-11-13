@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { revalidateTag } from 'next/cache';
 
 import { jwtVerify } from 'jose';
 import { cleanUrl, determineType, formatUrls } from './utils';
@@ -237,6 +238,10 @@ async function updateEpisodeDetails({
     };
 
     const podcastId = await upsertPodcastDetails(supabase, podcastData);
+
+    // Revalidate podcast cache after update
+    revalidateTag('podcast-details');
+    revalidateTag('podcast-metadata');
 
     const { data: episode, error: episodeError } = await upsertEpisode(
       supabase,

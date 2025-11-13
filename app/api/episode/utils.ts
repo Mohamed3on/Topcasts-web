@@ -52,10 +52,22 @@ export async function scrapeDataByType(
 }
 
 export async function scrapeApplePodcastsEpisodeDetails(url: string) {
-  const html = await getHtml(url);
+  const { podcastId: extractedPodcastId } =
+    extractApplePodcastInfoFromLink(url);
+
+  const [html, metadata] = await Promise.all([
+    getHtml(url),
+    extractedPodcastId
+      ? fetchApplePodcastMetadata(extractedPodcastId)
+      : Promise.resolve(null),
+  ]);
+
   const $ = await getCheerio(html);
 
-  const podcastId = url.match(/id(\d+)/)?.[1] || url.match(/\/podcast\/(\d+)/)?.[1];
+  const podcastId =
+    extractedPodcastId ||
+    url.match(/id(\d+)/)?.[1] ||
+    url.match(/\/podcast\/(\d+)/)?.[1];
   const episodeId = url.match(/i=(\d+)/)?.[1];
 
   const contentContainer = $('.content-container');
@@ -84,7 +96,7 @@ export async function scrapeApplePodcastsEpisodeDetails(url: string) {
 
   const durationInMilliseconds = convertAppleDurationToMs(duration_string);
 
-  const image_url = contentContainer
+  let image_url = contentContainer
     .find('source[type="image/jpeg"]')
     ?.attr('srcset')
     ?.split(',')
@@ -93,15 +105,19 @@ export async function scrapeApplePodcastsEpisodeDetails(url: string) {
     ?.split(' ')[0];
 
   // Try to get artist name from JSON-LD schema
-  let artist_name: string | undefined;
+  let artist_name: string | undefined = metadata?.artistName;
   const schemaScript = $('script[id="schema:episode"]');
   if (schemaScript.length > 0) {
     try {
       const schemaData = JSON.parse(schemaScript.html() || '{}');
-      artist_name = schemaData.productionCompany;
+      artist_name = schemaData.productionCompany ?? artist_name;
     } catch (e) {
       // If JSON parsing fails, artist_name remains undefined
     }
+  }
+
+  if (!image_url && metadata?.artworkUrl) {
+    image_url = metadata.artworkUrl;
   }
 
   const returnObject = {
@@ -114,6 +130,8 @@ export async function scrapeApplePodcastsEpisodeDetails(url: string) {
     duration: durationInMilliseconds,
     image_url,
     artist_name,
+    rss_feed: metadata?.rssFeed,
+    podcast_genres: metadata?.genres,
   };
 
   return returnObject;
@@ -148,10 +166,10 @@ export async function scrapeCastroEpisodeDetails(url: string) {
   const description = $('.co-supertop-castro-show-notes').html();
 
   const pocketCastsLink = $('a[href*="pca.st"]').attr('href');
-  const itunesId = pocketCastsLink?.split('/').pop();
+  let podcastItunesId = pocketCastsLink?.split('/').pop();
 
   // find the href of the parent element of the img whose alt contains Rss
-  const rss_feed = $('img[alt*="RSS"]').parent().attr('href');
+  let rss_feed = $('img[alt*="RSS"]').parent().attr('href') || undefined;
 
   // <source inside of the audio tag
   const audio_url = $('audio source').attr('src');
@@ -163,7 +181,44 @@ export async function scrapeCastroEpisodeDetails(url: string) {
   const duration = convertToMilliseconds(formatted_duration);
 
   // inside of #artwork-container
-  const image_url = $('#artwork-container img').attr('src');
+  let image_url = $('#artwork-container img').attr('src');
+
+  let artist_name: string | undefined;
+  let episode_itunes_id: string | undefined;
+  let podcast_genres: string[] | undefined;
+
+  const appleEpisodeLink = $(
+    'a[href*="podcasts.apple.com"], a[href*="itunes.apple.com"]',
+  ).attr('href');
+  if (appleEpisodeLink) {
+    const normalizedAppleUrl = cleanUrl(appleEpisodeLink);
+    const { podcastId } = extractApplePodcastInfoFromLink(normalizedAppleUrl);
+
+    if (podcastId) {
+      podcastItunesId = podcastItunesId ?? podcastId;
+
+      try {
+        const metadata = await fetchApplePodcastMetadata(podcastId);
+
+        if (metadata) {
+          artist_name = metadata.artistName ?? artist_name;
+          if (!image_url && metadata.artworkUrl) {
+            image_url = metadata.artworkUrl;
+          }
+          rss_feed = rss_feed ?? metadata.rssFeed ?? undefined;
+          podcast_genres = metadata.genres ?? podcast_genres;
+        }
+      } catch (error) {
+        console.warn(
+          '[scrapeCastroEpisodeDetails] Failed to fetch Apple metadata',
+          error,
+        );
+      }
+    }
+
+    // Castro pages typically link to the podcast feed, not a specific episode,
+    // so we intentionally leave `episode_itunes_id` undefined here.
+  }
 
   const returnObject = {
     episode_name,
@@ -172,9 +227,12 @@ export async function scrapeCastroEpisodeDetails(url: string) {
     image_url: image_url || null,
     duration,
     date_published,
-    podcast_itunes_id: itunesId,
+    podcast_itunes_id: podcastItunesId,
+    episode_itunes_id,
     rss_feed,
     audio_url,
+    artist_name,
+    podcast_genres,
   };
 
   return returnObject;
@@ -207,6 +265,80 @@ function convertToMilliseconds(duration: string): number {
   }
 
   return totalMilliseconds;
+}
+
+type ApplePodcastMetadata = {
+  artistName?: string;
+  artworkUrl?: string;
+  rssFeed?: string;
+  genres?: string[];
+};
+
+function extractApplePodcastInfoFromLink(urlString: string) {
+  try {
+    const parsedUrl = new URL(urlString);
+    const idMatch = urlString.match(/id(\d+)/);
+
+    return {
+      podcastId: idMatch?.[1],
+    };
+  } catch (_error) {
+    return {
+      podcastId: undefined,
+    };
+  }
+}
+
+async function fetchApplePodcastMetadata(
+  podcastId: string,
+): Promise<ApplePodcastMetadata | null> {
+  try {
+    const params = new URLSearchParams({
+      id: podcastId,
+      media: 'podcast',
+    });
+
+    const response = await fetch(
+      `https://itunes.apple.com/lookup?${params.toString()}`,
+    );
+
+    if (!response.ok) {
+      throw new Error(`Lookup request failed with status ${response.status}`);
+    }
+
+    const json = await response.json();
+    const result = Array.isArray(json?.results) ? json.results[0] : null;
+
+    if (!result) {
+      return null;
+    }
+
+    const artworkUrl =
+      result.artworkUrl1000 ??
+      result.artworkUrl600 ??
+      result.artworkUrl512 ??
+      result.artworkUrl160 ??
+      result.artworkUrl100;
+
+    const genres = Array.isArray(result.genres)
+      ? result.genres.filter(
+          (genre: unknown): genre is string => typeof genre === 'string',
+        )
+      : undefined;
+
+    return {
+      artistName: result.artistName ?? result.collectionArtistName,
+      artworkUrl,
+      rssFeed: typeof result.feedUrl === 'string' ? result.feedUrl : undefined,
+      genres,
+    };
+  } catch (error) {
+    console.warn(
+      `[fetchApplePodcastMetadata] Failed to fetch metadata for podcast ${podcastId}`,
+      error,
+    );
+    return null;
+  }
 }
 
 export async function getHtml(url: string): Promise<string> {
