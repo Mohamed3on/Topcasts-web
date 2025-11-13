@@ -239,9 +239,10 @@ async function updateEpisodeDetails({
 
     const podcastId = await upsertPodcastDetails(supabase, podcastData);
 
-    // Revalidate podcast cache after update
-    revalidateTag('podcast-details');
-    revalidateTag('podcast-metadata');
+    // Revalidate caches after update
+    revalidateTag(`podcast-details:${podcastId}`);
+    revalidateTag(`podcast-metadata:${podcastId}`);
+    revalidateTag('search-episodes');
 
     const { data: episode, error: episodeError } = await upsertEpisode(
       supabase,
@@ -252,6 +253,9 @@ async function updateEpisodeDetails({
       throw new Error(
         `Failed to upsert episode: ${JSON.stringify(episodeError)}`,
       );
+
+    revalidateTag(`episode-details:${episode.id}`);
+    revalidateTag(`episode-metadata:${episode.id}`);
 
     const { error: urlError } = await upsertEpisodeUrl(
       supabase,

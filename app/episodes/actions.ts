@@ -2,9 +2,10 @@
 
 import { ReviewType } from '@/app/api/types';
 import { createClient } from '@/utils/supabase/ssr';
-import { revalidatePath, revalidateTag } from 'next/cache';
+import { revalidateTag } from 'next/cache';
 
 const EPISODE_DETAILS_TAG = 'episode-details';
+const SEARCH_EPISODES_TAG = 'search-episodes';
 
 export async function toggleReview(
   episodeId: number,
@@ -48,7 +49,8 @@ export async function toggleReview(
     return { error: error.message };
   }
 
-  revalidateTag(EPISODE_DETAILS_TAG);
+  revalidateTag(`${EPISODE_DETAILS_TAG}:${episodeId}`);
+  revalidateTag(SEARCH_EPISODES_TAG);
 
   return { success: true };
 }
