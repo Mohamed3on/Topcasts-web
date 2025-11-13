@@ -39,7 +39,12 @@ export function AddEpisodeDrawer({
   };
 
   return (
-    <Drawer open={isOpen} onOpenChange={setIsOpen} onClose={closeModal}>
+    <Drawer
+      open={isOpen}
+      onOpenChange={setIsOpen}
+      onClose={closeModal}
+      repositionInputs={false}
+    >
       <DrawerTrigger asChild>{children}</DrawerTrigger>
 
       <DrawerContent className="h-[90%] lg:h-[75%]">
