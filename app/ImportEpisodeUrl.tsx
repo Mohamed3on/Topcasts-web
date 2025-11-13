@@ -137,7 +137,6 @@ export const ImportEpisodeUrl = ({
                 <FormControl>
                   <div className="relative">
                     <Input
-                      autoFocus
                       className="text-md  overflow-hidden pr-10 "
                       {...field}
                       placeholder="https://open.spotify.com/episode/4TVeJ7kvd9SqEKWGVZYDUU"
