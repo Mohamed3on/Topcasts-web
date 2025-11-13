@@ -1,7 +1,7 @@
 'use client';
 import { ReviewType } from '@/app/api/types';
 import { useUser } from '@/app/auth/UserContext';
-import { supabase } from '@/utils/supabase/client';
+import { toggleReview as toggleReviewAction } from '@/app/episodes/actions';
 import { useRouter } from 'next/navigation';
 import { useCallback, useState } from 'react';
 import { toast } from 'sonner';
@@ -13,35 +13,18 @@ export const useReview = (episodeId: number, reviewType?: ReviewType) => {
 
   const toggleReview = useCallback(
     async (type: ReviewType) => {
-      if (!user?.id)
-        return router.push(`/login?next=${window.location.pathname}`);
+      if (!user?.id) {
+        router.push(`/login?next=${window.location.pathname}`);
+        return false;
+      }
 
       setIsLoading(true);
 
-      const { error } =
-        reviewType === type
-          ? await (supabase as any)
-              .from('podcast_episode_review')
-              .delete()
-              .eq('episode_id', episodeId)
-              .eq('user_id', user.id)
-          : await (supabase as any)
-              .from('podcast_episode_review')
-              .upsert(
-                {
-                  episode_id: episodeId,
-                  user_id: user.id,
-                  review_type: type,
-                  updated_at: new Date().toISOString(),
-                },
-                {
-                  onConflict: 'user_id, episode_id',
-                },
-              )
-              .select('review_type')
-              .single();
+      const result = await toggleReviewAction(episodeId, type, reviewType);
 
-      if (error) {
+      const success = !result.error;
+
+      if (!success) {
         toast('Error updating your rating, please try again later', {
           className: 'bg-red-500 text-white',
         });
@@ -49,6 +32,7 @@ export const useReview = (episodeId: number, reviewType?: ReviewType) => {
         router.refresh();
       }
       setIsLoading(false);
+      return success;
     },
     [user?.id, router, reviewType, episodeId],
   );
