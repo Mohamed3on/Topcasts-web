@@ -28,11 +28,9 @@ export const useReview = (episodeId: number, reviewType?: ReviewType) => {
         toast('Error updating your rating, please try again later', {
           className: 'bg-red-500 text-white',
         });
-        setIsLoading(false);
-      } else {
-        setIsLoading(false);
-        router.refresh();
       }
+
+      setIsLoading(false);
       return success;
     },
     [user?.id, router, reviewType, episodeId],
