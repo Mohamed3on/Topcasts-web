@@ -1,3 +1,5 @@
+DROP TABLE IF EXISTS revalidations;
+
 CREATE TABLE IF NOT EXISTS revalidations (
   tag TEXT PRIMARY KEY ON CONFLICT REPLACE,
   revalidatedAt INTEGER NOT NULL
