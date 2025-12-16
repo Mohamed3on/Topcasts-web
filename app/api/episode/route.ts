@@ -8,7 +8,12 @@ import { getCachedEpisodeData } from './utils-cached';
 import { ScrapedEpisodeData, ScrapedEpisodeDetails } from '@/app/api/types';
 
 import { supabaseAdmin as supabase } from '@/utils/supabase/server';
-import { upsertEpisode, upsertEpisodeUrl, upsertPodcastDetails } from './db';
+import {
+  upsertEpisode,
+  upsertEpisodeUrl,
+  upsertPodcastDetails,
+  updatePodcast,
+} from './db';
 import { slugifyDetails } from './utils';
 
 export const dynamic = 'force-dynamic';
@@ -74,7 +79,17 @@ async function handlePodcastURL({
   if (data?.episode_id) {
     const episodeDetails = await getEpisodeDetailsFromDb(data.episode_id);
 
-    if (episodeDetails) return episodeDetails;
+    if (episodeDetails) {
+      // Check if podcast metadata needs refreshing (missing artist_name)
+      const podcast = episodeDetails.podcast as { artist_name: string | null } | null;
+      if (!podcast?.artist_name && episodeDetails.podcast_id) {
+        // Refresh podcast metadata in background
+        refreshPodcastMetadata(type, cleanedUrl, episodeDetails.podcast_id).catch(
+          (err) => console.error('Failed to refresh podcast metadata:', err),
+        );
+      }
+      return { id: episodeDetails.id, slug: episodeDetails.slug };
+    }
   }
 
   return handleNewEpisodeData({ type, cleanedUrl });
@@ -84,7 +99,8 @@ const getEpisodeDetailsFromDb = async (episodeId: number) => {
   const { data, error } = await supabase
     .from('podcast_episode')
     .select(
-      `id, slug
+      `id, slug, podcast_id,
+      podcast:podcast_id (artist_name)
     `,
     )
     .eq('id', episodeId)
@@ -273,4 +289,33 @@ async function updateEpisodeDetails({
     console.error('Error updating episode details:', error);
     return { error: 'Failed to update episode details', status: 500 };
   }
+}
+
+async function refreshPodcastMetadata(
+  type: 'apple' | 'spotify' | 'castro',
+  cleanedUrl: string,
+  podcastId: number,
+): Promise<void> {
+  const scrapedData = (await getCachedEpisodeData(
+    type,
+    cleanedUrl,
+  )) as ScrapedEpisodeDetails;
+
+  if (!scrapedData.artist_name) {
+    return;
+  }
+
+  const podcastData = {
+    name: scrapedData.podcast_name,
+    itunes_id: scrapedData.podcast_itunes_id,
+    spotify_id: scrapedData.spotify_show_id,
+    genres: scrapedData.podcast_genres,
+    rss_feed: scrapedData.rss_feed,
+    artist_name: scrapedData.artist_name,
+    image_url: scrapedData.image_url,
+  };
+
+  await updatePodcast(supabase, scrapedData.podcast_name, podcastData);
+  revalidateTag(`podcast-details:${podcastId}`);
+  revalidateTag(`podcast-metadata:${podcastId}`);
 }
