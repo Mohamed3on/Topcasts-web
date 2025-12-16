@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { revalidateTag } from 'next/cache';
+import { getCloudflareContext } from '@opennextjs/cloudflare';
 
 import { jwtVerify } from 'jose';
 import { cleanUrl, determineType, formatUrls } from './utils';
@@ -83,9 +84,10 @@ async function handlePodcastURL({
       // Check if podcast metadata needs refreshing (missing artist_name)
       const podcast = episodeDetails.podcast as { artist_name: string | null } | null;
       if (!podcast?.artist_name && episodeDetails.podcast_id) {
-        // Refresh podcast metadata in background
-        refreshPodcastMetadata(type, cleanedUrl, episodeDetails.podcast_id).catch(
-          (err) => console.error('Failed to refresh podcast metadata:', err),
+        // Refresh podcast metadata in background using Cloudflare's waitUntil
+        const { ctx } = getCloudflareContext();
+        ctx.waitUntil(
+          refreshPodcastMetadata(type, cleanedUrl, episodeDetails.podcast_id),
         );
       }
       return { id: episodeDetails.id, slug: episodeDetails.slug };
