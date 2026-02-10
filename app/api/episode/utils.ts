@@ -180,8 +180,9 @@ export async function scrapeCastroEpisodeDetails(url: string) {
   const formatted_duration = $('h2').eq(2).text();
   const duration = convertToMilliseconds(formatted_duration);
 
-  // inside of #artwork-container
-  let image_url = $('#artwork-container img').attr('src');
+  let image_url =
+    $('meta[property="og:image"]').attr('content') ||
+    $('img.episode-artwork-main').attr('src');
 
   let artist_name: string | undefined;
   let episode_itunes_id: string | undefined;

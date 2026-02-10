@@ -9,6 +9,7 @@ import { getCachedEpisodeData } from './utils-cached';
 import { ScrapedEpisodeData, ScrapedEpisodeDetails } from '@/app/api/types';
 
 import { supabaseAdmin as supabase } from '@/utils/supabase/server';
+import { sendTelegramAlert } from '@/utils/telegram';
 import {
   upsertEpisode,
   upsertEpisodeUrl,
@@ -194,10 +195,19 @@ async function handleNewEpisodeData({
     const scrapedData = await getCachedEpisodeData(type, cleanedUrl);
 
     if (!scrapedData.episode_name) {
+      sendTelegramAlert(
+        `⚠️ Scraping returned no episode name for ${type} URL:\n${cleanedUrl}`,
+      );
       return {
         error: 'Episode does not exist or could not be scraped',
         status: 400,
       };
+    }
+
+    if (!scrapedData.image_url) {
+      sendTelegramAlert(
+        `⚠️ Scraping returned no image for ${type} URL:\n${cleanedUrl}\nEpisode: ${scrapedData.episode_name}`,
+      );
     }
 
     const episodeDetails = await updateEpisodeDetails({
@@ -214,6 +224,9 @@ async function handleNewEpisodeData({
     );
   } catch (error) {
     console.error('Error scraping data:', error);
+    sendTelegramAlert(
+      `⚠️ Scraping failed for ${type} URL:\n${cleanedUrl}\n\n${error instanceof Error ? error.message : String(error)}`,
+    );
     return { error: 'Error scraping episode details', status: 500 };
   }
 }

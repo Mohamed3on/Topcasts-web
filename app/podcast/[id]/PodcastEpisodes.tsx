@@ -13,6 +13,7 @@ async function getEpisodes(podcastId: number, page: number, pageSize: number) {
     )
     .eq('podcast_id', podcastId)
     .order('popularity_score', { ascending: false })
+    .order('date_published', { ascending: false })
     .range((page - 1) * pageSize, page * pageSize - 1);
 
   if (error) {

@@ -60,18 +60,47 @@ test('scrapes Castro episode details and hydrates metadata via Apple', async () 
     'https://castro.fm/episode/PYl01A',
   );
 
+  // Core episode fields from Castro HTML
+  expect(result.episode_name).toBe(
+    "Why We Don't Build Apartments for Families",
+  );
+  expect(result.podcast_name).toBeTruthy();
+  expect(typeof result.description).toBe('string');
+  expect(result.description!.length).toBeGreaterThan(0);
+  expect(result.image_url).toMatch(/^https:\/\/.*\.(jpg|png|jpeg)$/i);
+  expect(result.duration).toBeGreaterThan(0);
+  expect(result.date_published).toBeTruthy();
+  expect(result.audio_url).toMatch(/^https:\/\/.*$/);
+  expect(result.rss_feed).toBe(
+    'https://api.substack.com/feed/podcast/1818323.rss',
+  );
+
+  // Apple-hydrated metadata
   expect(result.podcast_itunes_id).toBe('1711415224');
   expect(result.artist_name).toBe('Santi Ruiz');
   expect(result.podcast_genres).toBeDefined();
   expect(result.podcast_genres).toContain('Politics');
-  expect(result.rss_feed).toBe(
-    'https://api.substack.com/feed/podcast/1818323.rss',
+
+  // Castro doesn't resolve episode-level iTunes IDs
+  expect(result.episode_itunes_id).toBeUndefined();
+});
+
+test('scrapes Castro episode with all fields populated', async () => {
+  const result = await scrapeCastroEpisodeDetails(
+    'https://castro.fm/episode/tKdldz',
   );
-  expect(result.episode_name).toBe(
-    "Why We Don't Build Apartments for Families",
-  );
+
+  // Image (the field that broke when Castro redesigned)
+  expect(result.image_url).toMatch(/^https:\/\/.*\.(jpg|png|jpeg)$/i);
+
+  // Core scraped fields
+  expect(result.episode_name).toBeTruthy();
+  expect(result.podcast_name).toBeTruthy();
   expect(typeof result.description).toBe('string');
-  expect(result.image_url).toMatch(/^https:\/\/.*\.(jpg|png)$/i);
+  expect(result.description!.length).toBeGreaterThan(0);
   expect(result.duration).toBeGreaterThan(0);
+  expect(result.date_published).toBeTruthy();
   expect(result.audio_url).toMatch(/^https:\/\/.*$/);
+  expect(result.rss_feed).toMatch(/^https:\/\/.*$/);
+  expect(result.podcast_itunes_id).toBeTruthy();
 });

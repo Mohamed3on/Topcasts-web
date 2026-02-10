@@ -24,6 +24,8 @@ NEXT_PUBLIC_SUPABASE_URL = "https://dupqaaqpafucdxrmrmkv.supabase.co"
 # SPOTIFY_CLIENT_SECRET - Spotify API client secret
 # ct0 - Twitter/X ct0 token
 # auth_token - Twitter/X auth token
+# TELEGRAM_BOT_TOKEN - Telegram bot token for scraping failure alerts
+# TELEGRAM_CHAT_ID - Telegram chat ID for scraping failure alerts
 
 # Self-reference for revalidation
 [[services]]
