@@ -4,10 +4,17 @@ import { supabase } from '@/utils/supabase/client';
 
 export const LoginWithGoogle = () => {
   const signIn = async () => {
+    const params = new URLSearchParams(window.location.search);
+    const redirect = params.get('redirect');
+    const callbackUrl = new URL('/api/auth/callback', window.location.origin);
+    if (redirect) {
+      callbackUrl.searchParams.set('redirect', redirect);
+    }
+
     await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: {
-        redirectTo: `${window.location.origin}/api/auth/callback`,
+        redirectTo: callbackUrl.toString(),
       },
     });
   };

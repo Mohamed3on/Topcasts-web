@@ -2,12 +2,21 @@ import { LoginWithGoogle } from '@/app/login/LoginWithGoogle';
 import { createClient } from '@/utils/supabase/ssr';
 import { redirect } from 'next/navigation';
 
-export default async function Login() {
+export default async function Login({
+  searchParams,
+}: {
+  searchParams: Promise<{ redirect?: string }>;
+}) {
   const supabase = await createClient();
   const { data: userData } = await supabase.auth.getUser();
+  const { redirect: redirectPath } = await searchParams;
 
   if (userData.user) {
-    redirect('/episodes');
+    const target =
+      redirectPath && redirectPath.startsWith('/') && !redirectPath.startsWith('//')
+        ? redirectPath
+        : '/episodes';
+    redirect(target);
   }
   return (
     <main className="flex min-h-screen flex-col items-center justify-center p-8">
