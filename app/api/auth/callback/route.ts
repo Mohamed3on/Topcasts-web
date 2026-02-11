@@ -7,14 +7,20 @@ export async function GET(req: NextRequest) {
   const supabase = await createClient();
   const { searchParams, origin } = req.nextUrl;
   const code = searchParams.get('code');
+  const redirect = searchParams.get('redirect');
 
   try {
     if (code) {
-      // TODO: implement redirect to the previous page
       await supabase.auth.exchangeCodeForSession(code);
     }
   } catch (error) {
     console.log('Error exchanging code for session:', error);
   }
+
+  // Validate redirect is a relative path to prevent open redirects
+  if (redirect && redirect.startsWith('/') && !redirect.startsWith('//')) {
+    return NextResponse.redirect(`${origin}${redirect}`);
+  }
+
   return NextResponse.redirect(`${origin}/`);
 }
