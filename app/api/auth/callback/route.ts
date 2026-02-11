@@ -1,3 +1,4 @@
+import { isValidRedirect } from '@/utils/redirect';
 import { createClient } from '@/utils/supabase/ssr';
 import { NextRequest, NextResponse } from 'next/server';
 
@@ -17,8 +18,7 @@ export async function GET(req: NextRequest) {
     console.log('Error exchanging code for session:', error);
   }
 
-  // Validate redirect is a relative path to prevent open redirects
-  if (redirect && redirect.startsWith('/') && !redirect.startsWith('//')) {
+  if (isValidRedirect(redirect)) {
     return NextResponse.redirect(`${origin}${redirect}`);
   }
 

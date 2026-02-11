@@ -363,17 +363,17 @@ export function determineType(
   const url = new URL(urlString);
 
   if (
-    url.hostname.includes('podcasts.apple.com') &&
+    url.hostname === 'podcasts.apple.com' &&
     url.searchParams.get('i')
   ) {
     return 'apple';
   } else if (
-    url.hostname.includes('open.spotify.com') &&
+    url.hostname === 'open.spotify.com' &&
     url.pathname.includes('/episode/')
   ) {
     return 'spotify';
   } else if (
-    url.hostname.includes('castro.fm') &&
+    url.hostname === 'castro.fm' &&
     url.pathname.includes('/episode/')
   ) {
     return 'castro';

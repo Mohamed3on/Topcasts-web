@@ -1,4 +1,5 @@
 import { LoginWithGoogle } from '@/app/login/LoginWithGoogle';
+import { isValidRedirect } from '@/utils/redirect';
 import { createClient } from '@/utils/supabase/ssr';
 import { redirect } from 'next/navigation';
 
@@ -12,10 +13,7 @@ export default async function Login({
   const { redirect: redirectPath } = await searchParams;
 
   if (userData.user) {
-    const target =
-      redirectPath && redirectPath.startsWith('/') && !redirectPath.startsWith('//')
-        ? redirectPath
-        : '/episodes';
+    const target = isValidRedirect(redirectPath) ? redirectPath : '/episodes';
     redirect(target);
   }
   return (
