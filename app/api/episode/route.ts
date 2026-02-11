@@ -82,9 +82,9 @@ async function handlePodcastURL({
     const episodeDetails = await getEpisodeDetailsFromDb(data.episode_id);
 
     if (episodeDetails) {
-      // Check if podcast metadata needs refreshing (missing artist_name)
-      const podcast = episodeDetails.podcast as { artist_name: string | null } | null;
-      if (!podcast?.artist_name && episodeDetails.podcast_id) {
+      // Check if podcast metadata needs refreshing (missing artist_name or image_url)
+      const podcast = episodeDetails.podcast as { artist_name: string | null; image_url: string | null } | null;
+      if ((!podcast?.artist_name || !podcast?.image_url) && episodeDetails.podcast_id) {
         // Refresh podcast metadata in background using Cloudflare's waitUntil
         const { ctx } = getCloudflareContext();
         ctx.waitUntil(
@@ -103,7 +103,7 @@ const getEpisodeDetailsFromDb = async (episodeId: number) => {
     .from('podcast_episode')
     .select(
       `id, slug, podcast_id,
-      podcast:podcast_id (artist_name)
+      podcast:podcast_id (artist_name, image_url)
     `,
     )
     .eq('id', episodeId)
@@ -316,7 +316,7 @@ async function refreshPodcastMetadata(
     cleanedUrl,
   )) as ScrapedEpisodeDetails;
 
-  if (!scrapedData.artist_name) {
+  if (!scrapedData.artist_name && !scrapedData.image_url) {
     return;
   }
 
