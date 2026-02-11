@@ -7,6 +7,7 @@ import {
   LogInIcon,
   PlusCircle,
   SearchIcon,
+  Share,
 } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
@@ -67,6 +68,13 @@ const Header = async () => {
           <PlusCircle className="h-6 w-6" />
           <span className="hidden md:block">Add episode</span>
         </AddEpisodeButton>
+
+        <Button className="group hidden md:flex" asChild variant="link">
+          <Link href="/share/setup" className="flex items-center gap-1">
+            <Share className="h-5 w-5" />
+            <span>Quick Add</span>
+          </Link>
+        </Button>
       </div>
 
       <form

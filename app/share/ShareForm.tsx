@@ -55,6 +55,7 @@ export function ShareForm({
     }
   })();
 
+  const [error, setError] = useState<string | null>(null);
   const autoSubmit = initialRating !== undefined;
 
   const handleSubmit = async () => {
@@ -77,6 +78,7 @@ export function ShareForm({
       router.push(`/episode/${data.id}/${data.slug}`);
     } catch (error) {
       setIsLoading(false);
+      setError('Error saving episode. Is this a valid Apple Podcasts, Spotify, or Castro URL?');
       toast.error(
         'Error saving episode. Is this a valid Apple Podcasts, Spotify, or Castro URL?',
       );
@@ -101,7 +103,7 @@ export function ShareForm({
     );
   }
 
-  if (autoSubmit) {
+  if (autoSubmit && !error) {
     return (
       <div className="flex flex-col items-center gap-4">
         <Loader2 className="h-8 w-8 animate-spin" />
