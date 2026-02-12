@@ -5,12 +5,27 @@ export async function fetchPodcast(
   supabase: SupabaseAdmin,
   podcastData: PodcastData,
 ) {
+  const filters: string[] = [];
+  if (podcastData.name) {
+    const safeName = podcastData.name.replace(/"/g, '""');
+    filters.push(`name.eq."${safeName}"`);
+  }
+  if (podcastData.itunes_id) {
+    filters.push(`itunes_id.eq.${podcastData.itunes_id}`);
+  }
+  if (podcastData.spotify_id) {
+    const safeSpotifyId = podcastData.spotify_id.replace(/"/g, '""');
+    filters.push(`spotify_id.eq."${safeSpotifyId}"`);
+  }
+
+  if (filters.length === 0) {
+    return { data: null, error: null };
+  }
+
   return supabase
     .from('podcast')
     .select()
-    .or(
-      `name.eq."${podcastData.name}",itunes_id.eq.${podcastData.itunes_id},spotify_id.eq.${podcastData.spotify_id}`,
-    )
+    .or(filters.join(','))
     .single();
 }
 

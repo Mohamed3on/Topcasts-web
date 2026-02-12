@@ -71,51 +71,43 @@ async function handlePodcastURL({
     };
   }
 
-  // find url in supabase
+  // Single joined query: URL → episode → podcast (1 DB roundtrip instead of 2)
   const { data } = await supabase
     .from('podcast_episode_url')
-    .select('episode_id')
+    .select(
+      `
+      episode_id,
+      podcast_episode!inner (
+        id, slug, podcast_id,
+        podcast:podcast_id (artist_name, image_url)
+      )
+    `,
+    )
     .eq('url', cleanedUrl)
     .single();
 
-  if (data?.episode_id) {
-    const episodeDetails = await getEpisodeDetailsFromDb(data.episode_id);
+  if (data?.podcast_episode) {
+    const episode = data.podcast_episode as unknown as {
+      id: number;
+      slug: string | null;
+      podcast_id: number;
+      podcast: { artist_name: string | null; image_url: string | null } | null;
+    };
 
-    if (episodeDetails) {
+    if (episode?.id) {
       // Check if podcast metadata needs refreshing (missing artist_name or image_url)
-      const podcast = episodeDetails.podcast as { artist_name: string | null; image_url: string | null } | null;
-      if ((!podcast?.artist_name || !podcast?.image_url) && episodeDetails.podcast_id) {
-        // Refresh podcast metadata in background using Cloudflare's waitUntil
+      if ((!episode.podcast?.artist_name || !episode.podcast?.image_url) && episode.podcast_id) {
         const { ctx } = getCloudflareContext();
         ctx.waitUntil(
-          refreshPodcastMetadata(type, cleanedUrl, episodeDetails.podcast_id),
+          refreshPodcastMetadata(type, cleanedUrl, episode.podcast_id),
         );
       }
-      return { id: episodeDetails.id, slug: episodeDetails.slug };
+      return { id: episode.id, slug: episode.slug };
     }
   }
 
   return handleNewEpisodeData({ type, cleanedUrl });
 }
-
-const getEpisodeDetailsFromDb = async (episodeId: number) => {
-  const { data, error } = await supabase
-    .from('podcast_episode')
-    .select(
-      `id, slug, podcast_id,
-      podcast:podcast_id (artist_name, image_url)
-    `,
-    )
-    .eq('id', episodeId)
-    .single();
-
-  if (error || !data.id) {
-    console.error('Episode ID not in DB:', error);
-    return null;
-  }
-
-  return data;
-};
 
 export async function POST(request: NextRequest): Promise<NextResponse> {
   const body = await request.json();
@@ -163,15 +155,24 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
         { status: response.status },
       );
 
-    await supabase.from('podcast_episode_review').upsert(
-      {
-        episode_id: response.id,
-        user_id: user.id,
-        review_type: body.rating,
-        text: body.review_text,
-        updated_at: new Date().toISOString(),
-      },
-      { onConflict: 'user_id, episode_id' },
+    // Defer the review upsert to background — don't block the response
+    const { ctx } = getCloudflareContext();
+    ctx.waitUntil(
+      supabase
+        .from('podcast_episode_review')
+        .upsert(
+          {
+            episode_id: response.id,
+            user_id: user.id,
+            review_type: body.rating,
+            text: body.review_text,
+            updated_at: new Date().toISOString(),
+          },
+          { onConflict: 'user_id, episode_id' },
+        )
+        .then(({ error }) => {
+          if (error) console.error('Background review upsert failed:', error);
+        }),
     );
 
     return NextResponse.json(response);
