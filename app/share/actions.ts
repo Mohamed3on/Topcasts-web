@@ -12,7 +12,7 @@ import {
   upsertPodcastDetails,
 } from '@/app/api/episode/db';
 import { sendTelegramAlert } from '@/utils/telegram';
-import { ScrapedEpisodeData } from '@/app/api/types';
+import { ScrapedEpisodeData, ScrapedEpisodeDetails } from '@/app/api/types';
 import { saveReviewInBackground } from './background';
 
 /**
@@ -89,7 +89,7 @@ export async function shareEpisode(
   // New episode — scrape and persist (blocking for manual form,
   // since the user expects to see the episode page after)
   try {
-    const scrapedData = await getCachedEpisodeData(type, cleanedUrl);
+    const scrapedData = (await getCachedEpisodeData(type, cleanedUrl)) as ScrapedEpisodeDetails;
 
     if (!scrapedData.episode_name) {
       sendTelegramAlert(

@@ -10,7 +10,7 @@ import {
   upsertPodcastDetails,
 } from '@/app/api/episode/db';
 import { sendTelegramAlert } from '@/utils/telegram';
-import { ScrapedEpisodeData } from '@/app/api/types';
+import { ScrapedEpisodeData, ScrapedEpisodeDetails } from '@/app/api/types';
 
 /**
  * Save a review in the background using Cloudflare's waitUntil.
@@ -84,7 +84,7 @@ export function processEpisodeInBackground(
         }
 
         // Scrape episode data from external source
-        const scrapedData = await getCachedEpisodeData(type, cleanedUrl);
+        const scrapedData = (await getCachedEpisodeData(type, cleanedUrl)) as ScrapedEpisodeDetails;
 
         if (!scrapedData.episode_name) {
           sendTelegramAlert(
