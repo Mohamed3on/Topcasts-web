@@ -1,5 +1,6 @@
 import { redirect } from 'next/navigation';
 import { ShareForm } from './ShareForm';
+import { PollAndRedirect } from './PollAndRedirect';
 import { createClient } from '@/utils/supabase/ssr';
 import { determineType } from '@/app/api/episode/utils';
 import {
@@ -72,9 +73,10 @@ export default async function SharePage({
           <div className="text-center">
             <h1 className="mb-2 text-xl font-bold">Episode saved!</h1>
             <p className="text-muted-foreground">
-              Your {validRating} has been recorded.
+              Your {validRating} has been recorded. Redirecting...
             </p>
           </div>
+          <PollAndRedirect url={url} />
         </main>
       );
     }
