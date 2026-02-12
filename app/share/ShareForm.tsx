@@ -4,24 +4,17 @@ import { LoaderButton } from '@/app/LoaderButton';
 import { determineType } from '@/app/api/episode/utils';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Textarea } from '@/components/ui/textarea';
-import { Loader2, ThumbsDown, ThumbsUp } from 'lucide-react';
+import { ThumbsDown, ThumbsUp } from 'lucide-react';
 import { useRouter } from 'next/navigation';
-import { useEffect, useRef, useState } from 'react';
+import { useState } from 'react';
 import { toast } from 'sonner';
 import { shareEpisode } from './actions';
 
-export function ShareForm({
-  url,
-  rating: initialRating,
-}: {
-  url: string;
-  rating?: 'like' | 'dislike';
-}) {
+export function ShareForm({ url }: { url: string }) {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
-  const [rating, setRating] = useState(initialRating ?? 'like');
+  const [rating, setRating] = useState<'like' | 'dislike'>('like');
   const [reviewText, setReviewText] = useState('');
-  const autoSubmitted = useRef(false);
 
   const isValidUrl = (() => {
     try {
@@ -30,9 +23,6 @@ export function ShareForm({
       return false;
     }
   })();
-
-  const [error, setError] = useState<string | null>(null);
-  const autoSubmit = initialRating !== undefined;
 
   const handleSubmit = async () => {
     setIsLoading(true);
@@ -51,24 +41,17 @@ export function ShareForm({
       }
 
       toast.success('Episode saved!');
-      router.push(`/episode/${data.id}/${data.slug}`);
+      const path = data.slug
+        ? `/episode/${data.id}/${data.slug}`
+        : `/episode/${data.id}`;
+      router.push(path);
     } catch (error) {
       setIsLoading(false);
-      setError(
-        'Error saving episode. Is this a valid Apple Podcasts, Spotify, or Castro URL?',
-      );
       toast.error(
         'Error saving episode. Is this a valid Apple Podcasts, Spotify, or Castro URL?',
       );
     }
   };
-
-  useEffect(() => {
-    if (autoSubmit && isValidUrl && !autoSubmitted.current) {
-      autoSubmitted.current = true;
-      handleSubmit();
-    }
-  }, []);
 
   if (!isValidUrl) {
     return (
@@ -77,15 +60,6 @@ export function ShareForm({
         <p className="text-muted-foreground">
           Only Apple Podcasts, Spotify, and Castro episode URLs are supported.
         </p>
-      </div>
-    );
-  }
-
-  if (autoSubmit && !error) {
-    return (
-      <div className="flex flex-col items-center gap-4">
-        <Loader2 className="h-8 w-8 animate-spin" />
-        <p className="text-muted-foreground">Saving episode...</p>
       </div>
     );
   }

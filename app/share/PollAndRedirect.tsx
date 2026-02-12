@@ -5,36 +5,42 @@ import { useRouter } from 'next/navigation';
 import { lookupEpisodeByUrl } from './actions';
 
 const POLL_INTERVAL_MS = 1500;
-const MAX_ATTEMPTS = 20; // ~30 seconds total
+const MAX_ATTEMPTS = 20;
 
-/**
- * Lightweight client component that polls for the episode to appear in the DB
- * after background processing, then redirects to the episode page.
- */
 export function PollAndRedirect({ url }: { url: string }) {
   const router = useRouter();
   const attempts = useRef(0);
 
   useEffect(() => {
-    const interval = setInterval(async () => {
+    let cancelled = false;
+
+    const poll = async () => {
+      if (cancelled || attempts.current >= MAX_ATTEMPTS) return;
       attempts.current++;
 
       try {
         const episode = await lookupEpisodeByUrl(url);
-        if (episode?.id && episode?.slug) {
-          clearInterval(interval);
-          router.replace(`/episode/${episode.id}/${episode.slug}`);
+        if (episode?.id) {
+          const path = episode.slug
+            ? `/episode/${episode.id}/${episode.slug}`
+            : `/episode/${episode.id}`;
+          router.replace(path);
+          return;
         }
       } catch {
         // Ignore errors, keep polling
       }
 
-      if (attempts.current >= MAX_ATTEMPTS) {
-        clearInterval(interval);
+      if (!cancelled) {
+        setTimeout(poll, POLL_INTERVAL_MS);
       }
-    }, POLL_INTERVAL_MS);
+    };
 
-    return () => clearInterval(interval);
+    poll();
+
+    return () => {
+      cancelled = true;
+    };
   }, [url, router]);
 
   return null;
