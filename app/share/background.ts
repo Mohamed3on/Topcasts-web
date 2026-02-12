@@ -2,8 +2,12 @@ import { revalidateTag } from 'next/cache';
 import { getCloudflareContext } from '@opennextjs/cloudflare';
 
 import { supabaseAdmin } from '@/utils/supabase/server';
-import { cleanUrl, determineType, slugifyDetails } from '@/app/api/episode/utils';
-import { getCachedEpisodeData } from '@/app/api/episode/utils-cached';
+import {
+  cleanUrl,
+  determineType,
+  scrapeDataByType,
+  slugifyDetails,
+} from '@/app/api/episode/utils';
 import {
   upsertEpisode,
   upsertEpisodeUrl,
@@ -11,6 +15,14 @@ import {
 } from '@/app/api/episode/db';
 import { sendTelegramAlert } from '@/utils/telegram';
 import { ScrapedEpisodeData, ScrapedEpisodeDetails } from '@/app/api/types';
+
+function tryRevalidate(tag: string) {
+  try {
+    revalidateTag(tag);
+  } catch {
+    // revalidateTag may not work inside waitUntil (no Next.js request context)
+  }
+}
 
 /**
  * Save a review in the background using Cloudflare's waitUntil.
@@ -83,8 +95,8 @@ export function processEpisodeInBackground(
           return;
         }
 
-        // Scrape episode data from external source
-        const scrapedData = (await getCachedEpisodeData(type, cleanedUrl)) as ScrapedEpisodeDetails;
+        // Scrape directly — unstable_cache doesn't work inside waitUntil
+        const scrapedData = (await scrapeDataByType(type, cleanedUrl)) as ScrapedEpisodeDetails;
 
         if (!scrapedData.episode_name) {
           sendTelegramAlert(
@@ -132,9 +144,9 @@ export function processEpisodeInBackground(
           supabaseAdmin,
           podcastData,
         );
-        revalidateTag(`podcast-details:${podcastId}`);
-        revalidateTag(`podcast-metadata:${podcastId}`);
-        revalidateTag('search-episodes');
+        tryRevalidate(`podcast-details:${podcastId}`);
+        tryRevalidate(`podcast-metadata:${podcastId}`);
+        tryRevalidate('search-episodes');
 
         const { data: episode, error: episodeError } = await upsertEpisode(
           supabaseAdmin,
@@ -147,8 +159,8 @@ export function processEpisodeInBackground(
           );
         }
 
-        revalidateTag(`episode-details:${episode.id}`);
-        revalidateTag(`episode-metadata:${episode.id}`);
+        tryRevalidate(`episode-details:${episode.id}`);
+        tryRevalidate(`episode-metadata:${episode.id}`);
 
         // URL insert and review can run in parallel — both only need episode.id
         const [urlResult] = await Promise.all([
