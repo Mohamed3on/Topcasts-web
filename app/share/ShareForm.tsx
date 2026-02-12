@@ -4,34 +4,11 @@ import { LoaderButton } from '@/app/LoaderButton';
 import { determineType } from '@/app/api/episode/utils';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Textarea } from '@/components/ui/textarea';
-import { createClient } from '@/utils/supabase/client';
 import { Loader2, ThumbsDown, ThumbsUp } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
-
-async function submitEpisode(
-  supabase: ReturnType<typeof createClient>,
-  url: string,
-  rating: string,
-  reviewText?: string,
-) {
-  const accessToken = (await supabase.auth.getSession()).data.session
-    ?.access_token;
-
-  if (!accessToken) return null;
-
-  const response = await fetch('/api/episode', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      Authorization: `Bearer ${accessToken}`,
-    },
-    body: JSON.stringify({ url, rating, review_text: reviewText }),
-  });
-
-  return response.json();
-}
+import { shareEpisode } from './actions';
 
 export function ShareForm({
   url,
@@ -40,7 +17,6 @@ export function ShareForm({
   url: string;
   rating?: 'like' | 'dislike';
 }) {
-  const supabase = createClient();
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
   const [rating, setRating] = useState(initialRating ?? 'like');
@@ -61,24 +37,26 @@ export function ShareForm({
   const handleSubmit = async () => {
     setIsLoading(true);
     try {
-      const { data: userData } = await supabase.auth.getUser();
-      if (!userData.user) {
-        const params = new URLSearchParams({ url, rating });
-        router.push(`/login?redirect=${encodeURIComponent(`/share?${params}`)}`);
-        return;
-      }
+      const data = await shareEpisode(url, rating, reviewText);
 
-      const data = await submitEpisode(supabase, url, rating, reviewText);
-
-      if (!data || data.error) {
-        throw new Error(data?.error || 'Failed to save episode');
+      if ('error' in data) {
+        if (data.error === 'Not authenticated') {
+          const params = new URLSearchParams({ url, rating });
+          router.push(
+            `/login?redirect=${encodeURIComponent(`/share?${params}`)}`,
+          );
+          return;
+        }
+        throw new Error(data.error);
       }
 
       toast.success('Episode saved!');
       router.push(`/episode/${data.id}/${data.slug}`);
     } catch (error) {
       setIsLoading(false);
-      setError('Error saving episode. Is this a valid Apple Podcasts, Spotify, or Castro URL?');
+      setError(
+        'Error saving episode. Is this a valid Apple Podcasts, Spotify, or Castro URL?',
+      );
       toast.error(
         'Error saving episode. Is this a valid Apple Podcasts, Spotify, or Castro URL?',
       );
