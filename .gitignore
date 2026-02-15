@@ -46,3 +46,5 @@ twitter.log
 
 # import-tweets/
 .wrangler/
+.playwright-cli/
+.playwright-mcp/
