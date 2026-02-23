@@ -1,4 +1,4 @@
-import { createClient } from '@/utils/supabase/ssr';
+import { getCachedUserPodcastReviews } from '@/utils/supabase/server-cache';
 import { ThumbsDown, ThumbsUp } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
@@ -13,13 +13,9 @@ export default async function YouAndPodcast({
   podcastId,
   podcastName,
 }: YouAndPodcastProps) {
-  const supabase = await createClient();
-  const { data, error } = await supabase.rpc('get_user_podcast_reviews', {
-    user_id_param: userId,
-    podcast_id_param: podcastId,
-  });
+  const data = await getCachedUserPodcastReviews(userId, podcastId);
 
-  if (error || !data || data.length === 0) {
+  if (!data || data.length === 0) {
     return null;
   }
 

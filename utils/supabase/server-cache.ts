@@ -122,6 +122,91 @@ export const getCachedEpisodeMetadata = async (episodeId: string) => {
   return getEpisodeMetadata();
 };
 
+// Cached profile query
+export const getCachedProfile = async (userId: string) => {
+  const getProfile = unstable_cache(
+    async () => {
+      const supabase = createServerClient();
+      const { data } = await supabase
+        .from('profiles')
+        .select()
+        .eq('id', userId)
+        .single();
+      return data;
+    },
+    ['profile', userId],
+    {
+      tags: ['profile', `profile:${userId}`],
+      revalidate: 300, // 5 minutes
+    },
+  );
+  return getProfile();
+};
+
+// Cached popular episodes for homepage
+export const getCachedPopularEpisodes = async (userId?: string) => {
+  const getPopularEpisodes = unstable_cache(
+    async () => {
+      const supabase = createServerClient();
+
+      if (!userId) {
+        const { data } = await supabase
+          .from('episode_with_rating_data')
+          .select(
+            `id, slug, episode_name, image_url, podcast_name, description, twitter_shares, likes, dislikes`,
+          )
+          .order('popularity_score', { ascending: false })
+          .limit(5);
+        return data;
+      }
+
+      const { data } = await supabase
+        .from('episode_with_rating_data')
+        .select(
+          `id, slug, episode_name, image_url, podcast_name, description, twitter_shares, likes, dislikes,
+          podcast_episode_review(review_type, user_id, episode_id)`,
+        )
+        .eq('podcast_episode_review.user_id', userId)
+        .order('popularity_score', { ascending: false })
+        .limit(5);
+      return data;
+    },
+    ['popular-episodes', userId || 'anon'],
+    {
+      tags: ['search-episodes'],
+      revalidate: 7200, // 2 hours
+    },
+  );
+  return getPopularEpisodes();
+};
+
+// Cached user podcast reviews RPC
+export const getCachedUserPodcastReviews = async (
+  userId: string,
+  podcastId: number,
+) => {
+  const getUserPodcastReviews = unstable_cache(
+    async () => {
+      const supabase = createServerClient();
+      const { data, error } = await supabase.rpc('get_user_podcast_reviews', {
+        user_id_param: userId,
+        podcast_id_param: podcastId,
+      });
+      if (error) return null;
+      return data;
+    },
+    ['user-podcast-reviews', userId, String(podcastId)],
+    {
+      tags: [
+        'user-podcast-reviews',
+        `user-podcast-reviews:${userId}:${podcastId}`,
+      ],
+      revalidate: 3600, // 1 hour
+    },
+  );
+  return getUserPodcastReviews();
+};
+
 // Cached search results
 export const getCachedSearchResults = unstable_cache(
   async (

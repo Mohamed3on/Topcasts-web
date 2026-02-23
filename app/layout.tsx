@@ -4,6 +4,7 @@ import './globals.css';
 import Header from '@/app/Header';
 import { UserProvider } from '@/app/auth/UserContext';
 import { createClient } from '@/utils/supabase/ssr';
+import { getCachedProfile } from '@/utils/supabase/server-cache';
 import type { Viewport } from 'next';
 import { Toaster } from 'sonner';
 
@@ -32,22 +33,13 @@ export default async function RootLayout({
     data: { user },
   } = await supabase.auth.getUser();
 
-  let userInfo = null;
-  if (user) {
-    const { data } = await (supabase as any)
-      .from('profiles')
-      .select()
-      .eq('id', user?.id)
-      .single();
-
-    userInfo = data;
-  }
+  const userInfo = user ? await getCachedProfile(user.id) : null;
   return (
     <html lang="en" className={`${GeistSans.variable} ${GeistMono.variable}`}>
       <body className={'min-h-screen bg-background font-sans antialiased'}>
         <main>
           <UserProvider user={userInfo}>
-            <Header />
+            <Header user={userInfo} />
             {children}
 
             <Toaster closeButton richColors />

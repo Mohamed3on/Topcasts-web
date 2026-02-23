@@ -1,9 +1,14 @@
 'use client';
 
-import { ImportEpisodeUrl } from '@/app/ImportEpisodeUrl';
 import { Drawer, DrawerContent, DrawerTrigger } from '@/components/ui/drawer';
+import dynamic from 'next/dynamic';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { useState } from 'react';
+
+const ImportEpisodeUrl = dynamic(
+  () =>
+    import('@/app/ImportEpisodeUrl').then((m) => ({ default: m.ImportEpisodeUrl })),
+);
 
 export function AddEpisodeDrawer({
   children,

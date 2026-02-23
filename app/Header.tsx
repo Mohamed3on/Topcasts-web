@@ -1,5 +1,5 @@
+import { User } from '@/app/auth/UserContext';
 import { Button } from '@/components/ui/button';
-import { createClient } from '@/utils/supabase/ssr';
 import {
   BarChart,
   Flame,
@@ -24,22 +24,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Input } from '@/components/ui/input';
 
-const Header = async () => {
-  const supabase = await createClient();
-  const { data: authData } = await supabase.auth.getUser();
-
-  type UserInfo = { username: string; avatar_url: string; name: string };
-
-  let userInfo: UserInfo | null = null;
-  if (authData?.user) {
-    const { data } = (await (supabase as any)
-      .from('profiles')
-      .select('username, avatar_url, name')
-      .eq('id', authData?.user?.id)
-      .single()) as { data: UserInfo | null };
-
-    userInfo = data;
-  }
+const Header = async ({ user: userInfo }: { user: User | null }) => {
 
   return (
     <header className="sticky top-0 z-10  mb-8 flex w-full items-center justify-between border-b bg-background/95 px-4 py-2 shadow-sm backdrop-blur supports-[backdrop-filter]:bg-background/60">
@@ -153,7 +138,7 @@ const Header = async () => {
         </DropdownMenu>
       )}
 
-      {!authData.user && (
+      {!userInfo && (
         <Button asChild variant="link">
           <Link href="/login" className="flex  gap-1">
             <LogInIcon className="h-5 w-5" />

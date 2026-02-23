@@ -6,7 +6,6 @@ import {
   CollapsibleTrigger,
 } from '@/components/ui/collapsible';
 
-import DOMPurify from 'dompurify';
 import { ArrowDown } from 'lucide-react';
 import { useState } from 'react';
 
@@ -16,9 +15,8 @@ export const EpisodeDescription = ({
   description: string;
 }) => {
   const [isOpen, setIsOpen] = useState(false);
-  const cleanHtml = DOMPurify.sanitize(description);
 
-  if (!cleanHtml) return null;
+  if (!description) return null;
 
   return (
     <Collapsible open={isOpen} onOpenChange={setIsOpen} className=" space-y-2">
@@ -38,7 +36,7 @@ export const EpisodeDescription = ({
         <span
           className="break-words"
           dangerouslySetInnerHTML={{
-            __html: cleanHtml,
+            __html: description,
           }}
         ></span>
       </CollapsibleContent>
