@@ -57,16 +57,15 @@ export default async function SharePage({
         redirect(`/login?redirect=${encodeURIComponent(`/share?${params}`)}`);
       }
 
-      let episodePath: string | null = null;
-
       if (episode?.id) {
         saveReviewInBackground(episode.id, session.user.id, validRating);
-        episodePath = episode.slug
+        const episodePath = episode.slug
           ? `/episode/${episode.id}/${episode.slug}`
           : `/episode/${episode.id}`;
-      } else {
-        processEpisodeInBackground(url, validRating, session.user.id);
+        redirect(episodePath);
       }
+
+      processEpisodeInBackground(url, validRating, session.user.id);
 
       const isLike = validRating === 'like';
       const Icon = isLike ? ThumbsUp : ThumbsDown;
@@ -81,16 +80,7 @@ export default async function SharePage({
             <h1 className="text-xl font-bold">
               {isLike ? 'Liked' : 'Disliked'}!
             </h1>
-            {episodePath ? (
-              <a
-                href={episodePath}
-                className="text-sm text-muted-foreground underline"
-              >
-                View episode
-              </a>
-            ) : (
-              <PollAndRedirect url={url} />
-            )}
+            <PollAndRedirect url={url} />
           </div>
         </main>
       );
