@@ -101,7 +101,7 @@ function extractApplePodcastId(urlString: string): string | undefined {
   return urlString.match(/id(\d+)/)?.[1];
 }
 
-async function fetchApplePodcastMetadata(
+export async function fetchApplePodcastMetadata(
   podcastId: string,
 ): Promise<ApplePodcastMetadata | null> {
   try {
@@ -257,7 +257,7 @@ export async function scrapeCastroEpisodeDetails(url: string) {
   }
 
   // Alert on missing or unreliable fields to catch issues early
-  const isReliableImage = image_url && /mzstatic\.com|scdn\.co|megaphone|simplecastcdn|art19\.com|libsyn\.com|transistor|pippa\.io|substackcdn|cloudfront\.net|buzzsprout|captivate\.fm|omnycontent/.test(image_url);
+  const isReliableImage = image_url && /mzstatic\.com|scdn\.co|megaphone|simplecastcdn|art19\.com|libsyn\.com|transistorcdn\.com|pippa\.io|substackcdn|cloudfront\.net|buzzsprout|captivate\.fm|omnycontent/.test(image_url);
   const missing = [
     !podcast_name && 'podcast_name',
     !image_url && 'image_url',

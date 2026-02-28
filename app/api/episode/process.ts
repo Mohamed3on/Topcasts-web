@@ -4,6 +4,7 @@ import { supabaseAdmin } from '@/utils/supabase/server';
 import {
   cleanUrl,
   determineType,
+  fetchApplePodcastMetadata,
   scrapeDataByType,
   slugifyDetails,
   EpisodeType,
@@ -82,6 +83,17 @@ export async function processNewEpisode(
 
   if (!scrapedData.episode_name) {
     throw new Error('Episode does not exist or could not be scraped');
+  }
+
+  // Prefer Apple CDN images over unreliable sources
+  const isReliableImage = scrapedData.image_url &&
+    /mzstatic\.com|scdn\.co|megaphone|simplecastcdn|art19\.com|libsyn\.com|transistorcdn\.com|pippa\.io|substackcdn|cloudfront\.net|buzzsprout|captivate\.fm|omnycontent/.test(scrapedData.image_url);
+  if (!isReliableImage && scrapedData.podcast_itunes_id) {
+    const metadata = await fetchApplePodcastMetadata(scrapedData.podcast_itunes_id);
+    if (metadata?.artworkUrl) {
+      scrapedData.image_url = metadata.artworkUrl;
+      scrapedData.artist_name ??= metadata.artistName;
+    }
   }
 
   if (!scrapedData.image_url) {

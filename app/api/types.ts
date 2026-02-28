@@ -38,6 +38,7 @@ export type ReviewType = 'like' | 'dislike';
 export type PodcastData = {
   artist_name?: string;
   genres?: string[];
+  image_url?: string | null;
   itunes_id?: string;
   name: string;
   rss_feed?: string;
