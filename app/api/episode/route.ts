@@ -1,22 +1,18 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { revalidateTag } from 'next/cache';
 import { getCloudflareContext } from '@opennextjs/cloudflare';
 
 import { jwtVerify } from 'jose';
-import { cleanUrl, determineType, formatUrls } from './utils';
-import { getCachedEpisodeData } from './utils-cached';
-
-import { ScrapedEpisodeData, ScrapedEpisodeDetails } from '@/app/api/types';
-
+import { cleanUrl, determineType, formatUrls, scrapeDataByType } from './utils';
 import { supabaseAdmin as supabase } from '@/utils/supabase/server';
 import { sendTelegramAlert } from '@/utils/telegram';
+import { updatePodcast } from './db';
 import {
-  upsertEpisode,
-  upsertEpisodeUrl,
-  upsertPodcastDetails,
-  updatePodcast,
-} from './db';
-import { slugifyDetails } from './utils';
+  lookupEpisodeByUrl,
+  processNewEpisode,
+  saveReview,
+  tryRevalidate,
+} from './process';
+import { ScrapedEpisodeDetails } from '@/app/api/types';
 
 export const dynamic = 'force-dynamic';
 
@@ -60,8 +56,7 @@ async function handlePodcastURL({
 }): Promise<
   { id: number; slug: string | null } | { error: string; status: number }
 > {
-  const urlInput = url.trim();
-  const cleanedUrl = cleanUrl(urlInput);
+  const cleanedUrl = cleanUrl(url.trim());
   const type = determineType(cleanedUrl);
 
   if (!type) {
@@ -71,42 +66,31 @@ async function handlePodcastURL({
     };
   }
 
-  // Single joined query: URL → episode → podcast (1 DB roundtrip instead of 2)
-  const { data } = await supabase
-    .from('podcast_episode_url')
-    .select(
-      `
-      episode_id,
-      podcast_episode!inner (
-        id, slug, podcast_id,
-        podcast:podcast_id (artist_name, image_url)
-      )
-    `,
-    )
-    .eq('url', cleanedUrl)
-    .single();
+  const existing = await lookupEpisodeByUrl(url);
 
-  if (data?.podcast_episode) {
-    const episode = data.podcast_episode as unknown as {
-      id: number;
-      slug: string | null;
-      podcast_id: number;
-      podcast: { artist_name: string | null; image_url: string | null } | null;
-    };
-
-    if (episode?.id) {
-      // Check if podcast metadata needs refreshing (missing artist_name or image_url)
-      if ((!episode.podcast?.artist_name || !episode.podcast?.image_url) && episode.podcast_id) {
-        const { ctx } = getCloudflareContext();
-        ctx.waitUntil(
-          refreshPodcastMetadata(type, cleanedUrl, episode.podcast_id),
-        );
-      }
-      return { id: episode.id, slug: episode.slug };
+  if (existing) {
+    // Check if podcast metadata needs refreshing (missing artist_name or image_url)
+    if (
+      (!existing.podcast?.artist_name || !existing.podcast?.image_url) &&
+      existing.podcast_id
+    ) {
+      const { ctx } = getCloudflareContext();
+      ctx.waitUntil(
+        refreshPodcastMetadata(type, cleanedUrl, existing.podcast_id),
+      );
     }
+    return { id: existing.id, slug: existing.slug };
   }
 
-  return handleNewEpisodeData({ type, cleanedUrl });
+  try {
+    return await processNewEpisode(type, cleanedUrl);
+  } catch (error) {
+    console.error('Error processing episode:', error);
+    sendTelegramAlert(
+      `⚠️ Processing failed for ${type} URL:\n${cleanedUrl}\n\n${error instanceof Error ? error.message : String(error)}`,
+    );
+    return { error: 'Failed to process episode', status: 500 };
+  }
 }
 
 export async function POST(request: NextRequest): Promise<NextResponse> {
@@ -157,23 +141,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
 
     // Defer the review upsert to background — don't block the response
     const { ctx } = getCloudflareContext();
-    ctx.waitUntil(
-      supabase
-        .from('podcast_episode_review')
-        .upsert(
-          {
-            episode_id: response.id,
-            user_id: user.id,
-            review_type: body.rating,
-            text: body.review_text,
-            updated_at: new Date().toISOString(),
-          },
-          { onConflict: 'user_id, episode_id' },
-        )
-        .then(({ error }) => {
-          if (error) console.error('Background review upsert failed:', error);
-        }),
-    );
+    ctx.waitUntil(saveReview(response.id, user.id, body.rating, body.review_text));
 
     return NextResponse.json(response);
   } catch (error) {
@@ -185,134 +153,13 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
   }
 }
 
-async function handleNewEpisodeData({
-  type,
-  cleanedUrl,
-}: {
-  type: 'apple' | 'spotify' | 'castro';
-  cleanedUrl: string;
-}) {
-  try {
-    const scrapedData = await getCachedEpisodeData(type, cleanedUrl);
-
-    if (!scrapedData.episode_name) {
-      sendTelegramAlert(
-        `⚠️ Scraping returned no episode name for ${type} URL:\n${cleanedUrl}`,
-      );
-      return {
-        error: 'Episode does not exist or could not be scraped',
-        status: 400,
-      };
-    }
-
-    if (!scrapedData.image_url) {
-      sendTelegramAlert(
-        `⚠️ Scraping returned no image for ${type} URL:\n${cleanedUrl}\nEpisode: ${scrapedData.episode_name}`,
-      );
-    }
-
-    const episodeDetails = await updateEpisodeDetails({
-      type,
-      cleanedUrl,
-      scrapedData,
-    });
-
-    return (
-      episodeDetails || {
-        error: 'Failed to update episode details',
-        status: 500,
-      }
-    );
-  } catch (error) {
-    console.error('Error scraping data:', error);
-    sendTelegramAlert(
-      `⚠️ Scraping failed for ${type} URL:\n${cleanedUrl}\n\n${error instanceof Error ? error.message : String(error)}`,
-    );
-    return { error: 'Error scraping episode details', status: 500 };
-  }
-}
-async function updateEpisodeDetails({
-  type,
-  cleanedUrl,
-  scrapedData,
-}: {
-  type: 'apple' | 'spotify' | 'castro';
-  cleanedUrl: string;
-  scrapedData: ScrapedEpisodeDetails;
-}): Promise<{ id: number; slug: string } | { error: string; status: number }> {
-  try {
-    const slug = slugifyDetails(
-      scrapedData.episode_name,
-      scrapedData.podcast_name,
-    );
-
-    const podcastData = {
-      name: scrapedData.podcast_name,
-      itunes_id: scrapedData.podcast_itunes_id,
-      spotify_id: scrapedData.spotify_show_id,
-      genres: scrapedData.podcast_genres,
-      rss_feed: scrapedData.rss_feed,
-      artist_name: scrapedData.artist_name,
-      image_url: scrapedData.image_url,
-    };
-
-    const episodeData: ScrapedEpisodeData = {
-      audio_url: scrapedData.audio_url,
-      date_published: scrapedData.date_published,
-      description: scrapedData.description,
-      duration: scrapedData.duration,
-      episode_itunes_id: scrapedData.episode_itunes_id,
-      episode_name: scrapedData.episode_name,
-      formatted_duration: scrapedData.formatted_duration,
-      guid: scrapedData.guid,
-      image_url: scrapedData.image_url,
-      slug: slug,
-    };
-
-    const podcastId = await upsertPodcastDetails(supabase, podcastData);
-
-    // Revalidate caches after update
-    revalidateTag(`podcast-details:${podcastId}`);
-    revalidateTag(`podcast-metadata:${podcastId}`);
-    revalidateTag('search-episodes');
-
-    const { data: episode, error: episodeError } = await upsertEpisode(
-      supabase,
-      episodeData,
-      podcastId,
-    );
-    if (episodeError || !episode)
-      throw new Error(
-        `Failed to upsert episode: ${JSON.stringify(episodeError)}`,
-      );
-
-    revalidateTag(`episode-details:${episode.id}`);
-    revalidateTag(`episode-metadata:${episode.id}`);
-
-    const { error: urlError } = await upsertEpisodeUrl(
-      supabase,
-      cleanedUrl,
-      episode.id,
-      type,
-    );
-    if (urlError)
-      throw new Error(
-        `Failed to upsert episode URL: ${JSON.stringify(urlError)}`,
-      );
-
-    return { id: episode.id, slug };
-  } catch (error) {
-    console.error('Error updating episode details:', error);
-    return { error: 'Failed to update episode details', status: 500 };
-  }
-}
-
 async function refreshPodcastMetadata(
   type: 'apple' | 'spotify' | 'castro',
   cleanedUrl: string,
   podcastId: number,
 ): Promise<void> {
-  const scrapedData = (await getCachedEpisodeData(
+  // Use scrapeDataByType directly — unstable_cache doesn't work inside waitUntil
+  const scrapedData = (await scrapeDataByType(
     type,
     cleanedUrl,
   )) as ScrapedEpisodeDetails;
@@ -332,6 +179,6 @@ async function refreshPodcastMetadata(
   };
 
   await updatePodcast(supabase, scrapedData.podcast_name, podcastData);
-  revalidateTag(`podcast-details:${podcastId}`);
-  revalidateTag(`podcast-metadata:${podcastId}`);
+  tryRevalidate(`podcast-details:${podcastId}`);
+  tryRevalidate(`podcast-metadata:${podcastId}`);
 }

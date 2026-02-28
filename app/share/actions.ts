@@ -1,57 +1,13 @@
 'use server';
 
-import { revalidateTag } from 'next/cache';
-
-import { supabaseAdmin } from '@/utils/supabase/server';
 import { createClient } from '@/utils/supabase/ssr';
-import { cleanUrl, determineType, slugifyDetails } from '@/app/api/episode/utils';
-import { getCachedEpisodeData } from '@/app/api/episode/utils-cached';
-import {
-  upsertEpisode,
-  upsertEpisodeUrl,
-  upsertPodcastDetails,
-} from '@/app/api/episode/db';
+import { cleanUrl, determineType } from '@/app/api/episode/utils';
+import { processNewEpisode, lookupEpisodeByUrl } from '@/app/api/episode/process';
 import { sendTelegramAlert } from '@/utils/telegram';
-import { ScrapedEpisodeData, ScrapedEpisodeDetails } from '@/app/api/types';
 import { saveReviewInBackground } from './background';
 
-/**
- * Look up an existing episode by URL using a single joined query.
- * Returns episode id/slug or null if not found.
- */
-export async function lookupEpisodeByUrl(url: string) {
-  const cleanedUrl = cleanUrl(url.trim());
-  const type = determineType(cleanedUrl);
-
-  if (!type) return null;
-
-  const { data } = await supabaseAdmin
-    .from('podcast_episode_url')
-    .select(
-      `
-      episode_id,
-      podcast_episode!inner (
-        id, slug, podcast_id,
-        podcast:podcast_id (artist_name, image_url)
-      )
-    `,
-    )
-    .eq('url', cleanedUrl)
-    .single();
-
-  if (!data?.podcast_episode) return null;
-
-  const episode = data.podcast_episode as unknown as {
-    id: number;
-    slug: string | null;
-    podcast_id: number;
-    podcast: { artist_name: string | null; image_url: string | null } | null;
-  };
-
-  if (!episode?.id) return null;
-
-  return { ...episode, type, cleanedUrl };
-}
+// Re-export as server action for PollAndRedirect
+export { lookupEpisodeByUrl };
 
 /**
  * Server action for sharing an episode. Used by the manual form
@@ -89,83 +45,9 @@ export async function shareEpisode(
   // New episode — scrape and persist (blocking for manual form,
   // since the user expects to see the episode page after)
   try {
-    const scrapedData = (await getCachedEpisodeData(type, cleanedUrl)) as ScrapedEpisodeDetails;
-
-    if (!scrapedData.episode_name) {
-      sendTelegramAlert(
-        `⚠️ Scraping returned no episode name for ${type} URL:\n${cleanedUrl}`,
-      );
-      return { error: 'Episode does not exist or could not be scraped' };
-    }
-
-    if (!scrapedData.image_url) {
-      sendTelegramAlert(
-        `⚠️ Scraping returned no image for ${type} URL:\n${cleanedUrl}\nEpisode: ${scrapedData.episode_name}`,
-      );
-    }
-
-    const slug = slugifyDetails(
-      scrapedData.episode_name,
-      scrapedData.podcast_name,
-    );
-
-    const podcastData = {
-      name: scrapedData.podcast_name,
-      itunes_id: scrapedData.podcast_itunes_id,
-      spotify_id: scrapedData.spotify_show_id,
-      genres: scrapedData.podcast_genres,
-      rss_feed: scrapedData.rss_feed,
-      artist_name: scrapedData.artist_name,
-      image_url: scrapedData.image_url,
-    };
-
-    const episodeData: ScrapedEpisodeData = {
-      audio_url: scrapedData.audio_url,
-      date_published: scrapedData.date_published,
-      description: scrapedData.description,
-      duration: scrapedData.duration,
-      episode_itunes_id: scrapedData.episode_itunes_id,
-      episode_name: scrapedData.episode_name,
-      formatted_duration: scrapedData.formatted_duration,
-      guid: scrapedData.guid,
-      image_url: scrapedData.image_url,
-      slug,
-    };
-
-    const podcastId = await upsertPodcastDetails(supabaseAdmin, podcastData);
-    revalidateTag(`podcast-details:${podcastId}`);
-    revalidateTag(`podcast-metadata:${podcastId}`);
-    revalidateTag('search-episodes');
-
-    const { data: episode, error: episodeError } = await upsertEpisode(
-      supabaseAdmin,
-      episodeData,
-      podcastId,
-    );
-    if (episodeError || !episode) {
-      throw new Error(
-        `Failed to upsert episode: ${JSON.stringify(episodeError)}`,
-      );
-    }
-
-    revalidateTag(`episode-details:${episode.id}`);
-    revalidateTag(`episode-metadata:${episode.id}`);
-
-    const { error: urlError } = await upsertEpisodeUrl(
-      supabaseAdmin,
-      cleanedUrl,
-      episode.id,
-      type,
-    );
-    if (urlError) {
-      throw new Error(
-        `Failed to upsert episode URL: ${JSON.stringify(urlError)}`,
-      );
-    }
-
-    saveReviewInBackground(episode.id, userId, rating, reviewText);
-
-    return { id: episode.id, slug };
+    const { id, slug } = await processNewEpisode(type, cleanedUrl);
+    saveReviewInBackground(id, userId, rating, reviewText);
+    return { id, slug };
   } catch (error) {
     console.error('Error processing episode:', error);
     sendTelegramAlert(

@@ -48,3 +48,4 @@ twitter.log
 .wrangler/
 .playwright-cli/
 .playwright-mcp/
+data/idealista-profile/
