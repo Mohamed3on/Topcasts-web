@@ -43,13 +43,13 @@ export const Episode = ({
 }) => {
   return (
     <main className="flex flex-col items-center p-4 md:p-12">
-      <div className="grid w-full gap-8 md:grid-cols-[1fr,2fr]">
-        <div className="flex flex-col items-center gap-8">
+      <div className="mx-auto grid w-full max-w-5xl gap-8 md:grid-cols-[auto,1fr] md:gap-12">
+        <div className="flex flex-col items-center gap-6">
           {episodeDetails.image_url && (
             <Image
               width={300}
               height={300}
-              className="h-64 w-64 rounded-lg object-cover"
+              className="h-64 w-64 rounded-xl object-cover shadow-lg"
               src={episodeDetails.image_url}
               alt={episodeDetails.episode_name!}
             />
@@ -60,41 +60,47 @@ export const Episode = ({
             dislikes={episodeDetails.dislikes || 0}
           />
           {episodeDetails.twitter_shares! > 0 && (
-            <div className="flex items-center gap-1 text-blue-500">
-              <Twitter className="h-6 w-6" />
-              <span className="">
+            <div className="flex items-center gap-1.5 text-blue-500">
+              <Twitter className="h-5 w-5" />
+              <span className="text-sm">
                 {episodeDetails.twitter_shares} Recommendations
               </span>
             </div>
           )}
         </div>
-        <div className="flex flex-col items-center gap-4 md:items-start ">
+        <div className="flex flex-col items-center gap-3 md:items-start">
           <h1 className="text-center text-2xl font-semibold md:text-left">
             {episodeDetails.episode_name}
           </h1>
           <Link
             prefetch={true}
             href={`/podcast/${episodeDetails.podcast_id}`}
-            className="text-xl text-primary/80 underline transition-all hover:text-primary/60 hover:no-underline active:text-primary/40"
+            className="text-lg text-primary/80 underline transition-all hover:text-primary/60 hover:no-underline active:text-primary/40"
           >
             {episodeDetails.podcast_name}
           </Link>
-          {episodeDetails.date_published && (
-            <p className="text-muted-foreground">
-              {new Date(episodeDetails.date_published).toLocaleDateString(
-                'en-gb',
-                {
-                  year: 'numeric',
-                  month: 'long',
-                  day: 'numeric',
-                },
+          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+            {episodeDetails.date_published && (
+              <span>
+                {new Date(episodeDetails.date_published).toLocaleDateString(
+                  'en-gb',
+                  {
+                    year: 'numeric',
+                    month: 'long',
+                    day: 'numeric',
+                  },
+                )}
+              </span>
+            )}
+            {episodeDetails.date_published &&
+              (episodeDetails.duration || episodeDetails.formatted_duration) && (
+                <span className="text-muted-foreground/40">&middot;</span>
               )}
-            </p>
-          )}
-          <Duration episodeDetails={episodeDetails} />
+            <Duration episodeDetails={episodeDetails} />
+          </div>
 
-          <div className="flex gap-4">
-            <span className="text-lg font-semibold">Listen on:</span>
+          <div className="flex items-center gap-3 pt-1">
+            <span className="text-sm font-medium text-muted-foreground">Listen on</span>
             {episodeDetails.podcast_itunes_id && (
               <PlayerIcon
                 url={
@@ -129,7 +135,7 @@ export const Episode = ({
           </div>
 
           {episodeDetails.description && (
-            <div className="prose w-full">
+            <div className="prose w-full pt-2">
               <EpisodeDescription description={episodeDetails.description} />
             </div>
           )}

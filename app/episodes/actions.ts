@@ -7,6 +7,28 @@ import { revalidateTag } from 'next/cache';
 const EPISODE_DETAILS_TAG = 'episode-details';
 const SEARCH_EPISODES_TAG = 'search-episodes';
 
+export async function saveReviewText(episodeId: number, text: string | null) {
+  const supabase = await createClient();
+  const { data: userData } = await supabase.auth.getUser();
+
+  if (!userData?.user?.id) {
+    return { error: 'Not authenticated' };
+  }
+
+  const { error } = await (supabase as any)
+    .from('podcast_episode_review')
+    .update({ text: text || null, updated_at: new Date().toISOString() })
+    .eq('episode_id', episodeId)
+    .eq('user_id', userData.user.id);
+
+  if (error) {
+    return { error: error.message };
+  }
+
+  revalidateTag(`${EPISODE_DETAILS_TAG}:${episodeId}`);
+  return { success: true };
+}
+
 export async function toggleReview(
   episodeId: number,
   type: ReviewType,

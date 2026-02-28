@@ -19,14 +19,18 @@ export type EpisodeForCard = {
   dislikes: number;
 };
 
+const stripHtml = (html: string) =>
+  html.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim();
+
 export const EpisodeCardDescription = ({
   episode,
 }: {
   episode: EpisodeForCard;
 }) => {
+  if (!episode.description) return null;
   return (
     <div className="prose mt-3 line-clamp-1 text-sm text-gray-500 sm:line-clamp-2">
-      <span>{episode.description}</span>
+      <span>{stripHtml(episode.description)}</span>
     </div>
   );
 };

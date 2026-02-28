@@ -2,6 +2,7 @@
 import { ReviewType } from '@/app/api/types';
 import { Button } from '@/components/ui/button';
 import { Loader2Icon, ThumbsDownIcon, ThumbsUp } from 'lucide-react';
+import { useRef } from 'react';
 import { useReview } from './hooks/useReview';
 
 const reviewOptions = [
@@ -21,26 +22,39 @@ export const ReviewButtons = ({
   dislikes: number;
 }) => {
   const { toggleReview, isLoading } = useReview(episodeId, reviewType);
+  const iconRefs = useRef<Record<string, HTMLSpanElement | null>>({});
+
+  const handleClick = async (type: ReviewType) => {
+    const el = iconRefs.current[type];
+    if (el) {
+      el.classList.remove('animate-pop');
+      void el.offsetWidth;
+      el.classList.add('animate-pop');
+    }
+    toggleReview(type);
+  };
 
   return (
-    <div className="flex gap-4">
+    <div className="flex gap-3">
       {reviewOptions.map(({ type, Icon, color }) => (
         <Button
           disabled={isLoading}
           key={type}
           aria-label={type}
           variant="secondary"
-          className={`flex items-center gap-2 transition-colors hover:bg-slate-300 active:bg-slate-200 ${
+          className={`flex items-center gap-2 transition-colors hover:bg-slate-200 active:bg-slate-300 ${
             reviewType === type ? color : ''
           }`}
-          onClick={() => toggleReview(type)}
+          onClick={() => handleClick(type)}
         >
-          {!isLoading ? (
-            <Icon size={24} />
-          ) : (
-            <Loader2Icon size={24} className="animate-spin" />
-          )}
-          <span className=" text-sm">{type === 'like' ? likes : dislikes}</span>
+          <span ref={(el) => { iconRefs.current[type] = el; }}>
+            {!isLoading ? (
+              <Icon size={22} />
+            ) : (
+              <Loader2Icon size={22} className="animate-spin" />
+            )}
+          </span>
+          <span className="text-sm tabular-nums">{type === 'like' ? likes : dislikes}</span>
         </Button>
       ))}
     </div>
