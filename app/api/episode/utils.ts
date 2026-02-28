@@ -246,7 +246,7 @@ export async function scrapeCastroEpisodeDetails(url: string) {
         const metadata = await fetchApplePodcastMetadata(podcastId);
         if (metadata) {
           artist_name = metadata.artistName ?? artist_name;
-          if (!image_url && metadata.artworkUrl) image_url = metadata.artworkUrl;
+          if (metadata.artworkUrl) image_url = metadata.artworkUrl;
           rss_feed = rss_feed ?? metadata.rssFeed ?? undefined;
           podcast_genres = metadata.genres ?? podcast_genres;
         }
@@ -256,13 +256,15 @@ export async function scrapeCastroEpisodeDetails(url: string) {
     }
   }
 
-  // Alert on missing critical fields to catch selector breakage early
+  // Alert on missing or unreliable fields to catch issues early
+  const isReliableImage = image_url && /mzstatic\.com|scdn\.co|megaphone|simplecastcdn|art19\.com|libsyn\.com|transistor|pippa\.io|substackcdn|cloudfront\.net|buzzsprout|captivate\.fm|omnycontent/.test(image_url);
   const missing = [
     !podcast_name && 'podcast_name',
     !image_url && 'image_url',
     !audio_url && 'audio_url',
     !date_published && 'date_published',
     !duration && 'duration',
+    (image_url && !isReliableImage) && `unreliable_image(${image_url})`,
   ].filter(Boolean);
   if (missing.length) {
     sendTelegramAlert(
