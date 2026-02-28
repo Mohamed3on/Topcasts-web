@@ -101,7 +101,7 @@ function extractApplePodcastId(urlString: string): string | undefined {
   return urlString.match(/id(\d+)/)?.[1];
 }
 
-export async function fetchApplePodcastMetadata(
+async function fetchApplePodcastMetadata(
   podcastId: string,
 ): Promise<ApplePodcastMetadata | null> {
   try {
@@ -234,25 +234,25 @@ export async function scrapeCastroEpisodeDetails(url: string) {
   let episode_itunes_id: string | undefined;
   let podcast_genres: string[] | undefined;
 
-  // Enrich from Apple metadata if link present
+  // Enrich from Apple metadata
   const appleLink = $(
     'a[href*="podcasts.apple.com"], a[href*="itunes.apple.com"]',
   ).attr('href');
-  if (appleLink) {
-    const podcastId = extractApplePodcastId(cleanUrl(appleLink));
-    if (podcastId) {
-      podcastItunesId = podcastItunesId ?? podcastId;
-      try {
-        const metadata = await fetchApplePodcastMetadata(podcastId);
-        if (metadata) {
-          artist_name = metadata.artistName ?? artist_name;
-          if (metadata.artworkUrl) image_url = metadata.artworkUrl;
-          rss_feed = rss_feed ?? metadata.rssFeed ?? undefined;
-          podcast_genres = metadata.genres ?? podcast_genres;
-        }
-      } catch (error) {
-        console.warn('[scrapeCastroEpisodeDetails] Apple metadata fetch failed', error);
+  const applePodcastId = appleLink
+    ? extractApplePodcastId(cleanUrl(appleLink))
+    : /^\d+$/.test(podcastItunesId ?? '') ? podcastItunesId : undefined;
+  if (applePodcastId) {
+    podcastItunesId = podcastItunesId ?? applePodcastId;
+    try {
+      const metadata = await fetchApplePodcastMetadata(applePodcastId);
+      if (metadata) {
+        artist_name = metadata.artistName ?? artist_name;
+        if (metadata.artworkUrl) image_url = metadata.artworkUrl;
+        rss_feed = rss_feed ?? metadata.rssFeed ?? undefined;
+        podcast_genres = metadata.genres ?? podcast_genres;
       }
+    } catch (error) {
+      console.warn('[scrapeCastroEpisodeDetails] Apple metadata fetch failed', error);
     }
   }
 
