@@ -175,6 +175,12 @@ export function saveReview(
       { onConflict: 'user_id, episode_id' },
     )
     .then(({ error }) => {
-      if (error) console.error('Review upsert failed:', error);
+      if (error) {
+        console.error('Review upsert failed:', error);
+        return;
+      }
+      tryRevalidate(`episode-details:${episodeId}`);
+      tryRevalidate('search-episodes');
+      tryRevalidate('user-podcast-reviews');
     });
 }

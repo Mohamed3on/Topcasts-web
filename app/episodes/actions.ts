@@ -51,6 +51,7 @@ export async function toggleReview(
 
   revalidateTag(`${EPISODE_DETAILS_TAG}:${episodeId}`);
   revalidateTag(SEARCH_EPISODES_TAG);
+  revalidateTag('user-podcast-reviews');
 
   return { success: true };
 }
