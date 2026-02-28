@@ -6,23 +6,21 @@ import {
   HeartIcon,
   LogInIcon,
   PlusCircle,
-  SearchIcon,
   Share,
 } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { redirect } from 'next/navigation';
 import Logout from './logout/LogOutButton';
 
 import AddEpisodeButton from '@/app/AddEpisodeButton';
 import MobileNav from '@/app/MobileNav';
+import SearchBar from '@/app/SearchBar';
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { Input } from '@/components/ui/input';
 
 const Header = async ({ user: userInfo }: { user: User | null }) => {
 
@@ -62,31 +60,7 @@ const Header = async ({ user: userInfo }: { user: User | null }) => {
         </Button>
       </div>
 
-      <form
-        action={async (formData) => {
-          'use server';
-          const search = formData.get('search');
-
-          const href = `/search${search ? `?q=${search}` : ''}`;
-          redirect(href);
-        }}
-      >
-        <div className="relative w-full">
-          <Input
-            name="search"
-            type="search"
-            className="w-44 xl:w-96"
-            placeholder="Search episodes"
-          />
-
-          <button
-            type="submit"
-            className="absolute right-3 top-1/2 -translate-y-1/2 transform"
-          >
-            <SearchIcon className="text-muted-foreground" size={18} />
-          </button>
-        </div>
-      </form>
+      <SearchBar />
 
       {userInfo && (
         <DropdownMenu>

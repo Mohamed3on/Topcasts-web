@@ -22,7 +22,7 @@ const fetchEpisodes = async ({
   const userId = userData?.user?.id;
 
   return await getCachedSearchResults(
-    q?.replace(/ /g, '+') || '',
+    q || '',
     userId,
     episode_name || '',
     podcast_name || '',

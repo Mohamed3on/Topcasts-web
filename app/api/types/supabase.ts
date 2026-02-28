@@ -433,6 +433,16 @@ export type Database = {
           twitter_shares: number;
         }[];
       };
+      search_episodes_autocomplete: {
+        Args: { query: string };
+        Returns: {
+          id: number;
+          episode_name: string;
+          podcast_name: string;
+          image_url: string;
+          slug: string;
+        }[];
+      };
       search_episodes_by_relevance: {
         Args:
           | {
