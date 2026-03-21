@@ -25,7 +25,7 @@ export async function saveReviewText(episodeId: number, text: string | null) {
     return { error: error.message };
   }
 
-  revalidateTag(`${EPISODE_DETAILS_TAG}:${episodeId}`);
+  revalidateTag(`${EPISODE_DETAILS_TAG}:${episodeId}`, 'max');
   return { success: true };
 }
 
@@ -71,9 +71,9 @@ export async function toggleReview(
     return { error: error.message };
   }
 
-  revalidateTag(`${EPISODE_DETAILS_TAG}:${episodeId}`);
-  revalidateTag(SEARCH_EPISODES_TAG);
-  revalidateTag('user-podcast-reviews');
+  revalidateTag(`${EPISODE_DETAILS_TAG}:${episodeId}`, 'max');
+  revalidateTag(SEARCH_EPISODES_TAG, 'max');
+  revalidateTag('user-podcast-reviews', 'max');
 
   return { success: true };
 }

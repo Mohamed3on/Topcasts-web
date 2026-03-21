@@ -20,7 +20,7 @@ import { ScrapedEpisodeData, ScrapedEpisodeDetails } from '@/app/api/types';
 
 export function tryRevalidate(tag: string) {
   try {
-    revalidateTag(tag);
+    revalidateTag(tag, 'max');
   } catch {
     // revalidateTag may not work inside waitUntil (no Next.js request context)
   }
@@ -75,7 +75,9 @@ export async function processNewEpisode(
   opts?: { useCache?: boolean },
 ): Promise<{ id: number; slug: string }> {
   const useCache = opts?.useCache ?? true;
-  const revalidate = useCache ? revalidateTag : tryRevalidate;
+  const revalidate = useCache
+    ? (tag: string) => revalidateTag(tag, 'max')
+    : tryRevalidate;
 
   const scrapedData = (useCache
     ? await getCachedEpisodeData(type, cleanedUrl)
@@ -149,13 +151,13 @@ export async function processNewEpisode(
  * Upsert a review for an episode. Returns a promise so callers can
  * await it or pass it to waitUntil.
  */
-export function saveReview(
+export async function saveReview(
   episodeId: number,
   userId: string,
   rating: string,
   reviewText?: string,
 ) {
-  return supabaseAdmin
+  const { error } = await supabaseAdmin
     .from('podcast_episode_review')
     .upsert(
       {
@@ -166,14 +168,8 @@ export function saveReview(
         updated_at: new Date().toISOString(),
       },
       { onConflict: 'user_id, episode_id' },
-    )
-    .then(({ error }) => {
-      if (error) {
-        console.error('Review upsert failed:', error);
-        return;
-      }
-      tryRevalidate(`episode-details:${episodeId}`);
-      tryRevalidate('search-episodes');
-      tryRevalidate('user-podcast-reviews');
-    });
+    );
+  if (error) {
+    console.error('Review upsert failed:', error);
+  }
 }

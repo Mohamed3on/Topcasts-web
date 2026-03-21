@@ -1,4 +1,5 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { revalidateTag } from 'next/cache';
+import { after, NextRequest, NextResponse } from 'next/server';
 import { getCloudflareContext } from '@opennextjs/cloudflare';
 
 import { jwtVerify } from 'jose';
@@ -139,9 +140,13 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
         { status: response.status },
       );
 
-    // Defer the review upsert to background — don't block the response
-    const { ctx } = getCloudflareContext();
-    ctx.waitUntil(saveReview(response.id, user.id, body.rating, body.review_text));
+    // Write review + revalidate after response (after() retains request context)
+    after(async () => {
+      await saveReview(response.id, user.id, body.rating, body.review_text);
+      revalidateTag(`episode-details:${response.id}`, 'max');
+      revalidateTag('search-episodes', 'max');
+      revalidateTag('user-podcast-reviews', 'max');
+    });
 
     return NextResponse.json(response);
   } catch (error) {
