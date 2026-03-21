@@ -6,6 +6,7 @@ import {
   determineType,
   scrapeDataByType,
   slugifyDetails,
+  toPodcastData,
   EpisodeType,
 } from './utils';
 import { getCachedEpisodeData } from './utils-cached';
@@ -95,15 +96,7 @@ export async function processNewEpisode(
     scrapedData.podcast_name,
   );
 
-  const podcastData = {
-    name: scrapedData.podcast_name,
-    itunes_id: scrapedData.podcast_itunes_id,
-    spotify_id: scrapedData.spotify_show_id,
-    genres: scrapedData.podcast_genres,
-    rss_feed: scrapedData.rss_feed,
-    artist_name: scrapedData.artist_name,
-    image_url: scrapedData.image_url,
-  };
+  const podcastData = toPodcastData(scrapedData);
 
   const episodeData: ScrapedEpisodeData = {
     audio_url: scrapedData.audio_url,

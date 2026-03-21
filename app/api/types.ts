@@ -2,6 +2,7 @@ import { Database } from '@/app/api/types/supabase';
 
 export type ScrapedPodcastData = {
   artist_name?: string;
+  castro_id?: string;
   rss_feed?: string;
   podcast_genres?: string[];
   spotify_show_id?: string;
@@ -37,6 +38,7 @@ export type ReviewType = 'like' | 'dislike';
 
 export type PodcastData = {
   artist_name?: string;
+  castro_id?: string;
   genres?: string[];
   image_url?: string | null;
   itunes_id?: string;

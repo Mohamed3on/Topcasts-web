@@ -17,6 +17,10 @@ export async function fetchPodcast(
     const safeSpotifyId = podcastData.spotify_id.replace(/"/g, '""');
     filters.push(`spotify_id.eq."${safeSpotifyId}"`);
   }
+  if (podcastData.castro_id) {
+    const safeCastroId = podcastData.castro_id.replace(/"/g, '""');
+    filters.push(`castro_id.eq."${safeCastroId}"`);
+  }
 
   if (filters.length === 0) {
     return { data: null, error: null };
@@ -26,7 +30,8 @@ export async function fetchPodcast(
     .from('podcast')
     .select()
     .or(filters.join(','))
-    .single();
+    .limit(1)
+    .maybeSingle();
 }
 
 export async function insertPodcast(
@@ -38,13 +43,13 @@ export async function insertPodcast(
 
 export async function updatePodcast(
   supabase: SupabaseAdmin,
-  name: string,
+  id: number,
   podcastData: PodcastData,
 ) {
   return supabase
     .from('podcast')
     .update(podcastData)
-    .eq('name', name)
+    .eq('id', id)
     .select('id')
     .single();
 }
@@ -91,7 +96,7 @@ export async function upsertPodcastDetails(
   } else {
     const { data: updatedPodcast, error: updateError } = await updatePodcast(
       supabase,
-      existingPodcast.name,
+      existingPodcast.id,
       podcastData,
     );
     if (updateError)

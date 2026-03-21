@@ -15,6 +15,7 @@ export type Database = {
       podcast: {
         Row: {
           artist_name: string | null;
+          castro_id: string | null;
           genres: string[] | null;
           id: number;
           image_url: string | null;
@@ -25,6 +26,7 @@ export type Database = {
         };
         Insert: {
           artist_name?: string | null;
+          castro_id?: string | null;
           genres?: string[] | null;
           id?: number;
           image_url?: string | null;
@@ -35,6 +37,7 @@ export type Database = {
         };
         Update: {
           artist_name?: string | null;
+          castro_id?: string | null;
           genres?: string[] | null;
           id?: number;
           image_url?: string | null;

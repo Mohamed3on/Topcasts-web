@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getCloudflareContext } from '@opennextjs/cloudflare';
 
 import { jwtVerify } from 'jose';
-import { cleanUrl, determineType, formatUrls, scrapeDataByType } from './utils';
+import { cleanUrl, determineType, formatUrls, scrapeDataByType, toPodcastData } from './utils';
 import { supabaseAdmin as supabase } from '@/utils/supabase/server';
 import { sendTelegramAlert } from '@/utils/telegram';
 import { updatePodcast } from './db';
@@ -168,17 +168,7 @@ async function refreshPodcastMetadata(
     return;
   }
 
-  const podcastData = {
-    name: scrapedData.podcast_name,
-    itunes_id: scrapedData.podcast_itunes_id,
-    spotify_id: scrapedData.spotify_show_id,
-    genres: scrapedData.podcast_genres,
-    rss_feed: scrapedData.rss_feed,
-    artist_name: scrapedData.artist_name,
-    image_url: scrapedData.image_url,
-  };
-
-  await updatePodcast(supabase, scrapedData.podcast_name, podcastData);
+  await updatePodcast(supabase, podcastId, toPodcastData(scrapedData));
   tryRevalidate(`podcast-details:${podcastId}`);
   tryRevalidate(`podcast-metadata:${podcastId}`);
 }

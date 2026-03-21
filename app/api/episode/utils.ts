@@ -1,4 +1,5 @@
 import { getSpotifyEpisodeData } from '@/app/api/episode/spotify';
+import { PodcastData, ScrapedEpisodeDetails } from '@/app/api/types';
 import { sendTelegramAlert } from '@/utils/telegram';
 import { load } from 'cheerio';
 import slugify from 'slugify';
@@ -57,6 +58,19 @@ export function formatUrls(
     (acc, { type, url }) => ({ ...acc, [type]: url }),
     {},
   );
+}
+
+export function toPodcastData(s: ScrapedEpisodeDetails): PodcastData {
+  return {
+    name: s.podcast_name,
+    itunes_id: s.podcast_itunes_id,
+    spotify_id: s.spotify_show_id,
+    castro_id: s.castro_id,
+    genres: s.podcast_genres,
+    rss_feed: s.rss_feed,
+    artist_name: s.artist_name,
+    image_url: s.image_url,
+  };
 }
 
 async function getHtml(url: string) {
@@ -219,12 +233,14 @@ export async function scrapeCastroEpisodeDetails(url: string) {
   const audio_url = $('audio source').attr('src');
   let podcastItunesId = $('a[href*="pca.st"]').attr('href')?.split('/').pop();
   let rss_feed = $('img[alt*="RSS"]').parent().attr('href') || undefined;
+  const castroShareLink = $('a[href*="castro.fm/share/podcast/"]').attr('href');
+  const castro_id = castroShareLink?.match(/castro\.fm\/share\/podcast\/([0-9a-f-]{36})/)?.[1];
 
   const spans = $('.episode-submeta').find('span').not('.dot');
   const date_published = spans.eq(0).text().trim() || $('h2').eq(1).text();
   const formatted_duration =
     spans.eq(1).text().trim() || ogDuration || $('h2').eq(2).text();
-  const duration = parseDurationMs(formatted_duration);
+  const duration = parseDurationMs(formatted_duration) || null;
 
   let image_url = ogImage ||
     $('img.artwork-main').attr('src') ||
@@ -257,13 +273,13 @@ export async function scrapeCastroEpisodeDetails(url: string) {
   }
 
   // Alert on missing or unreliable fields to catch issues early
-  const isReliableImage = image_url && /mzstatic\.com|scdn\.co|megaphone|simplecastcdn|art19\.com|libsyn\.com|transistorcdn\.com|pippa\.io|substackcdn|cloudfront\.net|buzzsprout|captivate\.fm|omnycontent/.test(image_url);
+  const isReliableImage = image_url && /mzstatic\.com|scdn\.co|megaphone|simplecastcdn|art19\.com|libsyn\.com|transistorcdn\.com|pippa\.io|substackcdn|cloudfront\.net|buzzsprout|captivate\.fm|omnycontent|imgur\.com/.test(image_url);
   const missing = [
     !podcast_name && 'podcast_name',
     !image_url && 'image_url',
     !audio_url && 'audio_url',
     !date_published && 'date_published',
-    !duration && 'duration',
+    !duration && !audio_url && 'duration',
     (image_url && !isReliableImage) && `unreliable_image(${image_url})`,
   ].filter(Boolean);
   if (missing.length) {
@@ -281,6 +297,7 @@ export async function scrapeCastroEpisodeDetails(url: string) {
     date_published,
     podcast_itunes_id: podcastItunesId,
     episode_itunes_id,
+    castro_id,
     rss_feed,
     audio_url,
     artist_name,
