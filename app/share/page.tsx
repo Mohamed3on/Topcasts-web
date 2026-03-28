@@ -47,25 +47,25 @@ export default async function SharePage({
     if (isValid) {
       // Parallelize auth check and episode lookup
       const supabase = await createClient();
-      const [{ data: { session } }, episode] = await Promise.all([
-        supabase.auth.getSession(),
+      const [{ data: { user } }, episode] = await Promise.all([
+        supabase.auth.getUser(),
         lookupEpisodeByUrl(url).catch(() => null),
       ]);
 
-      if (!session?.user) {
+      if (!user) {
         const params = new URLSearchParams({ url, rating: validRating });
         redirect(`/login?redirect=${encodeURIComponent(`/share?${params}`)}`);
       }
 
       if (episode?.id) {
-        saveReviewInBackground(episode.id, session.user.id, validRating);
+        saveReviewInBackground(episode.id, user.id, validRating);
         const episodePath = episode.slug
           ? `/episode/${episode.id}/${episode.slug}`
           : `/episode/${episode.id}`;
         redirect(episodePath);
       }
 
-      processEpisodeInBackground(url, validRating, session.user.id);
+      processEpisodeInBackground(url, validRating, user.id);
 
       const isLike = validRating === 'like';
       const Icon = isLike ? ThumbsUp : ThumbsDown;

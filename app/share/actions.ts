@@ -20,14 +20,14 @@ export async function shareEpisode(
 ): Promise<{ id: number; slug: string | null } | { error: string }> {
   const supabase = await createClient();
   const {
-    data: { session },
-  } = await supabase.auth.getSession();
+    data: { user },
+  } = await supabase.auth.getUser();
 
-  if (!session?.user) {
+  if (!user) {
     return { error: 'Not authenticated' };
   }
 
-  const userId = session.user.id;
+  const userId = user.id;
   const cleanedUrl = cleanUrl(url.trim());
   const type = determineType(cleanedUrl);
 
