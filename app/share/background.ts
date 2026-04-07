@@ -1,4 +1,5 @@
 import { getCloudflareContext } from '@opennextjs/cloudflare';
+import { revalidateTag } from 'next/cache';
 
 import { cleanUrl, determineType } from '@/app/api/episode/utils';
 import {
@@ -19,7 +20,13 @@ export function saveReviewInBackground(
   reviewText?: string,
 ) {
   const { ctx } = getCloudflareContext();
-  ctx.waitUntil(saveReview(episodeId, userId, rating, reviewText));
+  ctx.waitUntil(
+    saveReview(episodeId, userId, rating, reviewText).then(() => {
+      revalidateTag(`episode-details:${episodeId}`, 'max');
+      revalidateTag('search-episodes', 'max');
+      revalidateTag('user-podcast-reviews', 'max');
+    }),
+  );
 }
 
 /**
@@ -44,6 +51,9 @@ export function processEpisodeInBackground(
         const existing = await lookupEpisodeByUrl(url);
         if (existing) {
           await saveReview(existing.id, userId, rating);
+          revalidateTag(`episode-details:${existing.id}`, 'max');
+          revalidateTag('search-episodes', 'max');
+          revalidateTag('user-podcast-reviews', 'max');
           return;
         }
 
@@ -52,6 +62,9 @@ export function processEpisodeInBackground(
           useCache: false,
         });
         await saveReview(id, userId, rating);
+        revalidateTag(`episode-details:${id}`, 'max');
+        revalidateTag('search-episodes', 'max');
+        revalidateTag('user-podcast-reviews', 'max');
       } catch (error) {
         console.error('Background episode processing failed:', error);
         sendTelegramAlert(
