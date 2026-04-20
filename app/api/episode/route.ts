@@ -1,6 +1,5 @@
 import { revalidateTag } from 'next/cache';
 import { after, NextRequest, NextResponse } from 'next/server';
-import { getCloudflareContext } from '@opennextjs/cloudflare';
 
 import { jwtVerify } from 'jose';
 import { cleanUrl, determineType, formatUrls, scrapeDataByType, toPodcastData } from './utils';
@@ -75,10 +74,8 @@ async function handlePodcastURL({
       (!existing.podcast?.artist_name || !existing.podcast?.image_url) &&
       existing.podcast_id
     ) {
-      const { ctx } = getCloudflareContext();
-      ctx.waitUntil(
-        refreshPodcastMetadata(type, cleanedUrl, existing.podcast_id),
-      );
+      const podcastId = existing.podcast_id;
+      after(() => refreshPodcastMetadata(type, cleanedUrl, podcastId));
     }
     return { id: existing.id, slug: existing.slug };
   }
