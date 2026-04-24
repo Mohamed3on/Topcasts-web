@@ -387,7 +387,14 @@ export async function scrapeSpotifyEpisodeDetails(url: string) {
   const audio_url = $('meta[property="og:audio"]').attr('content') || null;
   const spotify_show_id = $('a[href^="/show/"]').attr('href')?.split('/').pop();
 
+  const durationSec = Number($('meta[name="music:duration"]').attr('content'));
+  const duration = Number.isFinite(durationSec) && durationSec > 0
+    ? durationSec * 1000
+    : null;
+
   let description: string | null = null;
+  let date_published: string | null =
+    $('meta[name="music:release_date"]').attr('content')?.slice(0, 10) || null;
   const ldRaw = $('script[type="application/ld+json"]').first().html();
   if (ldRaw) {
     try {
@@ -397,6 +404,9 @@ export async function scrapeSpotifyEpisodeDetails(url: string) {
           /^Listen to this episode from .+? on Spotify\.\s*/,
           '',
         );
+      }
+      if (!date_published && typeof ld?.datePublished === 'string') {
+        date_published = ld.datePublished;
       }
     } catch {}
   }
@@ -414,6 +424,8 @@ export async function scrapeSpotifyEpisodeDetails(url: string) {
     !image_url && 'image_url',
     !spotify_show_id && 'spotify_show_id',
     !show?.publisher && 'artist_name',
+    !duration && 'duration',
+    !date_published && 'date_published',
   ].filter(Boolean);
   if (missing.length) {
     sendTelegramAlert(
@@ -427,8 +439,8 @@ export async function scrapeSpotifyEpisodeDetails(url: string) {
     description,
     image_url,
     audio_url,
-    duration: null,
-    date_published: null,
+    duration,
+    date_published,
     spotify_show_id,
     artist_name: show?.publisher,
   };

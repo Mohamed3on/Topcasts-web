@@ -21,8 +21,7 @@ const CHECKS = [
     name: 'Spotify',
     url: 'https://open.spotify.com/episode/5dSrm8LYeFAgc6ZbuoRvVE',
     scrape: scrapeSpotifyEpisodeDetails,
-    // duration + date_published aren't exposed in Spotify's public HTML
-    required: ['episode_name', 'podcast_name', 'image_url', 'artist_name'] as const,
+    required: ['episode_name', 'podcast_name', 'image_url', 'artist_name', 'duration'] as const,
   },
 ];
 
