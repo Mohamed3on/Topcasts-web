@@ -2,7 +2,6 @@ import { getSpotifyEpisodeData } from '@/app/api/episode/spotify';
 import { PodcastData, ScrapedEpisodeDetails } from '@/app/api/types';
 import { sendTelegramAlert } from '@/utils/telegram';
 import { load } from 'cheerio';
-import { unstable_cache } from 'next/cache';
 import slugify from 'slugify';
 
 // ── Shared utilities ──────────────────────────────────────────────
@@ -120,16 +119,14 @@ function extractApplePodcastId(urlString: string): string | undefined {
   return urlString.match(/id(\d+)/)?.[1];
 }
 
-// Throws on transient failures so `unstable_cache` doesn't poison the 7-day
-// slot; only a genuine empty-result from iTunes is cached as null.
-const fetchApplePodcastMetadata = unstable_cache(
-  async (podcastId: string): Promise<ApplePodcastMetadata | null> => {
+async function fetchApplePodcastMetadata(
+  podcastId: string,
+): Promise<ApplePodcastMetadata | null> {
+  try {
     const response = await fetch(
       `https://itunes.apple.com/lookup?id=${podcastId}&media=podcast`,
     );
-    if (!response.ok) {
-      throw new Error(`iTunes lookup ${response.status} for ${podcastId}`);
-    }
+    if (!response.ok) return null;
 
     const json = await response.json();
     const r = Array.isArray(json?.results) ? json.results[0] : null;
@@ -145,16 +142,10 @@ const fetchApplePodcastMetadata = unstable_cache(
         ? r.genres.filter((g: unknown): g is string => typeof g === 'string')
         : undefined,
     };
-  },
-  ['apple-podcast-metadata'],
-  { revalidate: 7 * 86400, tags: ['apple-podcast-metadata'] },
-);
-
-function safeFetchApplePodcastMetadata(podcastId: string) {
-  return fetchApplePodcastMetadata(podcastId).catch((error) => {
+  } catch (error) {
     console.warn(`[fetchApplePodcastMetadata] Failed for ${podcastId}`, error);
     return null;
-  });
+  }
 }
 
 export async function scrapeApplePodcastsEpisodeDetails(url: string) {
@@ -162,7 +153,7 @@ export async function scrapeApplePodcastsEpisodeDetails(url: string) {
 
   const [html, metadata] = await Promise.all([
     getHtml(url),
-    podcastId ? safeFetchApplePodcastMetadata(podcastId) : null,
+    podcastId ? fetchApplePodcastMetadata(podcastId) : null,
   ]);
 
   const $ = load(html);
@@ -272,7 +263,7 @@ export async function scrapeCastroEpisodeDetails(url: string) {
     : /^\d+$/.test(podcastItunesId ?? '') ? podcastItunesId : undefined;
   if (applePodcastId) {
     podcastItunesId = podcastItunesId ?? applePodcastId;
-    const metadata = await safeFetchApplePodcastMetadata(applePodcastId);
+    const metadata = await fetchApplePodcastMetadata(applePodcastId);
     if (metadata) {
       artist_name = metadata.artistName ?? artist_name;
       if (metadata.artworkUrl) image_url = metadata.artworkUrl;
