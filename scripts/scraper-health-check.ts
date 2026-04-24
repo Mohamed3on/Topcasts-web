@@ -1,22 +1,30 @@
 import {
   scrapeApplePodcastsEpisodeDetails,
   scrapeCastroEpisodeDetails,
+  scrapeSpotifyEpisodeDetails,
 } from '../app/api/episode/utils';
-import { getSpotifyEpisodeData } from '../app/api/episode/spotify';
 
-const TEST_URLS = {
-  apple:
-    'https://podcasts.apple.com/us/podcast/making-the-best-iphone-camera-app-with-ben-sandofsky/id1723943281?i=1000751014946',
-  castro: 'https://castro.fm/episode/ng9KUk',
-  spotify: '5dSrm8LYeFAgc6ZbuoRvVE',
-};
-
-const REQUIRED_FIELDS = [
-  'episode_name',
-  'podcast_name',
-  'image_url',
-  'duration',
-] as const;
+const CHECKS = [
+  {
+    name: 'Apple Podcasts',
+    url: 'https://podcasts.apple.com/us/podcast/making-the-best-iphone-camera-app-with-ben-sandofsky/id1723943281?i=1000751014946',
+    scrape: scrapeApplePodcastsEpisodeDetails,
+    required: ['episode_name', 'podcast_name', 'image_url', 'duration'] as const,
+  },
+  {
+    name: 'Castro',
+    url: 'https://castro.fm/episode/ng9KUk',
+    scrape: scrapeCastroEpisodeDetails,
+    required: ['episode_name', 'podcast_name', 'image_url', 'duration'] as const,
+  },
+  {
+    name: 'Spotify',
+    url: 'https://open.spotify.com/episode/5dSrm8LYeFAgc6ZbuoRvVE',
+    scrape: scrapeSpotifyEpisodeDetails,
+    // duration + date_published aren't exposed in Spotify's public HTML
+    required: ['episode_name', 'podcast_name', 'image_url', 'artist_name'] as const,
+  },
+];
 
 const BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
 const CHAT_ID = process.env.TELEGRAM_CHAT_ID;
@@ -31,37 +39,27 @@ async function sendAlert(msg: string) {
   }).catch(() => {});
 }
 
-type Result = Record<string, unknown>;
-
-async function check(name: string, fn: () => Promise<Result>) {
+async function runCheck(check: (typeof CHECKS)[number]) {
   try {
-    const data = await fn();
-    const missing = REQUIRED_FIELDS.filter((f) => !data[f]);
+    const data = (await check.scrape(check.url)) as Record<string, unknown>;
+    const missing = check.required.filter((f) => !data[f]);
     if (missing.length) {
       await sendAlert(
-        `🔴 Scraper health check FAILED: ${name}\nMissing fields: ${missing.join(', ')}`,
+        `🔴 Scraper health check FAILED: ${check.name}\nMissing fields: ${missing.join(', ')}`,
       );
       return false;
     }
-    console.log(`✓ ${name} — ${(data as any).episode_name}`);
+    console.log(`✓ ${check.name} — ${data.episode_name}`);
     return true;
   } catch (e) {
     await sendAlert(
-      `🔴 Scraper health check FAILED: ${name}\n${e instanceof Error ? e.message : String(e)}`,
+      `🔴 Scraper health check FAILED: ${check.name}\n${e instanceof Error ? e.message : String(e)}`,
     );
     return false;
   }
 }
 
-const results = await Promise.all([
-  check('Apple Podcasts', () =>
-    scrapeApplePodcastsEpisodeDetails(TEST_URLS.apple),
-  ),
-  check('Castro', () => scrapeCastroEpisodeDetails(TEST_URLS.castro)),
-  check('Spotify', () =>
-    getSpotifyEpisodeData(TEST_URLS.spotify) as Promise<Result>,
-  ),
-]);
+const results = await Promise.all(CHECKS.map(runCheck));
 
 if (results.some((r) => !r)) {
   process.exit(1);

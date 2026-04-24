@@ -4,7 +4,6 @@ on:
   push:
     paths:
       - 'app/api/episode/utils.ts'
-      - 'app/api/episode/spotify.ts'
       - 'scripts/scraper-health-check.ts'
   schedule:
     - cron: '0 8 * * 1' # weekly Monday 8am UTC
@@ -20,8 +19,6 @@ jobs:
 
       - name: Run scraper health checks
         env:
-          SPOTIFY_CLIENT_ID: ${{ secrets.SPOTIFY_CLIENT_ID }}
-          SPOTIFY_CLIENT_SECRET: ${{ secrets.SPOTIFY_CLIENT_SECRET }}
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
         run: bun scripts/scraper-health-check.ts

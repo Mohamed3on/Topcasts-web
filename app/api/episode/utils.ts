@@ -1,7 +1,7 @@
-import { getSpotifyEpisodeData } from '@/app/api/episode/spotify';
 import { PodcastData, ScrapedEpisodeDetails } from '@/app/api/types';
 import { sendTelegramAlert } from '@/utils/telegram';
 import { load } from 'cheerio';
+import { unstable_cache } from 'next/cache';
 import slugify from 'slugify';
 
 // ── Shared utilities ──────────────────────────────────────────────
@@ -43,8 +43,28 @@ export async function scrapeDataByType(
     case 'castro':
       return await scrapeCastroEpisodeDetails(url);
     case 'spotify':
-      return await getSpotifyEpisodeData(url.split('/').pop()!);
+      return await scrapeSpotifyEpisodeDetails(url);
   }
+}
+
+// Wraps `unstable_cache` so a missing Next.js request context (e.g. running
+// from a plain bun script) falls back to a direct call instead of throwing.
+function cacheInRequest<Args extends unknown[], R>(
+  fn: (...args: Args) => Promise<R>,
+  keyParts: string[],
+  options: { revalidate: number; tags: string[] },
+): (...args: Args) => Promise<R> {
+  const cached = unstable_cache(fn, keyParts, options);
+  return async (...args) => {
+    try {
+      return await cached(...args);
+    } catch (e) {
+      if (e instanceof Error && e.message.includes('incrementalCache missing')) {
+        return fn(...args);
+      }
+      throw e;
+    }
+  };
 }
 
 export function slugifyDetails(episode_name: string, podcast_name: string) {
@@ -302,5 +322,114 @@ export async function scrapeCastroEpisodeDetails(url: string) {
     audio_url,
     artist_name,
     podcast_genres,
+  };
+}
+
+// ── Spotify ───────────────────────────────────────────────────────
+// Public-page scrape; the Web API now requires Premium on the app owner
+// (Spotify dev-mode change, March 2026). Duration + release_date aren't
+// exposed in the public HTML; we accept the loss.
+
+type SpotifyShowMetadata = {
+  name: string;
+  publisher?: string;
+  description?: string;
+};
+
+const fetchSpotifyShowMetadata = cacheInRequest(
+  async (showId: string): Promise<SpotifyShowMetadata | null> => {
+    try {
+      const html = await getHtml(`https://open.spotify.com/show/${showId}`);
+      const $ = load(html);
+      const raw = $('script[type="application/ld+json"]').first().html();
+      if (!raw) return null;
+      const ld = JSON.parse(raw);
+      if (!ld?.name) return null;
+      return {
+        name: ld.name,
+        publisher: typeof ld.publisher === 'string' ? ld.publisher : undefined,
+        description: typeof ld.description === 'string'
+          ? ld.description.replace(/^Listen to .+? on Spotify\.\s*/, '')
+          : undefined,
+      };
+    } catch (error) {
+      console.warn(`[fetchSpotifyShowMetadata] Failed for ${showId}`, error);
+      return null;
+    }
+  },
+  ['spotify-show-metadata'],
+  { revalidate: 30 * 86400, tags: ['spotify-show-metadata'] },
+);
+
+function extractSpotifyEpisodeId(urlString: string): string | undefined {
+  return urlString.match(/\/episode\/([A-Za-z0-9]+)/)?.[1];
+}
+
+export async function scrapeSpotifyEpisodeDetails(url: string) {
+  const episodeId = extractSpotifyEpisodeId(url);
+  if (!episodeId) throw new Error('Invalid Spotify episode URL');
+
+  const html = await getHtml(`https://open.spotify.com/episode/${episodeId}`);
+  const $ = load(html);
+
+  const ogTitle = $('meta[property="og:title"]').attr('content') || '';
+  // Title format: "Episode Name - [Podcast Name, EP.N]" — fallback podcast
+  // name when the show-page fetch fails.
+  const titleMatch = ogTitle.match(/^(.+?)\s*-\s*\[([^,\]]+)(?:,\s*EP\.[^\]]*)?\]\s*$/i);
+  const episode_name = titleMatch?.[1]?.trim() || ogTitle.trim();
+  const podcastFromTitle = titleMatch?.[2]?.trim();
+
+  if (!episode_name) {
+    throw new Error('Episode not found');
+  }
+
+  const image_url = $('meta[property="og:image"]').attr('content') || null;
+  const audio_url = $('meta[property="og:audio"]').attr('content') || null;
+  const spotify_show_id = $('a[href^="/show/"]').attr('href')?.split('/').pop();
+
+  let description: string | null = null;
+  const ldRaw = $('script[type="application/ld+json"]').first().html();
+  if (ldRaw) {
+    try {
+      const ld = JSON.parse(ldRaw);
+      if (typeof ld?.description === 'string') {
+        description = ld.description.replace(
+          /^Listen to this episode from .+? on Spotify\.\s*/,
+          '',
+        );
+      }
+    } catch {}
+  }
+
+  const show = spotify_show_id
+    ? await fetchSpotifyShowMetadata(spotify_show_id)
+    : null;
+
+  const podcast_name = show?.name || podcastFromTitle;
+  if (!podcast_name) {
+    throw new Error('Could not extract podcast name');
+  }
+
+  const missing = [
+    !image_url && 'image_url',
+    !spotify_show_id && 'spotify_show_id',
+    !show?.publisher && 'artist_name',
+  ].filter(Boolean);
+  if (missing.length) {
+    sendTelegramAlert(
+      `⚠️ Spotify scraper: missing fields [${missing.join(', ')}] for:\n${url}`,
+    );
+  }
+
+  return {
+    episode_name,
+    podcast_name,
+    description,
+    image_url,
+    audio_url,
+    duration: null,
+    date_published: null,
+    spotify_show_id,
+    artist_name: show?.publisher,
   };
 }

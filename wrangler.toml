@@ -20,8 +20,6 @@ NEXT_PUBLIC_SUPABASE_URL = "https://dupqaaqpafucdxrmrmkv.supabase.co"
 # NEXT_PUBLIC_SUPABASE_ANON_KEY - Supabase anonymous/public key
 # SUPABASE_SERVICE_KEY - Supabase service role key (admin)
 # SUPABASE_JWT_SECRET - Supabase JWT secret for token verification
-# SPOTIFY_CLIENT_ID - Spotify API client ID
-# SPOTIFY_CLIENT_SECRET - Spotify API client secret
 # ct0 - Twitter/X ct0 token
 # auth_token - Twitter/X auth token
 # TELEGRAM_BOT_TOKEN - Telegram bot token for scraping failure alerts
