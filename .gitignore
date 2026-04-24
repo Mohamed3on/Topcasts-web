@@ -49,3 +49,17 @@ twitter.log
 .playwright-cli/
 .playwright-mcp/
 data/idealista-profile/
+
+# local secrets / auth
+my-auth.json
+data/idealista-cookies.json
+.mcp.json
+
+# local/unrelated scratch
+package-lock.json
+data/idealista-messages.md
+data/seen-idealista-alicante.json
+scripts/idealista-alicante.ts
+scripts/message-favorites.ts
+scripts/score-favorites.ts
+scripts/run-idealista.sh
