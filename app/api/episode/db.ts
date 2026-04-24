@@ -1,45 +1,6 @@
 import { PodcastData, ScrapedEpisodeData } from '@/app/api/types';
+import { Json } from '@/app/api/types/supabase';
 import { SupabaseAdmin } from '@/utils/supabase/server';
-
-export async function fetchPodcast(
-  supabase: SupabaseAdmin,
-  podcastData: PodcastData,
-) {
-  const filters: string[] = [];
-  if (podcastData.name) {
-    const safeName = podcastData.name.replace(/"/g, '""');
-    filters.push(`name.eq."${safeName}"`);
-  }
-  if (podcastData.itunes_id) {
-    filters.push(`itunes_id.eq.${podcastData.itunes_id}`);
-  }
-  if (podcastData.spotify_id) {
-    const safeSpotifyId = podcastData.spotify_id.replace(/"/g, '""');
-    filters.push(`spotify_id.eq."${safeSpotifyId}"`);
-  }
-  if (podcastData.castro_id) {
-    const safeCastroId = podcastData.castro_id.replace(/"/g, '""');
-    filters.push(`castro_id.eq."${safeCastroId}"`);
-  }
-
-  if (filters.length === 0) {
-    return { data: null, error: null };
-  }
-
-  return supabase
-    .from('podcast')
-    .select()
-    .or(filters.join(','))
-    .limit(1)
-    .maybeSingle();
-}
-
-export async function insertPodcast(
-  supabase: SupabaseAdmin,
-  podcastData: PodcastData,
-) {
-  return supabase.from('podcast').insert(podcastData).select('id').single();
-}
 
 export async function updatePodcast(
   supabase: SupabaseAdmin,
@@ -66,7 +27,7 @@ export async function upsertEpisode(
     .single();
 }
 
-export async function upsertEpisodeUrl(
+export async function insertEpisodeUrl(
   supabase: SupabaseAdmin,
   cleanedUrl: string,
   episodeId: number,
@@ -79,30 +40,17 @@ export async function upsertEpisodeUrl(
     .single();
 }
 
+// Atomic match-or-insert in one roundtrip (see migration upsert_podcast_rpc).
+// OR-matches by name/itunes_id/spotify_id/castro_id; fills nulls on update.
 export async function upsertPodcastDetails(
   supabase: SupabaseAdmin,
   podcastData: PodcastData,
-) {
-  const { data: existingPodcast } = await fetchPodcast(supabase, podcastData);
-
-  if (!existingPodcast) {
-    const { data: newPodcast, error: newError } = await insertPodcast(
-      supabase,
-      podcastData,
-    );
-    if (newError)
-      throw new Error(`Failed to insert podcast: ${JSON.stringify(newError)}`);
-    return newPodcast.id;
-  } else {
-    const { data: updatedPodcast, error: updateError } = await updatePodcast(
-      supabase,
-      existingPodcast.id,
-      podcastData,
-    );
-    if (updateError)
-      throw new Error(
-        `Failed to update podcast: ${JSON.stringify(updateError)}`,
-      );
-    return updatedPodcast.id;
+): Promise<number> {
+  const { data, error } = await supabase.rpc('upsert_podcast', {
+    p: podcastData as unknown as Json,
+  });
+  if (error || data == null) {
+    throw new Error(`Failed to upsert podcast: ${JSON.stringify(error)}`);
   }
+  return data;
 }

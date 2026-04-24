@@ -2,6 +2,7 @@ import { getSpotifyEpisodeData } from '@/app/api/episode/spotify';
 import { PodcastData, ScrapedEpisodeDetails } from '@/app/api/types';
 import { sendTelegramAlert } from '@/utils/telegram';
 import { load } from 'cheerio';
+import { unstable_cache } from 'next/cache';
 import slugify from 'slugify';
 
 // ── Shared utilities ──────────────────────────────────────────────
@@ -33,7 +34,10 @@ export const cleanUrl = (urlString: string) => {
   return `${url.origin}${url.pathname}`;
 };
 
-export async function scrapeDataByType(type: EpisodeType, url: string) {
+export async function scrapeDataByType(
+  type: EpisodeType,
+  url: string,
+): Promise<ScrapedEpisodeDetails> {
   switch (type) {
     case 'apple':
       return await scrapeApplePodcastsEpisodeDetails(url);
@@ -62,7 +66,8 @@ export function formatUrls(
 
 export function toPodcastData(s: ScrapedEpisodeDetails): PodcastData {
   return {
-    name: s.podcast_name,
+    // Collapse whitespace so upstream HTML formatting can't fork a podcast row
+    name: s.podcast_name.replace(/\s+/g, ' ').trim(),
     itunes_id: s.podcast_itunes_id,
     spotify_id: s.spotify_show_id,
     castro_id: s.castro_id,
@@ -115,14 +120,16 @@ function extractApplePodcastId(urlString: string): string | undefined {
   return urlString.match(/id(\d+)/)?.[1];
 }
 
-async function fetchApplePodcastMetadata(
-  podcastId: string,
-): Promise<ApplePodcastMetadata | null> {
-  try {
+// Throws on transient failures so `unstable_cache` doesn't poison the 7-day
+// slot; only a genuine empty-result from iTunes is cached as null.
+const fetchApplePodcastMetadata = unstable_cache(
+  async (podcastId: string): Promise<ApplePodcastMetadata | null> => {
     const response = await fetch(
       `https://itunes.apple.com/lookup?id=${podcastId}&media=podcast`,
     );
-    if (!response.ok) return null;
+    if (!response.ok) {
+      throw new Error(`iTunes lookup ${response.status} for ${podcastId}`);
+    }
 
     const json = await response.json();
     const r = Array.isArray(json?.results) ? json.results[0] : null;
@@ -138,10 +145,16 @@ async function fetchApplePodcastMetadata(
         ? r.genres.filter((g: unknown): g is string => typeof g === 'string')
         : undefined,
     };
-  } catch (error) {
+  },
+  ['apple-podcast-metadata'],
+  { revalidate: 7 * 86400, tags: ['apple-podcast-metadata'] },
+);
+
+function safeFetchApplePodcastMetadata(podcastId: string) {
+  return fetchApplePodcastMetadata(podcastId).catch((error) => {
     console.warn(`[fetchApplePodcastMetadata] Failed for ${podcastId}`, error);
     return null;
-  }
+  });
 }
 
 export async function scrapeApplePodcastsEpisodeDetails(url: string) {
@@ -149,7 +162,7 @@ export async function scrapeApplePodcastsEpisodeDetails(url: string) {
 
   const [html, metadata] = await Promise.all([
     getHtml(url),
-    podcastId ? fetchApplePodcastMetadata(podcastId) : null,
+    podcastId ? safeFetchApplePodcastMetadata(podcastId) : null,
   ]);
 
   const $ = load(html);
@@ -259,16 +272,12 @@ export async function scrapeCastroEpisodeDetails(url: string) {
     : /^\d+$/.test(podcastItunesId ?? '') ? podcastItunesId : undefined;
   if (applePodcastId) {
     podcastItunesId = podcastItunesId ?? applePodcastId;
-    try {
-      const metadata = await fetchApplePodcastMetadata(applePodcastId);
-      if (metadata) {
-        artist_name = metadata.artistName ?? artist_name;
-        if (metadata.artworkUrl) image_url = metadata.artworkUrl;
-        rss_feed = rss_feed ?? metadata.rssFeed ?? undefined;
-        podcast_genres = metadata.genres ?? podcast_genres;
-      }
-    } catch (error) {
-      console.warn('[scrapeCastroEpisodeDetails] Apple metadata fetch failed', error);
+    const metadata = await safeFetchApplePodcastMetadata(applePodcastId);
+    if (metadata) {
+      artist_name = metadata.artistName ?? artist_name;
+      if (metadata.artworkUrl) image_url = metadata.artworkUrl;
+      rss_feed = rss_feed ?? metadata.rssFeed ?? undefined;
+      podcast_genres = metadata.genres ?? podcast_genres;
     }
   }
 

@@ -12,7 +12,6 @@ import {
   saveReview,
   tryRevalidate,
 } from './process';
-import { ScrapedEpisodeDetails } from '@/app/api/types';
 
 export const dynamic = 'force-dynamic';
 
@@ -69,7 +68,6 @@ async function handlePodcastURL({
   const existing = await lookupEpisodeByUrl(url);
 
   if (existing) {
-    // Check if podcast metadata needs refreshing (missing artist_name or image_url)
     if (
       (!existing.podcast?.artist_name || !existing.podcast?.image_url) &&
       existing.podcast_id
@@ -161,10 +159,7 @@ async function refreshPodcastMetadata(
   podcastId: number,
 ): Promise<void> {
   // Use scrapeDataByType directly — unstable_cache doesn't work inside waitUntil
-  const scrapedData = (await scrapeDataByType(
-    type,
-    cleanedUrl,
-  )) as ScrapedEpisodeDetails;
+  const scrapedData = await scrapeDataByType(type, cleanedUrl);
 
   if (!scrapedData.artist_name && !scrapedData.image_url) {
     return;

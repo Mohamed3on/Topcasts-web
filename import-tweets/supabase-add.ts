@@ -3,7 +3,7 @@ import chalk from 'chalk';
 
 import {
   upsertEpisode,
-  upsertEpisodeUrl,
+  insertEpisodeUrl,
   upsertPodcastDetails,
 } from '../app/api/episode/db';
 import {
@@ -13,6 +13,7 @@ import {
   getHtml,
   scrapeDataByType,
   slugifyDetails,
+  toPodcastData,
 } from '../app/api/episode/utils';
 import { ScrapedEpisodeData, ScrapedEpisodeDetails } from '../app/api/types';
 // @ts-ignore
@@ -93,15 +94,7 @@ async function updateEpisodeDetails({
       scrapedData.podcast_name,
     );
 
-    const podcastData = {
-      name: scrapedData.podcast_name,
-      itunes_id: scrapedData.podcast_itunes_id,
-      spotify_id: scrapedData.spotify_show_id,
-      genres: scrapedData.podcast_genres,
-      rss_feed: scrapedData.rss_feed,
-      artist_name: scrapedData.artist_name,
-      image_url: scrapedData.image_url,
-    };
+    const podcastData = toPodcastData(scrapedData);
 
     const episodeData: ScrapedEpisodeData = {
       audio_url: scrapedData.audio_url,
@@ -128,7 +121,7 @@ async function updateEpisodeDetails({
       return { error: 'Failed to upsert episode', status: 500 };
     }
 
-    const { error: urlError } = await upsertEpisodeUrl(
+    const { error: urlError } = await insertEpisodeUrl(
       supabase,
       cleanedUrl,
       episode.id,
@@ -187,8 +180,8 @@ async function processTweets() {
 
         if (id) {
           if (links?.appleLink && links?.spotifyLink) {
-            await upsertEpisodeUrl(supabase, links.appleLink, id, 'apple');
-            await upsertEpisodeUrl(supabase, links.spotifyLink, id, 'spotify');
+            await insertEpisodeUrl(supabase, links.appleLink, id, 'apple');
+            await insertEpisodeUrl(supabase, links.spotifyLink, id, 'spotify');
           }
         } else {
           console.log(
@@ -207,7 +200,7 @@ async function processTweets() {
         if (links?.appleLink) {
           const id = await handleEpisodeURL(links.appleLink, tweetsToProcess);
           if (links?.spotifyLink)
-            await upsertEpisodeUrl(supabase, links.spotifyLink, id, 'spotify');
+            await insertEpisodeUrl(supabase, links.spotifyLink, id, 'spotify');
         } else {
           console.log(
             chalk.red('❌ No links found for Tim Ferriss episode:'),

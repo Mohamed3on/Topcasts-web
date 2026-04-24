@@ -12,11 +12,11 @@ import {
 import { getCachedEpisodeData } from './utils-cached';
 import {
   upsertEpisode,
-  upsertEpisodeUrl,
+  insertEpisodeUrl,
   upsertPodcastDetails,
 } from './db';
 import { sendTelegramAlert } from '@/utils/telegram';
-import { ScrapedEpisodeData, ScrapedEpisodeDetails } from '@/app/api/types';
+import { ScrapedEpisodeData } from '@/app/api/types';
 
 export function tryRevalidate(tag: string) {
   try {
@@ -78,10 +78,8 @@ export async function processNewEpisode(
   const revalidate = useCache
     ? (tag: string) => revalidateTag(tag, 'max')
     : tryRevalidate;
-
-  const scrapedData = (useCache
-    ? await getCachedEpisodeData(type, cleanedUrl)
-    : await scrapeDataByType(type, cleanedUrl)) as ScrapedEpisodeDetails;
+  const scrape = useCache ? getCachedEpisodeData : scrapeDataByType;
+  const scrapedData = await scrape(type, cleanedUrl);
 
   if (!scrapedData.episode_name) {
     throw new Error('Episode does not exist or could not be scraped');
@@ -132,7 +130,7 @@ export async function processNewEpisode(
   revalidate(`episode-details:${episode.id}`);
   revalidate(`episode-metadata:${episode.id}`);
 
-  const { error: urlError } = await upsertEpisodeUrl(
+  const { error: urlError } = await insertEpisodeUrl(
     supabaseAdmin,
     cleanedUrl,
     episode.id,
