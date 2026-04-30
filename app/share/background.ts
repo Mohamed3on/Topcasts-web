@@ -1,19 +1,14 @@
-import { revalidateTag } from 'next/cache';
 import { after } from 'next/server';
 
 import { cleanUrl, determineType } from '@/app/api/episode/utils';
 import {
   lookupEpisodeByUrl,
   processNewEpisode,
+  revalidateReviewTags,
   saveReview,
 } from '@/app/api/episode/process';
+import { ReviewType } from '@/app/api/types';
 import { sendTelegramAlert } from '@/utils/telegram';
-
-function revalidateReviewTags(episodeId: number) {
-  revalidateTag(`episode-details:${episodeId}`, 'max');
-  revalidateTag('search-episodes', 'max');
-  revalidateTag('user-podcast-reviews', 'max');
-}
 
 /**
  * Save a review after the response is sent. Uses next/server's `after()` so the
@@ -22,7 +17,7 @@ function revalidateReviewTags(episodeId: number) {
 export function saveReviewInBackground(
   episodeId: number,
   userId: string,
-  rating: string,
+  rating: ReviewType,
   reviewText?: string,
 ) {
   after(async () => {
@@ -37,7 +32,7 @@ export function saveReviewInBackground(
  */
 export function processEpisodeInBackground(
   url: string,
-  rating: string,
+  rating: ReviewType,
   userId: string,
 ) {
   after(async () => {

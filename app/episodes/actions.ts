@@ -3,9 +3,7 @@
 import { ReviewType } from '@/app/api/types';
 import { createClient } from '@/utils/supabase/ssr';
 import { revalidateTag } from 'next/cache';
-
-const EPISODE_DETAILS_TAG = 'episode-details';
-const SEARCH_EPISODES_TAG = 'search-episodes';
+import { revalidateReviewTags } from '@/app/api/episode/process';
 
 export async function saveReviewText(episodeId: number, text: string | null) {
   const supabase = await createClient();
@@ -25,7 +23,7 @@ export async function saveReviewText(episodeId: number, text: string | null) {
     return { error: error.message };
   }
 
-  revalidateTag(`${EPISODE_DETAILS_TAG}:${episodeId}`, 'max');
+  revalidateTag(`episode-details:${episodeId}`, 'max');
   return { success: true };
 }
 
@@ -71,9 +69,7 @@ export async function toggleReview(
     return { error: error.message };
   }
 
-  revalidateTag(`${EPISODE_DETAILS_TAG}:${episodeId}`, 'max');
-  revalidateTag(SEARCH_EPISODES_TAG, 'max');
-  revalidateTag('user-podcast-reviews', 'max');
+  revalidateReviewTags(episodeId);
 
   return { success: true };
 }

@@ -1,4 +1,3 @@
-import { revalidateTag } from 'next/cache';
 import { after, NextRequest, NextResponse } from 'next/server';
 
 import { jwtVerify } from 'jose';
@@ -9,9 +8,9 @@ import { updatePodcast } from './db';
 import {
   lookupEpisodeByUrl,
   processNewEpisode,
-  saveReview,
   tryRevalidate,
 } from './process';
+import { saveReviewInBackground } from '@/app/share/background';
 
 export const dynamic = 'force-dynamic';
 
@@ -117,7 +116,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
 
     const user = { id: payload.sub, ...payload };
 
-    if (!body?.url || !body?.rating)
+    if (!body?.url || (body?.rating !== 'like' && body?.rating !== 'dislike'))
       return NextResponse.json(
         { error: 'Invalid URL or rating' },
         { status: 400 },
@@ -135,13 +134,12 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
         { status: response.status },
       );
 
-    // Write review + revalidate after response (after() retains request context)
-    after(async () => {
-      await saveReview(response.id, user.id, body.rating, body.review_text);
-      revalidateTag(`episode-details:${response.id}`, 'max');
-      revalidateTag('search-episodes', 'max');
-      revalidateTag('user-podcast-reviews', 'max');
-    });
+    saveReviewInBackground(
+      response.id,
+      user.id,
+      body.rating,
+      body.review_text,
+    );
 
     return NextResponse.json(response);
   } catch (error) {

@@ -1,6 +1,7 @@
 import { PodcastData, ScrapedEpisodeData } from '@/app/api/types';
 import { Json } from '@/app/api/types/supabase';
 import { SupabaseAdmin } from '@/utils/supabase/server';
+import { EpisodeType } from './utils';
 
 export async function updatePodcast(
   supabase: SupabaseAdmin,
@@ -27,21 +28,23 @@ export async function upsertEpisode(
     .single();
 }
 
-export async function insertEpisodeUrl(
+export async function upsertEpisodeUrl(
   supabase: SupabaseAdmin,
   cleanedUrl: string,
   episodeId: number,
-  type: 'apple' | 'spotify' | 'castro',
+  type: EpisodeType,
 ) {
   return supabase
     .from('podcast_episode_url')
-    .insert({ url: cleanedUrl, episode_id: episodeId, type })
+    .upsert(
+      { url: cleanedUrl, episode_id: episodeId, type },
+      { onConflict: 'url' },
+    )
     .select('episode_id')
     .single();
 }
 
-// Atomic match-or-insert in one roundtrip (see migration upsert_podcast_rpc).
-// OR-matches by name/itunes_id/spotify_id/castro_id; fills nulls on update.
+// RPC matches on name/itunes_id/spotify_id/castro_id (OR), fills nulls on update.
 export async function upsertPodcastDetails(
   supabase: SupabaseAdmin,
   podcastData: PodcastData,

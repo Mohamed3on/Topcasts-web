@@ -3,6 +3,7 @@
 import { createClient } from '@/utils/supabase/ssr';
 import { cleanUrl, determineType } from '@/app/api/episode/utils';
 import { processNewEpisode, lookupEpisodeByUrl } from '@/app/api/episode/process';
+import { ReviewType } from '@/app/api/types';
 import { sendTelegramAlert } from '@/utils/telegram';
 import { saveReviewInBackground } from './background';
 
@@ -15,7 +16,7 @@ export { lookupEpisodeByUrl };
  */
 export async function shareEpisode(
   url: string,
-  rating: string,
+  rating: ReviewType,
   reviewText?: string,
 ): Promise<{ id: number; slug: string | null } | { error: string }> {
   const supabase = await createClient();
@@ -35,7 +36,6 @@ export async function shareEpisode(
     return { error: 'Unsupported URL, must be Apple, Spotify, or Castro' };
   }
 
-  // Check if episode already exists
   const existing = await lookupEpisodeByUrl(url);
   if (existing) {
     saveReviewInBackground(existing.id, userId, rating, reviewText);

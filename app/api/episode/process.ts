@@ -3,8 +3,6 @@ import { revalidateTag } from 'next/cache';
 import { supabaseAdmin } from '@/utils/supabase/server';
 import {
   cleanUrl,
-  determineType,
-  scrapeDataByType,
   slugifyDetails,
   toPodcastData,
   EpisodeType,
@@ -12,11 +10,11 @@ import {
 import { getCachedEpisodeData } from './utils-cached';
 import {
   upsertEpisode,
-  insertEpisodeUrl,
+  upsertEpisodeUrl,
   upsertPodcastDetails,
 } from './db';
 import { sendTelegramAlert } from '@/utils/telegram';
-import { ScrapedEpisodeData } from '@/app/api/types';
+import { ReviewType, ScrapedEpisodeData } from '@/app/api/types';
 
 export function tryRevalidate(tag: string) {
   try {
@@ -26,16 +24,13 @@ export function tryRevalidate(tag: string) {
   }
 }
 
-/**
- * Look up an existing episode by URL using a single joined query.
- * Returns episode details or null if not found.
- */
+export function revalidateReviewTags(episodeId: number) {
+  revalidateTag(`episode-details:${episodeId}`, 'max');
+  revalidateTag('search-episodes', 'max');
+  revalidateTag('user-podcast-reviews', 'max');
+}
+
 export async function lookupEpisodeByUrl(url: string) {
-  const cleanedUrl = cleanUrl(url.trim());
-  const type = determineType(cleanedUrl);
-
-  if (!type) return null;
-
   const { data } = await supabaseAdmin
     .from('podcast_episode_url')
     .select(
@@ -47,39 +42,25 @@ export async function lookupEpisodeByUrl(url: string) {
       )
     `,
     )
-    .eq('url', cleanedUrl)
+    .eq('url', cleanUrl(url.trim()))
     .single();
 
   if (!data?.podcast_episode) return null;
 
-  const episode = data.podcast_episode as unknown as {
+  return data.podcast_episode as unknown as {
     id: number;
     slug: string | null;
     podcast_id: number;
     podcast: { artist_name: string | null; image_url: string | null } | null;
   };
-
-  if (!episode?.id) return null;
-
-  return { ...episode, type, cleanedUrl };
 }
 
-/**
- * Scrape, persist, and revalidate a new episode.
- * useCache: false for waitUntil contexts (uses scrapeDataByType + tryRevalidate).
- * Throws on failure.
- */
 export async function processNewEpisode(
   type: EpisodeType,
   cleanedUrl: string,
-  opts?: { useCache?: boolean },
 ): Promise<{ id: number; slug: string }> {
-  const useCache = opts?.useCache ?? true;
-  const revalidate = useCache
-    ? (tag: string) => revalidateTag(tag, 'max')
-    : tryRevalidate;
-  const scrape = useCache ? getCachedEpisodeData : scrapeDataByType;
-  const scrapedData = await scrape(type, cleanedUrl);
+  const revalidate = (tag: string) => revalidateTag(tag, 'max');
+  const scrapedData = await getCachedEpisodeData(type, cleanedUrl);
 
   if (!scrapedData.episode_name) {
     throw new Error('Episode does not exist or could not be scraped');
@@ -130,7 +111,7 @@ export async function processNewEpisode(
   revalidate(`episode-details:${episode.id}`);
   revalidate(`episode-metadata:${episode.id}`);
 
-  const { error: urlError } = await insertEpisodeUrl(
+  const { error: urlError } = await upsertEpisodeUrl(
     supabaseAdmin,
     cleanedUrl,
     episode.id,
@@ -145,14 +126,10 @@ export async function processNewEpisode(
   return { id: episode.id, slug };
 }
 
-/**
- * Upsert a review for an episode. Returns a promise so callers can
- * await it or pass it to waitUntil.
- */
 export async function saveReview(
   episodeId: number,
   userId: string,
-  rating: string,
+  rating: ReviewType,
   reviewText?: string,
 ) {
   const { error } = await supabaseAdmin
@@ -169,5 +146,8 @@ export async function saveReview(
     );
   if (error) {
     console.error('Review upsert failed:', error);
+    sendTelegramAlert(
+      `⚠️ Review upsert failed for episode ${episodeId} (user ${userId}):\n${JSON.stringify(error)}`,
+    );
   }
 }
