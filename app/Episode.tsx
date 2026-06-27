@@ -1,11 +1,13 @@
 import { PlayerIcon } from '@/app/PlayerIcon';
 import { ReviewSection } from '@/app/ReviewSection';
+import YourPodcastSummary from '@/app/components/YourPodcastSummary';
 import { EpisodeDescription } from '@/app/episodes/EpisodeDescription';
 import AppleIcon from '@/components/AppleIcon';
 import { SpotifyIcon } from '@/components/SpotifyIcon';
 import { Twitter } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
+import { Suspense } from 'react';
 import { EpisodeDetails } from './api/types';
 
 const formatDuration = (duration: number) => {
@@ -79,6 +81,11 @@ export const Episode = ({
           >
             {episodeDetails.podcast_name}
           </Link>
+          {episodeDetails.podcast_id && (
+            <Suspense fallback={null}>
+              <YourPodcastSummary podcastId={episodeDetails.podcast_id} />
+            </Suspense>
+          )}
           <div className="flex items-center gap-2 text-sm text-muted-foreground">
             {episodeDetails.date_published && (
               <span>
