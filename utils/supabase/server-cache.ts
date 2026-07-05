@@ -1,4 +1,5 @@
 import { Database } from '@/app/api/types/supabase';
+import { byPodcastRank } from '@/utils/podcastRanking';
 import { createClient as createSupabaseClient } from '@supabase/supabase-js';
 import { unstable_cache } from 'next/cache';
 
@@ -205,6 +206,26 @@ export const getCachedUserPodcastReviews = async (
     },
   );
   return getUserPodcastReviews();
+};
+
+// Cached "your top podcasts" ranking (same data + ordering as the statistics page)
+export const getCachedPodcastRanking = async (username: string) => {
+  const getRanking = unstable_cache(
+    async () => {
+      const supabase = createServerClient();
+      const { data } = await supabase.rpc('get_podcast_reviews', {
+        username_param: username,
+      });
+      if (!data) return null;
+      return [...data].sort(byPodcastRank);
+    },
+    ['podcast-ranking', username],
+    {
+      tags: ['podcast-ranking', `podcast-ranking:${username}`],
+      revalidate: 3600, // 1 hour
+    },
+  );
+  return getRanking();
 };
 
 // Cached search results

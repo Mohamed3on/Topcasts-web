@@ -70,7 +70,7 @@ export const Episode = ({
             </div>
           )}
         </div>
-        <div className="flex flex-col items-center gap-3 md:items-start">
+        <div className="flex min-w-0 flex-col items-center gap-3 md:items-start">
           <h1 className="text-center text-2xl font-semibold md:text-left">
             {episodeDetails.episode_name}
           </h1>
@@ -142,7 +142,7 @@ export const Episode = ({
           </div>
 
           {episodeDetails.description && (
-            <div className="prose w-full pt-2">
+            <div className="prose w-full min-w-0 pt-2">
               <EpisodeDescription description={episodeDetails.description} />
             </div>
           )}

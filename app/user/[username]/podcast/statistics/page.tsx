@@ -1,4 +1,5 @@
 import { Card, CardFooter, CardHeader } from '@/components/ui/card';
+import { byPodcastRank } from '@/utils/podcastRanking';
 import { createClient } from '@/utils/supabase/ssr';
 import { ThumbsDown, ThumbsUp } from 'lucide-react';
 import Image from 'next/image';
@@ -28,28 +29,7 @@ const GroupedRatings = async ({
   const { username } = await params;
   const groupedByPodcast = await fetchUserTopPodcasts(username);
 
-  const sortFunction = (
-    a: {
-      review_difference: number;
-      likes_count: number;
-      dislikes_count: number;
-    },
-    b: {
-      review_difference: number;
-      likes_count: number;
-      dislikes_count: number;
-    },
-  ) => {
-    const bRatio =
-      b.review_difference *
-      (b.likes_count / (b.likes_count + b.dislikes_count));
-    const aRatio =
-      a.review_difference *
-      (a.likes_count / (a.likes_count + a.dislikes_count));
-    return bRatio - aRatio;
-  };
-
-  const sorted = groupedByPodcast.sort(sortFunction);
+  const sorted = groupedByPodcast.sort(byPodcastRank);
 
   return (
     <div className="container flex flex-col items-center gap-4 pb-4">

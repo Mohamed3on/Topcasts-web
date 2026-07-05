@@ -8,7 +8,7 @@ export const EpisodeDescription = ({
 
   return (
     <div
-      className="break-words"
+      className="[overflow-wrap:anywhere] [&_iframe]:max-w-full [&_img]:h-auto [&_img]:max-w-full"
       dangerouslySetInnerHTML={{ __html: description }}
     />
   );
