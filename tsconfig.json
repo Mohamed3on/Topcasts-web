@@ -38,6 +38,7 @@
   "exclude": [
     "node_modules",
     "import-tweets",
-    "scripts"
+    "scripts",
+    "**/*.test.ts"
   ]
 }
