@@ -28,6 +28,9 @@ export function revalidateReviewTags(episodeId: number) {
   revalidateTag(`episode-details:${episodeId}`, 'max');
   revalidateTag('search-episodes', 'max');
   revalidateTag('user-podcast-reviews', 'max');
+  // A like/dislike reorders your podcast ranking, so the episode page's rank
+  // badge must refresh too — otherwise it drifts from the statistics page.
+  revalidateTag('podcast-ranking', 'max');
 }
 
 export async function lookupEpisodeByUrl(url: string) {
