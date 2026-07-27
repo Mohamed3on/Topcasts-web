@@ -208,7 +208,6 @@ export async function scrapeApplePodcastsEpisodeDetails(url: string) {
   const podcast_name =
     schema.partOfSeries?.name?.trim() ||
     metadata?.podcastName?.trim() ||
-    content.find('.subtitle-action a').text().trim() ||
     (podcastId
       ? content
           .find(`a[href*="/podcast/"][href*="id${podcastId}"]`)
