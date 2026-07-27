@@ -52,6 +52,7 @@ test('scrapes Apple episode details with enriched metadata', async () => {
   );
   expect(result.image_url).toMatch(/^https:\/\/.*\.(jpg|png)$/i);
   expect(result.episode_name).toBe('How to Bring Down Healthcare Costs');
+  expect(result.podcast_name).toBe('Statecraft');
   expect(typeof result.description).toBe('string');
 });
 

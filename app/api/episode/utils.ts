@@ -129,10 +129,23 @@ export function processDateString(dateString: string): string {
 // ── Apple Podcasts ────────────────────────────────────────────────
 
 type ApplePodcastMetadata = {
+  podcastName?: string;
   artistName?: string;
   artworkUrl?: string;
   rssFeed?: string;
   genres?: string[];
+};
+
+type AppleEpisodeSchema = {
+  name?: string;
+  productionCompany?: string;
+  datePublished?: string;
+  description?: string;
+  duration?: string;
+  thumbnailUrl?: string;
+  partOfSeries?: {
+    name?: string;
+  };
 };
 
 function extractApplePodcastId(urlString: string): string | undefined {
@@ -153,10 +166,14 @@ async function fetchApplePodcastMetadata(
     if (!r) return null;
 
     return {
+      podcastName: r.collectionName ?? r.trackName,
       artistName: r.artistName ?? r.collectionArtistName,
       artworkUrl:
-        r.artworkUrl1000 ?? r.artworkUrl600 ?? r.artworkUrl512 ??
-        r.artworkUrl160 ?? r.artworkUrl100,
+        r.artworkUrl1000 ??
+        r.artworkUrl600 ??
+        r.artworkUrl512 ??
+        r.artworkUrl160 ??
+        r.artworkUrl100,
       rssFeed: typeof r.feedUrl === 'string' ? r.feedUrl : undefined,
       genres: Array.isArray(r.genres)
         ? r.genres.filter((g: unknown): g is string => typeof g === 'string')
@@ -179,29 +196,52 @@ export async function scrapeApplePodcastsEpisodeDetails(url: string) {
   const $ = load(html);
   const content = $('.content-container');
 
-  const episode_name = content.find('.headings__title').text().trim();
-  const podcast_name = content.find('.subtitle-action a').text().trim();
-  const description = content.find('.paragraph-wrapper').html();
+  let schema: AppleEpisodeSchema = {};
+  try {
+    schema = JSON.parse(
+      $('script[id="schema:episode"]').html() || '{}',
+    ) as AppleEpisodeSchema;
+  } catch {}
+
+  const episode_name =
+    content.find('.headings__title').text().trim() || schema.name?.trim() || '';
+  const podcast_name =
+    schema.partOfSeries?.name?.trim() ||
+    metadata?.podcastName?.trim() ||
+    content.find('.subtitle-action a').text().trim() ||
+    (podcastId
+      ? content
+          .find(`a[href*="/podcast/"][href*="id${podcastId}"]`)
+          .first()
+          .text()
+          .trim()
+      : '');
+  const description =
+    content.find('.paragraph-wrapper').html() || schema.description || null;
 
   const info = $('[data-testid="information"]');
-  const date_published_string = info
-    .find('li:contains("Published")').find('.content').text().trim();
-  const duration_string = info
-    .find('li:contains("Length")').find('.content').text().trim();
+  const date_published_string =
+    info.find('li:contains("Published")').find('.content').text().trim() ||
+    schema.datePublished ||
+    '';
+  const duration_string =
+    info.find('li:contains("Length")').find('.content').text().trim() ||
+    schema.duration ||
+    '';
 
   let image_url = content
     .find('source[type="image/jpeg"]')
-    ?.attr('srcset')?.split(',')?.pop()?.trim()?.split(' ')[0];
+    ?.attr('srcset')
+    ?.split(',')
+    ?.pop()
+    ?.trim()
+    ?.split(' ')[0];
 
-  let artist_name: string | undefined = metadata?.artistName;
-  try {
-    const schema = JSON.parse($('script[id="schema:episode"]').html() || '{}');
-    artist_name = schema.productionCompany ?? artist_name;
-  } catch {}
+  image_url = image_url || schema.thumbnailUrl;
 
-  if (!image_url && metadata?.artworkUrl) {
-    image_url = metadata.artworkUrl;
-  }
+  const artist_name = schema.productionCompany ?? metadata?.artistName;
+
+  image_url = image_url || metadata?.artworkUrl;
 
   return {
     episode_name,
