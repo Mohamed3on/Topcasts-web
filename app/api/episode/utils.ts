@@ -102,6 +102,40 @@ async function getHtml(url: string) {
   return response.text();
 }
 
+export type ImageValidationResult = 'valid' | 'invalid' | 'unknown';
+
+export async function validateImageUrl(
+  url: string,
+): Promise<ImageValidationResult> {
+  let parsedUrl: URL;
+  try {
+    parsedUrl = new URL(url);
+  } catch {
+    return 'invalid';
+  }
+
+  if (!['http:', 'https:'].includes(parsedUrl.protocol)) return 'invalid';
+
+  try {
+    const response = await fetch(parsedUrl, {
+      headers: {
+        Accept: 'image/*',
+        Range: 'bytes=0-0',
+      },
+      signal: AbortSignal.timeout(5_000),
+    });
+    const contentType = response.headers.get('content-type')?.toLowerCase();
+    await response.body?.cancel();
+
+    return response.ok && contentType?.startsWith('image/')
+      ? 'valid'
+      : 'invalid';
+  } catch (error) {
+    console.warn(`Unable to validate image URL ${url}:`, error);
+    return 'unknown';
+  }
+}
+
 /** Parse durations like "1h 30m", "45m", "1:30:00", "67 minutes" */
 function parseDurationMs(duration: string): number {
   // HH:MM:SS or MM:SS
@@ -331,19 +365,20 @@ export async function scrapeCastroEpisodeDetails(url: string) {
     }
   }
 
-  // Alert on missing or unreliable fields to catch issues early
-  const isReliableImage = image_url && /mzstatic\.com|scdn\.co|megaphone|simplecastcdn|art19\.com|libsyn\.com|transistorcdn\.com|pippa\.io|substackcdn|cloudfront\.net|buzzsprout|captivate\.fm|omnycontent|imgur\.com/.test(image_url);
-  const missing = [
+  const imageValidation = image_url
+    ? await validateImageUrl(image_url)
+    : 'invalid';
+  const issues = [
     !podcast_name && 'podcast_name',
     !image_url && 'image_url',
     !audio_url && 'audio_url',
     !date_published && 'date_published',
     !duration && !audio_url && 'duration',
-    (image_url && !isReliableImage) && `unreliable_image(${image_url})`,
+    image_url && imageValidation === 'invalid' && `invalid_image(${image_url})`,
   ].filter(Boolean);
-  if (missing.length) {
+  if (issues.length) {
     sendTelegramAlert(
-      `⚠️ Castro scraper: missing fields [${missing.join(', ')}] for:\n${url}`,
+      `⚠️ Castro scraper: issues [${issues.join(', ')}] for:\n${url}`,
     );
   }
 
