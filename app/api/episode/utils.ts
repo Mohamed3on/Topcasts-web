@@ -159,7 +159,7 @@ function parseDurationMs(duration: string): number {
 }
 
 // Strips " at HH:MM AM" suffix from Apple date strings
-export function processDateString(dateString: string): string {
+function processDateString(dateString: string): string {
   return dateString.replace(/\s+at\s+.*$/, '').trim() || dateString;
 }
 

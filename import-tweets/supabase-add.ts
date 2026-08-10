@@ -103,7 +103,6 @@ async function updateEpisodeDetails({
       duration: scrapedData.duration,
       episode_itunes_id: scrapedData.episode_itunes_id,
       episode_name: scrapedData.episode_name,
-      formatted_duration: scrapedData.formatted_duration,
       guid: scrapedData.guid,
       image_url: scrapedData.image_url,
       slug: slug,

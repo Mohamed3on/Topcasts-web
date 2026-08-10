@@ -63,11 +63,8 @@ export async function processNewEpisode(
   cleanedUrl: string,
 ): Promise<{ id: number; slug: string }> {
   const revalidate = (tag: string) => revalidateTag(tag, 'max');
+  // Throws 'Episode does not exist or could not be scraped' on an empty scrape
   const scrapedData = await getCachedEpisodeData(type, cleanedUrl);
-
-  if (!scrapedData.episode_name) {
-    throw new Error('Episode does not exist or could not be scraped');
-  }
 
   if (!scrapedData.image_url) {
     sendTelegramAlert(
@@ -89,7 +86,6 @@ export async function processNewEpisode(
     duration: scrapedData.duration,
     episode_itunes_id: scrapedData.episode_itunes_id,
     episode_name: scrapedData.episode_name,
-    formatted_duration: scrapedData.formatted_duration,
     guid: scrapedData.guid,
     image_url: scrapedData.image_url,
     slug,

@@ -17,7 +17,6 @@ export type ScrapedEpisodeData = {
   duration?: number | null;
   episode_itunes_id?: string;
   episode_name: string;
-  formatted_duration?: string | null;
   guid?: string | null;
   image_url?: string | null;
   slug?: string | null;
