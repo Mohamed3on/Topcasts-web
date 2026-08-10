@@ -170,6 +170,39 @@ type ApplePodcastMetadata = {
   genres?: string[];
 };
 
+type AppleEpisodeMetadata = {
+  episodeName?: string;
+  podcastName?: string;
+  durationMs?: number;
+  releaseDate?: string;
+  description?: string;
+  artworkUrl?: string;
+  audioUrl?: string;
+  guid?: string;
+};
+
+type AppleLookupResult = {
+  kind?: string;
+  trackId?: number;
+  trackName?: string;
+  collectionName?: string;
+  artistName?: string;
+  collectionArtistName?: string;
+  artworkUrl1000?: string;
+  artworkUrl600?: string;
+  artworkUrl512?: string;
+  artworkUrl160?: string;
+  artworkUrl100?: string;
+  feedUrl?: string;
+  genres?: unknown[];
+  trackTimeMillis?: number;
+  releaseDate?: string;
+  description?: string;
+  shortDescription?: string;
+  episodeUrl?: string;
+  episodeGuid?: string;
+};
+
 type AppleEpisodeSchema = {
   name?: string;
   productionCompany?: string;
@@ -186,6 +219,23 @@ function extractApplePodcastId(urlString: string): string | undefined {
   return urlString.match(/id(\d+)/)?.[1];
 }
 
+function parseApplePodcastResult(r: AppleLookupResult): ApplePodcastMetadata {
+  return {
+    podcastName: r.collectionName ?? r.trackName,
+    artistName: r.artistName ?? r.collectionArtistName,
+    artworkUrl:
+      r.artworkUrl1000 ??
+      r.artworkUrl600 ??
+      r.artworkUrl512 ??
+      r.artworkUrl160 ??
+      r.artworkUrl100,
+    rssFeed: typeof r.feedUrl === 'string' ? r.feedUrl : undefined,
+    genres: Array.isArray(r.genres)
+      ? r.genres.filter((g: unknown): g is string => typeof g === 'string')
+      : undefined,
+  };
+}
+
 async function fetchApplePodcastMetadata(
   podcastId: string,
 ): Promise<ApplePodcastMetadata | null> {
@@ -199,33 +249,121 @@ async function fetchApplePodcastMetadata(
     const r = Array.isArray(json?.results) ? json.results[0] : null;
     if (!r) return null;
 
-    return {
-      podcastName: r.collectionName ?? r.trackName,
-      artistName: r.artistName ?? r.collectionArtistName,
-      artworkUrl:
-        r.artworkUrl1000 ??
-        r.artworkUrl600 ??
-        r.artworkUrl512 ??
-        r.artworkUrl160 ??
-        r.artworkUrl100,
-      rssFeed: typeof r.feedUrl === 'string' ? r.feedUrl : undefined,
-      genres: Array.isArray(r.genres)
-        ? r.genres.filter((g: unknown): g is string => typeof g === 'string')
-        : undefined,
-    };
+    return parseApplePodcastResult(r);
   } catch (error) {
     console.warn(`[fetchApplePodcastMetadata] Failed for ${podcastId}`, error);
     return null;
   }
 }
 
+// Official lookup API: one call returns the podcast object plus its most
+// recent episodes (up to 200, bounded by the show's RSS feed window).
+async function fetchAppleEpisodeLookup(
+  podcastId: string,
+  episodeId: string | undefined,
+  storefront: string,
+): Promise<{
+  metadata: ApplePodcastMetadata | null;
+  episode: AppleEpisodeMetadata | null;
+} | null> {
+  try {
+    const response = await fetch(
+      `https://itunes.apple.com/lookup?id=${podcastId}&media=podcast&entity=podcastEpisode&limit=200&country=${storefront}`,
+    );
+    if (!response.ok) return null;
+
+    const json = await response.json();
+    const results: AppleLookupResult[] = Array.isArray(json?.results)
+      ? json.results
+      : [];
+    const podcast = results.find((r) => r.kind === 'podcast');
+    const episode = episodeId
+      ? results.find(
+          (r) => r.kind === 'podcast-episode' && String(r.trackId) === episodeId,
+        )
+      : undefined;
+
+    return {
+      metadata: podcast ? parseApplePodcastResult(podcast) : null,
+      episode: episode
+        ? {
+            episodeName: episode.trackName,
+            podcastName: episode.collectionName,
+            durationMs:
+              typeof episode.trackTimeMillis === 'number' &&
+              episode.trackTimeMillis > 0
+                ? episode.trackTimeMillis
+                : undefined,
+            releaseDate: episode.releaseDate,
+            description: episode.description ?? episode.shortDescription,
+            artworkUrl: episode.artworkUrl600 ?? episode.artworkUrl160,
+            audioUrl: episode.episodeUrl,
+            guid: episode.episodeGuid,
+          }
+        : null,
+    };
+  } catch (error) {
+    console.warn(`[fetchAppleEpisodeLookup] Failed for ${podcastId}`, error);
+    return null;
+  }
+}
+
+// The RSS feed is the canonical source of the rich HTML description that
+// Apple's episode page renders; used when the page doesn't provide one.
+async function fetchFeedDescription(
+  feedUrl: string,
+  guid: string,
+): Promise<string | null> {
+  try {
+    const response = await fetch(feedUrl, {
+      signal: AbortSignal.timeout(10_000),
+    });
+    if (!response.ok) return null;
+
+    const $ = load(await response.text(), { xmlMode: true });
+    const item = $('item')
+      .filter((_, el) => $(el).children('guid').text().trim() === guid)
+      .first();
+    if (!item.length) return null;
+
+    const html =
+      item.children('content\\:encoded').text().trim() ||
+      item.children('description').text().trim();
+    return html || null;
+  } catch (error) {
+    console.warn(`[fetchFeedDescription] Failed for ${feedUrl}`, error);
+    return null;
+  }
+}
+
+function plainTextToHtml(text: string): string {
+  const escaped = text
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;');
+  return escaped
+    .split(/\n+/)
+    .filter(Boolean)
+    .map((paragraph) => `<p>${paragraph}</p>`)
+    .join('');
+}
+
 export async function scrapeApplePodcastsEpisodeDetails(url: string) {
   const podcastId = extractApplePodcastId(url);
+  const episodeId = url.match(/i=(\d+)/)?.[1];
+  const storefront =
+    url.match(/podcasts\.apple\.com\/([a-z]{2})\//)?.[1] ?? 'us';
 
-  const [html, metadata] = await Promise.all([
-    getHtml(url),
-    podcastId ? fetchApplePodcastMetadata(podcastId) : null,
+  // Page HTML and lookup API fetched in parallel; every field below merges
+  // both sources so an Apple web outage (or selector rot) can't zero it out.
+  const [html, lookup] = await Promise.all([
+    getHtml(url).catch(() => ''),
+    podcastId
+      ? fetchAppleEpisodeLookup(podcastId, episodeId, storefront)
+      : null,
   ]);
+  const metadata = lookup?.metadata ?? null;
+  const apiEpisode = lookup?.episode ?? null;
 
   const $ = load(html);
   const content = $('.content-container');
@@ -238,9 +376,13 @@ export async function scrapeApplePodcastsEpisodeDetails(url: string) {
   } catch {}
 
   const episode_name =
-    content.find('.headings__title').text().trim() || schema.name?.trim() || '';
+    content.find('.headings__title').text().trim() ||
+    schema.name?.trim() ||
+    apiEpisode?.episodeName?.trim() ||
+    '';
   const podcast_name =
     schema.partOfSeries?.name?.trim() ||
+    apiEpisode?.podcastName?.trim() ||
     metadata?.podcastName?.trim() ||
     (podcastId
       ? content
@@ -249,8 +391,15 @@ export async function scrapeApplePodcastsEpisodeDetails(url: string) {
           .text()
           .trim()
       : '');
-  const description =
+
+  let description =
     content.find('.paragraph-wrapper').html() || schema.description || null;
+  if (!description && metadata?.rssFeed && apiEpisode?.guid) {
+    description = await fetchFeedDescription(metadata.rssFeed, apiEpisode.guid);
+  }
+  if (!description && apiEpisode?.description) {
+    description = plainTextToHtml(apiEpisode.description);
+  }
 
   const info = $('[data-testid="information"]');
   const date_published_string =
@@ -270,22 +419,27 @@ export async function scrapeApplePodcastsEpisodeDetails(url: string) {
     ?.trim()
     ?.split(' ')[0];
 
-  image_url = image_url || schema.thumbnailUrl;
+  image_url =
+    image_url ||
+    schema.thumbnailUrl ||
+    apiEpisode?.artworkUrl ||
+    metadata?.artworkUrl;
 
   const artist_name = schema.productionCompany ?? metadata?.artistName;
-
-  image_url = image_url || metadata?.artworkUrl;
 
   return {
     episode_name,
     podcast_name,
     podcast_itunes_id: podcastId,
-    episode_itunes_id: url.match(/i=(\d+)/)?.[1],
+    episode_itunes_id: episodeId,
     description,
-    date_published: processDateString(date_published_string),
-    duration: parseDurationMs(duration_string),
+    date_published:
+      apiEpisode?.releaseDate ?? processDateString(date_published_string),
+    duration: apiEpisode?.durationMs || parseDurationMs(duration_string) || null,
     image_url,
     artist_name,
+    audio_url: apiEpisode?.audioUrl,
+    guid: apiEpisode?.guid,
     rss_feed: metadata?.rssFeed,
     podcast_genres: metadata?.genres,
   };
