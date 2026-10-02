@@ -320,7 +320,7 @@ async function fetchAppleEpisodeLookup(
 // The podcast page (unlike episode pages) embeds the RSS feed URL in its
 // serialized data, and is reachable from datacenter IPs where the lookup
 // API is not — it bootstraps the RSS fallback with no other dependency.
-async function fetchAppleFeedUrl(
+export async function fetchAppleFeedUrl(
   podcastId: string,
   storefront: string,
 ): Promise<string | undefined> {
