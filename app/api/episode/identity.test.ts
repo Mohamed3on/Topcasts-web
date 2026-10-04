@@ -6,11 +6,14 @@ import {
   type CandidateEpisode,
   findCodeMatch,
   findFeedGuid,
+  isInFeed,
   matchWithJev,
   parseFeedItems,
   plainText,
+  publishersAgree,
   sameEpisodeQuestions,
   shortlist,
+  showNameKey,
   titleKey,
 } from './identity';
 
@@ -298,5 +301,40 @@ describe('parseFeedItems', () => {
     expect(
       plainText(item.block.match(/<description>([\s\S]*)<\/description>/)![1]),
     ).toBe('Notes & links');
+  });
+});
+
+describe('shows', () => {
+  test('names agree before any subtitle', () => {
+    expect(
+      showNameKey('The Official SaaStr Podcast: SaaS | Founders | Investors'),
+    ).toBe(showNameKey('The Official Saastr Podcast'));
+    expect(showNameKey('Game Changer - the game theory podcast')).toBe(
+      'game changer',
+    );
+    // Same start, but the feed check is what keeps these apart
+    expect(showNameKey('The Rest Is Politics: US')).toBe(
+      showNameKey('The Rest Is Politics'),
+    );
+  });
+
+  test('publishers agree when one name holds all of the other\'s words', () => {
+    expect(publishersAgree('TED', 'TED Audio Collective')).toBe(true);
+    expect(publishersAgree('SaaStr', 'saastr')).toBe(true);
+    expect(publishersAgree('Ted', 'United States')).toBe(false);
+    expect(publishersAgree('SaaStr', null)).toBe(false);
+  });
+
+  test('an episode is in a feed by GUID, or by a unique title with agreeing dates', () => {
+    const items = [
+      feedItem('g1', 'Play Free', '2024-10-17'),
+      feedItem('g2', 'Urban Meyer: Selfless Teams', '2024-10-10'),
+    ];
+    expect(isInFeed(items, { title: 'Renamed later', guid: 'g2' })).toBe(true);
+    expect(
+      isInFeed(items, { title: 'Play Free - [Glue Guys, EP.8]', date: '2024-10-17' }),
+    ).toBe(true);
+    expect(isInFeed(items, { title: 'Play Free', date: '2024-11-30' })).toBe(false);
+    expect(isInFeed(items, { title: 'Steve Young' })).toBe(false);
   });
 });

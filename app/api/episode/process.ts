@@ -11,6 +11,7 @@ import {
 import { getCachedEpisodeData } from './utils-cached';
 import {
   fillEpisode,
+  fillPodcast,
   getEpisodeDescriptions,
   getPodcastEpisodes,
   insertEpisode,
@@ -21,14 +22,19 @@ import {
 } from './db';
 import {
   askJev,
+  type EpisodeFacts,
+  type FeedItem,
   fetchFeedItems,
   findCodeMatch,
   findFeedGuid,
+  isInFeed,
   matchWithJev,
+  publishersAgree,
   shortlist,
+  showNameKey,
 } from './identity';
 import { sendTelegramAlert } from '@/utils/telegram';
-import { ReviewType, ScrapedEpisodeData } from '@/app/api/types';
+import { PodcastData, ReviewType, ScrapedEpisodeData } from '@/app/api/types';
 
 export function tryRevalidate(tag: string) {
   try {
@@ -105,7 +111,11 @@ export async function processNewEpisode(
     slug,
   };
 
-  const podcastId = await upsertPodcastDetails(supabaseAdmin, podcastData);
+  const sameShow = await findSameShow(podcastData, toEpisodeFacts(episodeData));
+  if (sameShow) console.log(`[identity] show ${sameShow.id} matched by feed`);
+  const podcastId = sameShow
+    ? await fillPodcast(supabaseAdmin, sameShow, podcastData)
+    : await upsertPodcastDetails(supabaseAdmin, podcastData);
   revalidate(`podcast-details:${podcastId}`);
   revalidate(`podcast-metadata:${podcastId}`);
   revalidate('search-episodes');
@@ -147,6 +157,80 @@ export async function processNewEpisode(
 }
 
 /**
+ * A stored show's feed items. A show without a feed, or whose feed lists
+ * nothing because it moved hosts (TED's podcasts.ted.com now redirects to a
+ * web page), gets the current one from its Apple page — reachable from
+ * Workers, unlike Apple's API — and keeps it. (rss_feed is unique, so a feed
+ * held by a duplicate podcast row is skipped.)
+ */
+async function showFeedItems(
+  show: { id: number; itunes_id: string | null; rss_feed: string | null },
+  storefront = 'us',
+): Promise<FeedItem[]> {
+  const items = show.rss_feed ? await fetchFeedItems(show.rss_feed) : [];
+  if (items.length || !show.itunes_id) return items;
+  const feedUrl = await fetchAppleFeedUrl(show.itunes_id, storefront);
+  if (!feedUrl || feedUrl === show.rss_feed) return items;
+  const moved = await fetchFeedItems(feedUrl);
+  if (moved.length)
+    await supabaseAdmin
+      .from('podcast')
+      .update({ rss_feed: feedUrl })
+      .eq('id', show.id);
+  return moved;
+}
+
+/**
+ * The stored show a share belongs to when it isn't stored under this app's
+ * ID or the share's feed yet. Apps name shows differently ("The Official
+ * Saastr Podcast" on Spotify, "The Official SaaStr Podcast: SaaS | Founders |
+ * Investors" on Apple), which the upsert's exact-name match misses. A show by
+ * the same publisher with the same name before any subtitle counts only when
+ * a feed confirms it — the shared episode is in the stored show's feed, or a
+ * stored episode is in the shared show's — so "The Rest Is Politics: US"
+ * never joins "The Rest Is Politics".
+ */
+export async function findSameShow(podcast: PodcastData, episode: EpisodeFacts) {
+  const ids = (['itunes_id', 'spotify_id', 'castro_id'] as const).filter(
+    (k) => podcast[k],
+  );
+  const known = await Promise.all(
+    [...ids, ...(podcast.rss_feed ? (['rss_feed'] as const) : [])].map((k) =>
+      supabaseAdmin.from('podcast').select('id').eq(k, podcast[k]!).limit(1),
+    ),
+  );
+  if (!ids.length || known.some(({ data }) => data?.length)) return undefined;
+
+  let query = supabaseAdmin
+    .from('podcast')
+    .select(
+      'id, name, artist_name, itunes_id, spotify_id, castro_id, rss_feed, image_url, genres',
+    );
+  for (const k of ids) query = query.is(k, null);
+  const { data: shows } = await query;
+  const key = showNameKey(podcast.name);
+  const named = (shows ?? []).filter(
+    (show) =>
+      key &&
+      showNameKey(show.name) === key &&
+      publishersAgree(show.artist_name, podcast.artist_name),
+  );
+  if (!named.length) return undefined;
+
+  const sharedFeed = podcast.rss_feed
+    ? await fetchFeedItems(podcast.rss_feed)
+    : null;
+  for (const show of named) {
+    if (sharedFeed) {
+      const { data: stored } = await getPodcastEpisodes(supabaseAdmin, show.id);
+      if (stored?.some((e) => isInFeed(sharedFeed, toCandidate(e))))
+        return show;
+    } else if (isInFeed(await showFeedItems(show), episode)) return show;
+  }
+  return undefined;
+}
+
+/**
  * The stored episode a newly shared one is the same recording as, if any —
  * by feed GUID, then cleaned title, then Jev on a shortlist — plus the GUID
  * found in the show's feed. Read-only apart from remembering a feed URL.
@@ -169,21 +253,16 @@ export async function findExistingEpisode(
   const episode = toEpisodeFacts(episodeData);
 
   if (!episode.guid) {
-    let feedUrl = scrapedFeedUrl ?? podcast?.rss_feed ?? undefined;
-    if (!feedUrl && type === 'apple' && podcast?.itunes_id) {
-      const storefront = cleanedUrl.match(/apple\.com\/([a-z]{2})\//)?.[1];
-      feedUrl = await fetchAppleFeedUrl(podcast.itunes_id, storefront ?? 'us');
-      // Spotify pages don't link the feed; later Spotify shares need it here.
-      // (rss_feed is unique, so a feed held by a duplicate podcast row is skipped.)
-      if (feedUrl)
-        await supabaseAdmin
-          .from('podcast')
-          .update({ rss_feed: feedUrl })
-          .eq('id', podcastId)
-          .is('rss_feed', null);
-    }
-    if (feedUrl)
-      episode.guid = findFeedGuid(await fetchFeedItems(feedUrl), episode);
+    // Spotify pages don't link the feed; the stored one serves them.
+    const items = scrapedFeedUrl
+      ? await fetchFeedItems(scrapedFeedUrl)
+      : podcast
+        ? await showFeedItems(
+            { id: podcastId, ...podcast },
+            cleanedUrl.match(/apple\.com\/([a-z]{2})\//)?.[1],
+          )
+        : [];
+    episode.guid = findFeedGuid(items, episode);
   }
 
   const candidates = (rows ?? []).map(toCandidate);

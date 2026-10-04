@@ -216,6 +216,30 @@ function byCloseness(episode: EpisodeFacts) {
     (a.id ?? 0) - (b.id ?? 0);
 }
 
+// ── Shows ─────────────────────────────────────────────────────────
+
+/** A show's name before any subtitle: Apple's "The Official SaaStr Podcast: SaaS | Founders | Investors" is Spotify's "The Official Saastr Podcast". */
+export function showNameKey(name: string): string {
+  return titleKey(name.split(/\s[:|–—-]\s|:\s/)[0]);
+}
+
+/** One publisher name's words all appear in the other's: "TED" and "TED Audio Collective". */
+export function publishersAgree(a?: string | null, b?: string | null): boolean {
+  const [x, y] = [a, b].map(
+    (name) => new Set(titleKey(name ?? '').split(' ').filter(Boolean)),
+  );
+  const [fewer, more] = x.size <= y.size ? [x, y] : [y, x];
+  return fewer.size > 0 && [...fewer].every((w) => more.has(w));
+}
+
+/** Whether a feed lists the episode, by GUID or by a unique title whose dates agree. */
+export function isInFeed(items: FeedItem[], episode: EpisodeFacts): boolean {
+  return (
+    (!!episode.guid && items.some((item) => item.guid === episode.guid)) ||
+    !!findFeedGuid(items, episode)
+  );
+}
+
 // ── Jev ───────────────────────────────────────────────────────────
 
 export type JevQuestion = {

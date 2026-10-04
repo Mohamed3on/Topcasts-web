@@ -167,7 +167,7 @@ export async function upsertEpisodeUrl(
     .single();
 }
 
-// RPC matches on name/itunes_id/spotify_id/castro_id (OR), fills nulls on update.
+// RPC matches on name/itunes_id/spotify_id/castro_id/rss_feed (OR), fills nulls on update.
 export async function upsertPodcastDetails(
   supabase: SupabaseAdmin,
   podcastData: PodcastData,
@@ -179,4 +179,28 @@ export async function upsertPodcastDetails(
     throw new Error(`Failed to upsert podcast: ${JSON.stringify(error)}`);
   }
   return data;
+}
+
+// Another app's listing of a stored show only fills what the row lacks (this
+// app's ID first of all); its name stays as first saved.
+export async function fillPodcast(
+  supabase: SupabaseAdmin,
+  stored: { id: number } & { [K in keyof PodcastData]?: unknown },
+  podcastData: PodcastData,
+): Promise<number> {
+  const patch = Object.fromEntries(
+    Object.entries(podcastData).filter(
+      ([k, v]) => k !== 'name' && v != null && stored[k as keyof PodcastData] == null,
+    ),
+  );
+  if (Object.keys(patch).length) {
+    const { error } = await supabase
+      .from('podcast')
+      .update(patch)
+      .eq('id', stored.id);
+    if (error) {
+      throw new Error(`Failed to fill podcast: ${JSON.stringify(error)}`);
+    }
+  }
+  return stored.id;
 }
