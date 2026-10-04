@@ -63,3 +63,6 @@ scripts/idealista-alicante.ts
 scripts/message-favorites.ts
 scripts/score-favorites.ts
 scripts/run-idealista.sh
+# episode identity backfill: caches, plans and backups of production rows
+data/backfill/
+data/backups/
