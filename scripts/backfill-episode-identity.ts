@@ -8,6 +8,8 @@
  *     duplicate, and is merged into it.
  *  2. Episodes lacking a GUID get one from the feed: a unique title match in
  *     code, else Jev on a shortlist of feed items (a single confident pick).
+ *     A stored feed that lists nothing (the show moved hosts) is replaced by
+ *     the one Apple has now.
  *  3. Episodes of a podcast that share a GUID are merged: URLs, reviews and
  *     social shares move onto the oldest row, which then fills its gaps.
  *
@@ -34,7 +36,9 @@ import {
   JEV_THRESHOLD,
   matchWithJev,
   parseFeedItems,
+  publishersAgree,
   shortlist,
+  showNameKey,
   titleKey,
 } from '../app/api/episode/identity';
 
@@ -81,6 +85,8 @@ type Plan = {
     genres: string[];
   }[];
   podcastMerges: { keeper: number; dup: number }[];
+  feedMoves: { id: number; rss_feed: string }[];
+  guidChanges: { episodeId: number; from: string; to: string }[];
   guids: { episodeId: number; guid: string; via: 'code' | 'jev' }[];
   episodeMerges: { keeper: number; dups: number[]; guid: string }[];
   delta: Record<string, number>;
@@ -171,21 +177,18 @@ async function itunes(url: string): Promise<Record<string, any>[] | null> {
 }
 
 const norm = (s?: string | null) => titleKey(s ?? '');
-const head = (s: string) => norm(s.split(/\s[:|–—-]\s|:\s/)[0]);
-const publishersAgree = (a?: string | null, b?: string | null) => {
-  const [x, y] = [norm(a), norm(b)];
-  return !!x && !!y && (x === y || x.includes(y) || y.includes(x));
+
+// iTunes answers, kept across runs.
+const cacheFile = Bun.file(`${DIR}/itunes.json`);
+const cache: Record<string, Record<string, any>[]> =
+  (await cacheFile.exists()) ? await cacheFile.json() : {};
+const call = async (url: string) => {
+  cache[url] ??= (await itunes(url)) as Record<string, any>[];
+  await Bun.write(cacheFile, JSON.stringify(cache));
+  return cache[url];
 };
 
 async function findFeeds(podcasts: Podcast[]) {
-  const cacheFile = Bun.file(`${DIR}/itunes.json`);
-  const cache: Record<string, Record<string, any>[]> =
-    (await cacheFile.exists()) ? await cacheFile.json() : {};
-  const call = async (url: string) => {
-    cache[url] ??= (await itunes(url)) as Record<string, any>[];
-    await Bun.write(cacheFile, JSON.stringify(cache));
-    return cache[url];
-  };
   const updates: Plan['podcastUpdates'] = [];
   const merges: Plan['podcastMerges'] = [];
   const report = {
@@ -267,14 +270,22 @@ async function findFeeds(podcasts: Podcast[]) {
       continue;
     }
     const [hit] = results
-      .map((r, rank) => ({ show: toShow(r), rank }))
+      .map((r, rank) => {
+        const show = toShow(r);
+        return { show, rank, exact: norm(show.name) === norm(podcast.name) };
+      })
       .filter(
-        ({ show }) =>
-          (norm(show.name) === norm(podcast.name) ||
-            head(show.name) === head(podcast.name)) &&
+        ({ show, exact }) =>
+          (exact || showNameKey(show.name) === showNameKey(podcast.name)) &&
           publishersAgree(show.artist, podcast.artist_name),
       )
-      .sort((a, b) => b.show.episodes - a.show.episodes || a.rank - b.rank);
+      // An exact name beats a longer show sharing its start ("The Rest Is Politics: US").
+      .sort(
+        (a, b) =>
+          Number(b.exact) - Number(a.exact) ||
+          b.show.episodes - a.show.episodes ||
+          a.rank - b.rank,
+      );
     if (!hit?.show.feed) {
       report.noMatch.push(
         `${podcast.id} ${podcast.name} (${podcast.artist_name})`,
@@ -324,6 +335,7 @@ const toFacts = (e: Episode) => ({
 async function assignGuids(
   episodes: Episode[],
   feedOf: Map<number, string>,
+  appleIdOf: Map<number, string>,
   podcastName: Map<number, string>,
 ) {
   const missing = episodes.filter((e) => !e.guid && feedOf.has(e.podcast_id));
@@ -340,10 +352,34 @@ async function assignGuids(
     jevCalls: 0,
     jevFailed: 0,
   };
-  const needJev: { episode: Episode; items: FeedItem[] }[] = [];
+  // `from`: a stored GUID the show's new feed no longer lists.
+  const needJev: { episode: Episode; items: FeedItem[]; from?: string }[] = [];
+  const moves: Plan['feedMoves'] = [];
+  const changes: Plan['guidChanges'] = [];
 
   await pool([...byPodcast.keys()], 6, async (podcastId) => {
-    const items = await fetchFeed(feedOf.get(podcastId)!);
+    let items = await fetchFeed(feedOf.get(podcastId)!);
+    let stale: Episode[] = [];
+    // A feed that moved hosts lists nothing; Apple has the current one.
+    const appleId = appleIdOf.get(podcastId);
+    if (!items?.length && appleId) {
+      const [show] =
+        (await call(
+          `https://itunes.apple.com/lookup?entity=podcast&id=${appleId}`,
+        )) ?? [];
+      if (show?.feedUrl && show.feedUrl !== feedOf.get(podcastId)) {
+        items = await fetchFeed(show.feedUrl);
+        if (items?.length) {
+          moves.push({ id: podcastId, rss_feed: show.feedUrl });
+          // A new host may re-key the episodes: stored GUIDs the new feed
+          // lacks are found again, like missing ones.
+          const listed = new Set(items.map((i) => i.guid));
+          stale = episodes.filter(
+            (e) => e.podcast_id === podcastId && e.guid && !listed.has(e.guid),
+          );
+        }
+      }
+    }
     const own = byPodcast.get(podcastId)!;
     if (!items?.length) {
       report.feedFailed += own.length;
@@ -355,12 +391,14 @@ async function assignGuids(
       (i) =>
         new Set(titlesOf.get(i.guid)!.map((x) => titleKey(x.title))).size === 1,
     );
-    for (const episode of own) {
+    for (const { guid: from, ...rest } of [...own, ...stale]) {
+      const episode = { ...rest, guid: null };
       const guid = findFeedGuid(items, toFacts(episode));
-      if (guid) {
+      if (guid && from) changes.push({ episodeId: episode.id, from, to: guid });
+      else if (guid) {
         assignments.push({ episodeId: episode.id, guid, via: 'code' });
         report.code++;
-      } else needJev.push({ episode, items: usable });
+      } else needJev.push({ episode, items: usable, from: from ?? undefined });
     }
   });
 
@@ -373,7 +411,7 @@ async function assignGuids(
       .in('id', ids);
     for (const row of data ?? []) descriptions.set(row.id, row.description);
   }
-  await pool(needJev, 4, async ({ episode, items }) => {
+  await pool(needJev, 4, async ({ episode, items, from }) => {
     const facts = {
       ...toFacts(episode),
       description: descriptions.get(episode.id),
@@ -382,7 +420,7 @@ async function assignGuids(
       ...item,
       description: feedItemDescription(item),
     }));
-    if (!candidates.length) return void report.unmatched++;
+    if (!candidates.length) return void (from || report.unmatched++);
     report.jevCalls++;
     // A feed may repeat an episode under the same title; only one confident pick counts.
     const confident = new Set<string>();
@@ -403,16 +441,15 @@ async function assignGuids(
       },
       { podcast: podcastName.get(episode.podcast_id) },
     );
-    if (confident.size === 1) {
-      assignments.push({
-        episodeId: episode.id,
-        guid: [...confident][0],
-        via: 'jev',
-      });
+    const [guid] = confident;
+    if (confident.size === 1 && from)
+      changes.push({ episodeId: episode.id, from, to: guid });
+    else if (confident.size === 1) {
+      assignments.push({ episodeId: episode.id, guid, via: 'jev' });
       report.jev++;
-    } else report.unmatched++;
+    } else if (!from) report.unmatched++;
   });
-  return { assignments, report };
+  return { assignments, moves, changes, report };
 }
 
 // ── Plan ──────────────────────────────────────────────────────────
@@ -451,6 +488,9 @@ async function makePlan() {
   const feedOf = new Map<number, string>();
   for (const p of podcasts) if (p.rss_feed) feedOf.set(p.id, p.rss_feed);
   for (const u of feeds.updates) feedOf.set(u.id, u.rss_feed);
+  const appleIdOf = new Map<number, string>();
+  for (const p of podcasts) if (p.itunes_id) appleIdOf.set(p.id, p.itunes_id);
+  for (const u of feeds.updates) appleIdOf.set(u.id, u.itunes_id);
   const homed = episodes.map((e) => ({
     ...e,
     podcast_id: keeperOf.get(e.podcast_id) ?? e.podcast_id,
@@ -458,15 +498,23 @@ async function makePlan() {
 
   console.log('2. Matching episodes to feed GUIDs…');
   const podcastName = new Map(podcasts.map((p) => [p.id, p.name]));
-  const { assignments, report: guidReport } = await assignGuids(
-    homed,
-    feedOf,
-    podcastName,
-  );
+  const {
+    assignments,
+    moves,
+    changes,
+    report: guidReport,
+  } = await assignGuids(homed, feedOf, appleIdOf, podcastName);
+  // rss_feed is unique: a moved feed another show already holds stays put.
+  const held = new Set([
+    ...podcasts.map((p) => p.rss_feed),
+    ...feeds.updates.map((u) => u.rss_feed),
+  ]);
+  const feedMoves = moves.filter((m) => !held.has(m.rss_feed));
 
   // 3. Episodes of one podcast sharing a GUID are one episode.
   const guidOf = new Map(homed.map((e) => [e.id, e.guid]));
   for (const a of assignments) guidOf.set(a.episodeId, a.guid);
+  for (const c of changes) guidOf.set(c.episodeId, c.to);
   const groups = Map.groupBy(
     homed.filter((e) => guidOf.get(e.id)),
     (e) => `${e.podcast_id} ${guidOf.get(e.id)}`,
@@ -480,6 +528,7 @@ async function makePlan() {
   const doomed = new Set(episodeMerges.flatMap((m) => m.dups));
   const hadGuid = new Set(episodes.filter((e) => e.guid).map((e) => e.id));
   const guids = assignments.filter((a) => !doomed.has(a.episodeId));
+  const guidChanges = changes.filter((c) => !doomed.has(c.episodeId));
 
   // Same-user reviews and same-account shares collapse into one on merge.
   const keeperOfEpisode = new Map<number, number>(
@@ -508,7 +557,9 @@ async function makePlan() {
     createdAt: new Date().toISOString(),
     podcastUpdates: feeds.updates,
     podcastMerges: feeds.merges,
+    feedMoves,
     guids,
+    guidChanges,
     episodeMerges,
     delta: {
       podcasts: -feeds.merges.length,
@@ -543,9 +594,16 @@ async function makePlan() {
     console.log(
       `  merge podcast ${m.dup} "${podcastName.get(m.dup)}" → ${m.keeper} "${podcastName.get(m.keeper)}"`,
     );
+  for (const m of moves)
+    console.log(
+      `  feed moved: ${m.id} "${podcastName.get(m.id)}" → ${m.rss_feed}${feedMoves.includes(m) ? '' : ' (held by another show; left)'}`,
+    );
   const g = guidReport;
   console.log(
     `\nGUIDs: ${g.withoutGuid} episodes lacked one (${g.feedless} in podcasts with no feed, ${g.feedFailed} whose feed failed); assigned ${g.code} by title, ${g.jev} by Jev (${g.jevCalls} calls, ${g.jevFailed} failed); ${g.unmatched} left unmatched`,
+  );
+  console.log(
+    `  re-keyed by a moved feed: ${changes.length} stored GUIDs follow their title to the new feed`,
   );
   console.log(
     `\nEpisode merges: ${episodeMerges.length} groups, ${doomed.size} rows deleted after moving their URLs, reviews and shares`,
@@ -606,6 +664,7 @@ async function apply() {
   const episodeIds = [
     ...new Set([
       ...plan.guids.map((a) => a.episodeId),
+      ...plan.guidChanges.map((c) => c.episodeId),
       ...plan.episodeMerges.flatMap((m) => [m.keeper, ...m.dups]),
     ]),
   ];
@@ -613,6 +672,7 @@ async function apply() {
     ...new Set([
       ...plan.podcastUpdates.map((u) => u.id),
       ...plan.podcastMerges.flatMap((m) => [m.keeper, m.dup]),
+      ...plan.feedMoves.map((m) => m.id),
     ]),
   ];
   const ids = (xs: number[]) => (xs.length ? xs.join(',') : 'null');
@@ -698,6 +758,18 @@ begin
       rss_feed = coalesce(rss_feed, u->>'rss_feed'),
       genres = coalesce(genres, nullif(array(select jsonb_array_elements_text(u->'genres')), '{}'))
     where id = (u->>'id')::int;
+  end loop;
+
+  for u in select * from jsonb_array_elements(plan->'feedMoves') loop
+    update podcast set rss_feed = u->>'rss_feed' where id = (u->>'id')::int;
+  end loop;
+
+  for a in select * from jsonb_array_elements(plan->'guidChanges') loop
+    update podcast_episode set guid = a->>'to'
+      where id = (a->>'episodeId')::int and guid = a->>'from';
+    if not found then
+      raise exception 'episode % no longer has the planned GUID', a->>'episodeId';
+    end if;
   end loop;
 
   for m in select * from jsonb_array_elements(plan->'episodeMerges') loop
