@@ -668,10 +668,11 @@ async function apply() {
     `Backed up ${backup.episodes.length} merged episodes (+${backup.guidAssigned.length} GUID-only), ${backup.podcasts.length} podcasts, ${backup.urls.length} URLs, ${backup.reviews.length} reviews, ${backup.shares.length} shares → ${backupPath}`,
   );
 
-  // One DO block: any failure rolls everything back.
+  // One DO block: any failure rolls everything back. Feed data never holds a
+  // "$" here (JSON escapes it), so it can't close the dollar quotes.
   await sql(`do $do$
 declare
-  plan jsonb := $plan$${JSON.stringify(plan)}$plan$::jsonb;
+  plan jsonb := $plan$${JSON.stringify(plan).replaceAll('$', '\\u0024')}$plan$::jsonb;
   m jsonb; u jsonb; a jsonb; d jsonb;
   keeper int; dup int; gone podcast%rowtype;
 begin
